@@ -265,6 +265,10 @@
             font-size: 14px;
             padding: 8px;
             border-radius: var(--radius-sm);
+            min-height: 38px;
+            display: block;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.14);
         }
 
         .canvas-dashboard {
@@ -707,7 +711,7 @@
                         🔄 Sync Canvas Data
                     </button>
                     
-                    <div id="syncStatus" class="canvas-status"></div>
+                    <div id="syncStatus" class="canvas-status" aria-live="polite"></div>
                 </div>
 
                 <div id="canvasDashboard" class="canvas-dashboard">
@@ -796,21 +800,22 @@
         // CANVAS INTEGRATION
         // ============================================
 
-        async function syncCanvas() {
-            const url = document.getElementById('canvasUrl').value.trim();
-            const username = document.getElementById('canvasUsername').value.trim();
-            const password = document.getElementById('canvasPassword').value;
-            const status = document.getElementById('syncStatus');
-            const syncBtn = document.getElementById('syncBtn');
-            
-            if (!url || !username || !password) {
-                status.innerHTML = '❌ Please fill in all fields';
-                status.style.color = 'var(--color-error)';
-                return;
-            }
-            
-            status.innerHTML = '⏳ Syncing Canvas data... approve your 2FA prompt if asked (can take up to 90 seconds)';
-            status.style.color = '#FF9800';
+	        async function syncCanvas() {
+	            const url = document.getElementById('canvasUrl').value.trim();
+	            const username = document.getElementById('canvasUsername').value.trim();
+	            const password = document.getElementById('canvasPassword').value;
+	            const status = document.getElementById('syncStatus');
+	            const syncBtn = document.getElementById('syncBtn');
+	            status.style.display = 'block';
+	            
+	            if (!url || !username || !password) {
+	                status.innerHTML = '❌ Please fill in all fields';
+	                status.style.color = 'var(--color-error)';
+	                return;
+	            }
+	            
+	            status.innerHTML = '⏳ Syncing Canvas data... approve your 2FA prompt if asked (can take up to 90 seconds)';
+	            status.style.color = '#FF9800';
             syncBtn.disabled = true;
             syncBtn.textContent = 'Syncing...';
             
