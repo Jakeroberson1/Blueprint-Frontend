@@ -272,6 +272,14 @@
     </div>
 
     <script>
+        // Auth is session-scoped (clears when the tab/window closes).
+        // Remove any legacy persistent tokens from older versions.
+        try {
+            localStorage.removeItem('sessionToken');
+            localStorage.removeItem('user');
+        } catch (e) {}
+
+
         const BASE_API_URL = 'https://blueprint-backend-154275778730.us-west1.run.app';
 
         async function parseResponse(response) {
@@ -335,8 +343,8 @@
                 const data = await parseResponse(response);
 
                 if (response.ok) {
-                    localStorage.setItem('sessionToken', data.sessionToken);
-                    localStorage.setItem('user', JSON.stringify(data.user));
+                    sessionStorage.setItem('sessionToken', data.sessionToken);
+                    sessionStorage.setItem('user', JSON.stringify(data.user));
                     showSuccess('Sign in successful! Redirecting...');
                     setTimeout(() => {
                         window.location.href = 'index.html';
@@ -381,8 +389,8 @@
                 const data = await parseResponse(response);
 
                 if (response.ok) {
-                    localStorage.setItem('sessionToken', data.sessionToken);
-                    localStorage.setItem('user', JSON.stringify(data.user));
+                    sessionStorage.setItem('sessionToken', data.sessionToken);
+                    sessionStorage.setItem('user', JSON.stringify(data.user));
                     showSuccess('Account created! Redirecting...');
                     setTimeout(() => {
                         window.location.href = 'index.html';
@@ -401,7 +409,7 @@
 
         // Check if already logged in
         window.addEventListener('load', async () => {
-            const sessionToken = localStorage.getItem('sessionToken');
+            const sessionToken = sessionStorage.getItem('sessionToken');
             if (sessionToken) {
                 try {
                     const response = await fetch(`${BASE_API_URL}/auth/me`, {

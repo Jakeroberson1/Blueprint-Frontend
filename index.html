@@ -582,6 +582,14 @@
     </div>
 
     <script>
+        // Auth is session-scoped (clears when the tab/window closes).
+        // Remove any legacy persistent tokens from older versions.
+        try {
+            localStorage.removeItem('sessionToken');
+            localStorage.removeItem('user');
+        } catch (e) {}
+
+
         // API Configuration
         const BASE_API_URL = 'https://blueprint-backend-154275778730.us-west1.run.app';
         const API_URL = `${BASE_API_URL}/chat`;
@@ -589,11 +597,14 @@
         const STUDY_GUIDE_URL = `${BASE_API_URL}/generate-study-guide`;
         const CHAT_HISTORY_URL = `${BASE_API_URL}/chat/history`;
         const LOGOUT_URL = `${BASE_API_URL}/auth/logout`;
-        const sessionToken = localStorage.getItem('sessionToken');
-        const currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+        const sessionToken = sessionStorage.getItem('sessionToken');
+        const currentUser = JSON.parse(sessionStorage.getItem('user') || 'null');
 
         function redirectToLogin() {
-            localStorage.clear();
+            try {
+                sessionStorage.removeItem('sessionToken');
+                sessionStorage.removeItem('user');
+            } catch (e) {}
             window.location.href = 'login.html';
         }
 
