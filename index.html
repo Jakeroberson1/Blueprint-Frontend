@@ -659,11 +659,36 @@
     </div>
 
     <script>
+                // Authentication check
+        const sessionToken = localStorage.getItem('sessionToken');
+        
+        window.addEventListener('load', async () => {
+            if (!sessionToken) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${BASE_API_URL}/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${sessionToken}` }
+                });
+                
+                if (!response.ok) {
+                    localStorage.clear();
+                    window.location.href = 'login.html';
+                }
+            } catch (error) {
+                console.error('Auth check failed:', error);
+            }
+        });
+
         // API Configuration
-        const API_URL = 'https://blueprint-backend-154275778730.us-west1.run.app/chat';
-        const UPLOAD_URL = 'https://blueprint-backend-154275778730.us-west1.run.app/upload';
-        const STUDY_GUIDE_URL = 'https://blueprint-backend-154275778730.us-west1.run.app/generate-study-guide';
-        const CANVAS_API_URL = 'https://blueprint-backend-154275778730.us-west1.run.app/api/canvas';
+        const BASE_API_URL = 'https://blueprint-backend-154275778730.us-west1.run.app';
+        const API_URL = `${BASE_API_URL}/chat`;
+        const UPLOAD_URL = `${BASE_API_URL}/upload`;
+        const STUDY_GUIDE_URL = `${BASE_API_URL}/generate-study-guide`;
+        const CANVAS_API_URL = `${BASE_API_URL}/api/canvas`;
+        const CHAT_HISTORY_URL = `${BASE_API_URL}/chat/history`;
 
         // DOM Elements
         const messagesArea = document.getElementById('messagesArea');
@@ -709,12 +734,14 @@
                 
                 const response = await fetch(`${CANVAS_API_URL}/sync`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${sessionToken}`
+                     },
+                   
                     body: JSON.stringify({
                         canvasUrl,
                         username,
-                        password,
-                        userId: 'default'
+                        password
                     })
                 });
                 
@@ -765,7 +792,9 @@
 
         async function loadCanvasDashboard() {
             try {
-                const response = await fetch(`${CANVAS_API_URL}/data?userId=default`);
+                const response = await fetch(`${CANVAS_API_URL}/data`, {
+                    headers: { 'Authorization': `Bearer ${sessionToken}` }
+                });
                 const data = await response.json();
                 
                 if (data.error) return;
@@ -776,8 +805,10 @@
                 document.getElementById('courseCount').textContent = data.courses.length;
                 document.getElementById('assignmentCount').textContent = data.assignments.length;
                 
-                const upcomingResponse = await fetch(`${CANVAS_API_URL}/assignments/upcoming?userId=default`);
-                const upcoming = await upcomingResponse.json();
+                const upcoming = (data.assignments || [])
+                    .filter(a => a.due_at && new Date(a.due_at).getTime() > Date.now())
+                    .sort((a, b) => new Date(a.due_at) - new Date(b.due_at))
+                    .slice(0, 20);
                 
                 const container = document.getElementById('upcomingAssignments');
                 
@@ -948,15 +979,18 @@
 
                     response = await fetch(UPLOAD_URL, {
                         method: 'POST',
+                        headers: { 'Authorization': `Bearer ${sessionToken}` },
                         body: formData
                     });
                 } else {
                     // Regular chat message
                     response = await fetch(API_URL, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
+                                        method: 'POST',
+                                        headers: { 
+                                            'Content-Type': 'application/json',
+                                            'Authorization': `Bearer ${sessionToken}`
+                                         },
+
                         body: JSON.stringify({
                             message: message,
                             subject: '',
@@ -1017,6 +1051,10 @@
             if (confirm('Are you sure you want to clear the chat history?')) {
                 chatHistory = [];
                 localStorage.removeItem('chatHistory');
+                fetch(CHAT_HISTORY_URL, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${sessionToken}` }
+                }).catch(() => {});
                 
                 messagesArea.innerHTML = `
                     <div class="empty-state">
@@ -1069,27 +1107,43 @@
                 document.querySelector('.theme-toggle').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
             }
 
-            // Load chat history
-            const savedHistory = localStorage.getItem('chatHistory');
-            if (savedHistory) {
-                chatHistory = JSON.parse(savedHistory);
-                
-                // Restore messages
-                if (chatHistory.length > 0) {
-                    messagesArea.innerHTML = '';
-                    chatHistory.forEach(msg => {
-                        if (msg.role === 'user') {
-                            addUserMessage(msg.content);
-                        } else {
-                            addAssistantMessage(msg.content);
-                        }
-                    });
+            // Load chat history from backend first, fallback to localStorage
+            try {
+                const historyResponse = await fetch(CHAT_HISTORY_URL, {
+                    headers: { 'Authorization': `Bearer ${sessionToken}` }
+                });
+
+                if (historyResponse.ok) {
+                    const historyData = await historyResponse.json();
+                    chatHistory = historyData.history || [];
                 }
+            } catch (error) {
+                // Ignore and fallback to local cache
+            }
+
+            if (!chatHistory.length) {
+                const savedHistory = localStorage.getItem('chatHistory');
+                if (savedHistory) {
+                    chatHistory = JSON.parse(savedHistory);
+                }
+            }
+
+            if (chatHistory.length > 0) {
+                messagesArea.innerHTML = '';
+                chatHistory.forEach(msg => {
+                    if (msg.role === 'user') {
+                        addUserMessage(msg.content);
+                    } else {
+                        addAssistantMessage(msg.content);
+                    }
+                });
             }
 
             // Check for Canvas data
             try {
-                const response = await fetch(`${CANVAS_API_URL}/data?userId=default`);
+                const response = await fetch(`${CANVAS_API_URL}/data`, {
+                    headers: { 'Authorization': `Bearer ${sessionToken}` }
+                });
                 if (response.ok) {
                     const data = await response.json();
                     if (!data.error) {
