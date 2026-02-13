@@ -175,6 +175,167 @@
             color: var(--color-text-secondary);
         }
 
+        /* ===== CANVAS INTEGRATION PANEL ===== */
+        .canvas-section {
+            margin-bottom: 20px;
+        }
+
+        .canvas-toggle-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, rgba(23, 105, 255, 0.95), rgba(43, 228, 167, 0.70));
+            color: white;
+            border: none;
+            border-radius: var(--radius-base);
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .canvas-toggle-btn:hover {
+            background: linear-gradient(135deg, rgba(23, 105, 255, 0.98), rgba(43, 228, 167, 0.78));
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+	        .canvas-panel {
+	            display: block;
+	            margin-top: 12px;
+	            padding: 24px;
+	            background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));
+	            border-radius: var(--radius-lg);
+	            box-shadow: var(--shadow-md);
+	            border: 1px solid var(--color-border);
+	            backdrop-filter: blur(var(--glass-blur));
+	            -webkit-backdrop-filter: blur(var(--glass-blur));
+	        }
+
+        .canvas-panel h3 {
+            margin-bottom: 16px;
+            color: var(--color-text-primary);
+            font-size: 18px;
+        }
+
+        .canvas-input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: var(--radius-base);
+            color: var(--color-text-primary);
+            font-size: 14px;
+            font-family: var(--font-family);
+        }
+
+        .canvas-input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        .canvas-btn {
+            padding: 12px 24px;
+            background: var(--color-success);
+            color: white;
+            border: none;
+            border-radius: var(--radius-base);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .canvas-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .canvas-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .canvas-status {
+            margin-top: 12px;
+            font-size: 14px;
+            padding: 8px;
+            border-radius: var(--radius-sm);
+        }
+
+        .canvas-dashboard {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .canvas-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: var(--color-bg-primary);
+            padding: 20px;
+            border-radius: var(--radius-base);
+            text-align: center;
+            border: 1px solid var(--color-border);
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--color-primary);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .assignments-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .assignment-card {
+            background: var(--color-bg-primary);
+            padding: 16px;
+            border-radius: var(--radius-base);
+            margin-bottom: 12px;
+            border-left: 4px solid;
+        }
+
+        .assignment-card.urgent { border-left-color: var(--color-error); }
+        .assignment-card.soon { border-left-color: #FF9800; }
+        .assignment-card.normal { border-left-color: var(--color-success); }
+
+        .assignment-title {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--color-text-primary);
+            margin-bottom: 4px;
+        }
+
+        .assignment-course {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .assignment-due {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
         /* ===== CHAT INTERFACE ===== */
         .chat-container {
             background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));
@@ -508,86 +669,77 @@
                 max-width: 85%;
             }
 
+            .canvas-stats {
+                grid-template-columns: 1fr 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="topbar">
-            <div class="brand-wrap">
-                <div class="brand-title">Blueprint</div>
-                <div class="brand-subtitle">AI Study Companion</div>
-            </div>
-            <div class="account-wrap">
-                <a class="auth-btn" href="canvas.html" style="text-decoration:none;">Canvas</a>
-                <div class="user-pill" id="userPill">Signed in</div>
-                <button class="auth-btn" id="logoutBtn" onclick="logout()">Log Out</button>
-            </div>
-        </div>
+	        <div class="topbar">
+	            <div class="brand-wrap">
+	                <div class="brand-title">Blueprint</div>
+	                <div class="brand-subtitle">AI Study Companion</div>
+	            </div>
+	            <div class="account-wrap">
+	                <a class="auth-btn" href="index.html" style="text-decoration:none;">Chat</a>
+	                <div class="user-pill" id="userPill">Signed in</div>
+	                <button class="auth-btn" id="logoutBtn" onclick="logout()">Log Out</button>
+	            </div>
+	        </div>
 
-        <div class="header">
-            <h1>🎓 Blueprint</h1>
-            <p>Your AI-Powered Study Companion with Canvas Integration</p>
-        </div>
+	        <div class="header">
+	            <h1>🎓 Canvas</h1>
+	            <p>Sync your courses, assignments, and grades</p>
+	        </div>
 
-        <!-- Chat Interface -->
-        <div class="chat-container">
-            <div class="chat-header">
-                <h2>💬 Chat with Blueprint</h2>
-                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">🌙</button>
-            </div>
-
-            <div class="messages-area" id="messagesArea">
-                <div class="empty-state">
-                    <div class="empty-state-icon">🎓</div>
-                    <h3>Welcome to Blueprint!</h3>
-                    <p>Ask a question about your coursework and I'll help guide you to the answer using the Socratic method.</p>
-                    <p style="margin-top: 8px;">Upload files for help with specific problems.</p>
-                </div>
-            </div>
-
-            <div class="input-area">
-                <div class="file-preview" id="filePreview">
-                    <span>📎</span>
-                    <span id="fileName"></span>
-                    <button class="remove-file" onclick="removeFile()">×</button>
+	        <!-- Canvas Integration Section -->
+	        <div class="canvas-section">
+	            <div id="canvasPanel" class="canvas-panel">
+	                <div id="canvasLoginForm">
+	                    <h3>Connect to Canvas</h3>
+                    <input type="text" id="canvasUrl" class="canvas-input" placeholder="Canvas URL (e.g., uvu.instructure.com)">
+                    <input type="text" id="canvasUsername" class="canvas-input" placeholder="Canvas Username">
+                    <input type="password" id="canvasPassword" class="canvas-input" placeholder="Canvas Password">
+                    
+                    <button class="canvas-btn" onclick="syncCanvas()" id="syncBtn">
+                        🔄 Sync Canvas Data
+                    </button>
+                    
+                    <div id="syncStatus" class="canvas-status"></div>
                 </div>
 
-                <div class="input-container">
-                    <textarea 
-                        id="messageInput" 
-                        class="message-input" 
-                        placeholder="Ask me anything about your studies..."
-                        rows="1"
-                    ></textarea>
-
-                    <div class="input-buttons">
-                        <input type="file" id="fileInput" style="display: none;" accept=".txt,.pdf,.doc,.docx">
-                        <button class="icon-btn" id="fileUploadBtn" onclick="document.getElementById('fileInput').click()" title="Upload file">
-                            📎
-                        </button>
-                        <button class="icon-btn send-btn" id="sendButton" onclick="sendMessage()" title="Send message">
-                            ➤
-                        </button>
+                <div id="canvasDashboard" class="canvas-dashboard">
+                    <h3>📊 Your Canvas Data</h3>
+                    
+                    <div class="canvas-stats">
+                        <div class="stat-card">
+                            <div class="stat-number" id="courseCount">0</div>
+                            <div class="stat-label">Courses</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="assignmentCount">0</div>
+                            <div class="stat-label">Assignments</div>
+                        </div>
                     </div>
-                </div>
-                <div id="composerStatus" class="composer-status"></div>
-            </div>
 
-            <div class="footer-actions">
-                <button class="footer-btn" onclick="exportChat()">💾 Export Chat</button>
-                <button class="footer-btn danger" onclick="clearChat()">🗑️ Clear Chat</button>
+                    <h3>📅 Upcoming Assignments</h3>
+                    <div class="assignments-list" id="upcomingAssignments"></div>
+
+                    <button class="canvas-btn" onclick="resyncCanvas()" style="margin-top: 12px; background: #FF9800;">
+                        🔄 Re-sync Canvas
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
+
+	    </div>
 
     <script>
         // API Configuration
         const BASE_API_URL = 'https://blueprint-backend-154275778730.us-west1.run.app';
-        const API_URL = `${BASE_API_URL}/chat`;
-        const UPLOAD_URL = `${BASE_API_URL}/upload`;
-        const STUDY_GUIDE_URL = `${BASE_API_URL}/generate-study-guide`;
-        const CHAT_HISTORY_URL = `${BASE_API_URL}/chat/history`;
+        const CANVAS_API_URL = `${BASE_API_URL}/api/canvas`;
         const LOGOUT_URL = `${BASE_API_URL}/auth/logout`;
         const sessionToken = localStorage.getItem('sessionToken');
         const currentUser = JSON.parse(localStorage.getItem('user') || 'null');
@@ -618,24 +770,6 @@
             return response;
         }
 
-        function setComposerStatus(message = '', isError = false) {
-            const composerStatus = document.getElementById('composerStatus');
-            if (!message) {
-                composerStatus.classList.remove('show', 'error');
-                composerStatus.textContent = '';
-                return;
-            }
-            composerStatus.textContent = message;
-            composerStatus.classList.add('show');
-            composerStatus.classList.toggle('error', isError);
-        }
-
-        function setChatBusy(isBusy) {
-            sendButton.disabled = isBusy;
-            fileUploadBtn.disabled = isBusy;
-            sendButton.textContent = isBusy ? '…' : '➤';
-        }
-
         async function logout() {
             try {
                 await apiFetch(LOGOUT_URL, { method: 'POST' });
@@ -658,318 +792,155 @@
             }
         });
 
-        // DOM Elements
-        const messagesArea = document.getElementById('messagesArea');
-        const messageInput = document.getElementById('messageInput');
-        const sendButton = document.getElementById('sendButton');
-        const fileInput = document.getElementById('fileInput');
-        const fileUploadBtn = document.getElementById('fileUploadBtn');
-        const filePreview = document.getElementById('filePreview');
-        const fileName = document.getElementById('fileName');
-
-        // State
-        let chatHistory = [];
-        let currentFile = null;
-
         // ============================================
-        // CHAT INTERFACE
+        // CANVAS INTEGRATION
         // ============================================
 
-        // Auto-resize textarea
-        messageInput.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-        });
-
-        // Enter to send
-        messageInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
+        async function syncCanvas() {
+            const url = document.getElementById('canvasUrl').value.trim();
+            const username = document.getElementById('canvasUsername').value.trim();
+            const password = document.getElementById('canvasPassword').value;
+            const status = document.getElementById('syncStatus');
+            const syncBtn = document.getElementById('syncBtn');
+            
+            if (!url || !username || !password) {
+                status.innerHTML = '❌ Please fill in all fields';
+                status.style.color = 'var(--color-error)';
+                return;
             }
-        });
-
-        // File upload
-        fileInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                currentFile = file;
-                fileName.textContent = file.name;
-                filePreview.classList.add('active');
-            }
-        });
-
-        function removeFile() {
-            currentFile = null;
-            fileInput.value = '';
-            filePreview.classList.remove('active');
-        }
-
-        function addUserMessage(content) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message user';
-            messageDiv.innerHTML = `
-                <div class="message-avatar">👤</div>
-                <div class="message-content">${escapeHtml(content)}</div>
-            `;
-            messagesArea.appendChild(messageDiv);
-            messagesArea.scrollTop = messagesArea.scrollHeight;
-        }
-
-        function addAssistantMessage(content) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message assistant';
             
-            // Render markdown and LaTeX
-            const renderedContent = marked.parse(content);
-            const safeHtml = window.DOMPurify ? DOMPurify.sanitize(renderedContent) : renderedContent;
+            status.innerHTML = '⏳ Syncing Canvas data... approve your 2FA prompt if asked (can take up to 90 seconds)';
+            status.style.color = '#FF9800';
+            syncBtn.disabled = true;
+            syncBtn.textContent = 'Syncing...';
             
-            messageDiv.innerHTML = `
-                <div class="message-avatar">🤖</div>
-                <div class="message-content">
-                    ${safeHtml}
-                    <div class="message-actions">
-                        <button class="action-btn" onclick="copyMessage(this)">📋 Copy</button>
-                    </div>
-                </div>
-            `;
-            messagesArea.appendChild(messageDiv);
-            
-            // Render LaTeX
-            renderMathInElement(messageDiv, {
-                delimiters: [
-                    {left: '$$', right: '$$', display: true},
-                    {left: '$', right: '$', display: false},
-                    {left: '\\[', right: '\\]', display: true},
-                    {left: '\\(', right: '\\)', display: false}
-                ]
-            });
-            
-            messagesArea.scrollTop = messagesArea.scrollHeight;
-        }
-
-        function showTypingIndicator() {
-            const typingDiv = document.createElement('div');
-            typingDiv.className = 'message assistant';
-            typingDiv.id = 'typingIndicator';
-            typingDiv.innerHTML = `
-                <div class="message-avatar">🤖</div>
-                <div class="message-content typing-indicator">
-                    <div class="typing-dot"></div>
-                    <div class="typing-dot"></div>
-                    <div class="typing-dot"></div>
-                </div>
-            `;
-            messagesArea.appendChild(typingDiv);
-            messagesArea.scrollTop = messagesArea.scrollHeight;
-        }
-
-        function hideTypingIndicator() {
-            const indicator = document.getElementById('typingIndicator');
-            if (indicator) indicator.remove();
-        }
-
-        async function sendMessage() {
-            const message = messageInput.value.trim();
-            
-            if (!message && !currentFile) return;
-            setComposerStatus();
-
-            // Remove empty state if present
-            const emptyState = messagesArea.querySelector('.empty-state');
-            if (emptyState) {
-                emptyState.remove();
-            }
-
-            // Add user message to UI
-            let displayMessage = message || "(Sent a file)";
-            if (currentFile && message) {
-                displayMessage = `${message}\n\n📎 Attachment: ${currentFile.name}`;
-            } else if (currentFile) {
-                displayMessage = `📎 Attachment: ${currentFile.name}`;
-            }
-            addUserMessage(displayMessage);
-            
-            // Clear input
-            messageInput.value = '';
-            messageInput.style.height = 'auto';
-
-            // Disable buttons while processing
-            setChatBusy(true);
-
-            // Show typing indicator
-            showTypingIndicator();
-
             try {
-                let response;
-
-                if (currentFile) {
-                    // Use FormData for file upload
-                    const formData = new FormData();
-                    formData.append('file', currentFile);
-                    formData.append('message', message || '');
-                    formData.append('history', JSON.stringify(chatHistory));
-
-                    response = await apiFetch(UPLOAD_URL, {
-                        method: 'POST',
-                        body: formData
-                    });
+                const canvasUrl = url.includes('http') ? url : `https://${url}`;
+                
+                const response = await apiFetch(`${CANVAS_API_URL}/sync`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        canvasUrl,
+                        username,
+                        password
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    status.innerHTML = `✅ ${result.message}`;
+                    status.style.color = 'var(--color-success)';
+                    
+                    localStorage.setItem('canvasCredentials', JSON.stringify({
+                        url: canvasUrl,
+                        username
+                    }));
+                    
+                    document.getElementById('canvasPassword').value = '';
+                    
+                    setTimeout(() => loadCanvasDashboard(), 1000);
                 } else {
-                    // Regular chat message
-                    response = await apiFetch(API_URL, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-
-                        body: JSON.stringify({
-                            message: message,
-                            subject: '',
-                            history: chatHistory
-                        })
-                    });
+                    status.innerHTML = `❌ Error: ${result.error}`;
+                    status.style.color = 'var(--color-error)';
                 }
+            } catch (error) {
+                status.innerHTML = `❌ Connection error: ${error.message}`;
+                status.style.color = 'var(--color-error)';
+            } finally {
+                syncBtn.disabled = false;
+                syncBtn.textContent = '🔄 Sync Canvas Data';
+            }
+        }
 
+        async function resyncCanvas() {
+            const creds = localStorage.getItem('canvasCredentials');
+            if (!creds) {
+                alert('No saved credentials. Please log in again.');
+                return;
+            }
+            
+            const { url, username } = JSON.parse(creds);
+            const password = prompt('Enter your Canvas password to re-sync:');
+            
+            if (!password) return;
+            
+            document.getElementById('canvasUrl').value = url;
+            document.getElementById('canvasUsername').value = username;
+            document.getElementById('canvasPassword').value = password;
+            
+            await syncCanvas();
+        }
+
+        async function loadCanvasDashboard() {
+            try {
+                const response = await apiFetch(`${CANVAS_API_URL}/data`);
                 const data = await response.json();
                 
-                hideTypingIndicator();
-
-                if (!response.ok || data.error) {
-                    const errorMessage = data.error || 'Request failed. Please try again.';
-                    setComposerStatus(errorMessage, true);
-                    addAssistantMessage(`⚠️ Error: ${errorMessage}`);
-                } else {
-                    setComposerStatus();
-                    addAssistantMessage(data.response);
-                    
-                    // Update chat history
-                    chatHistory.push({
-                        role: 'user',
-                        content: displayMessage
-                    });
-                    chatHistory.push({
-                        role: 'assistant',
-                        content: data.response
-                    });
-                    
-                    // Save to localStorage
-                    localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
-                }
-
-            } catch (error) {
-                hideTypingIndicator();
-                setComposerStatus(error.message || 'Connection error', true);
-                addAssistantMessage(`⚠️ Connection error: ${error.message}`);
-            }
-
-            // Re-enable buttons
-            setChatBusy(false);
-            
-            // Clear file
-            if (currentFile) {
-                removeFile();
-            }
-            
-            messageInput.focus();
-        }
-
-        function copyMessage(btn) {
-            const messageContent = btn.closest('.message-content');
-            const text = messageContent.innerText.replace(/📋 Copy/g, '').trim();
-            navigator.clipboard.writeText(text);
-            btn.textContent = '✓ Copied!';
-            setTimeout(() => btn.textContent = '📋 Copy', 2000);
-        }
-
-        function clearChat() {
-            if (confirm('Are you sure you want to clear the chat history?')) {
-                chatHistory = [];
-                localStorage.removeItem('chatHistory');
-                apiFetch(CHAT_HISTORY_URL, {
-                    method: 'DELETE',
-                }).catch(() => {});
+                if (data.error) return;
                 
-                messagesArea.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">🎓</div>
-                        <h3>Welcome to Blueprint!</h3>
-                        <p>Ask a question about your coursework and I'll help guide you to the answer using the Socratic method.</p>
-                        <p style="margin-top: 8px;">Upload files for help with specific problems.</p>
-                    </div>
-                `;
-            }
-        }
-
-        function exportChat() {
-            const chatText = chatHistory.map(msg => 
-                `${msg.role === 'user' ? 'You' : 'Blueprint'}: ${msg.content}`
-            ).join('\n\n');
-            
-            const blob = new Blob([chatText], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `blueprint-chat-${new Date().toISOString().slice(0,10)}.txt`;
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        function toggleTheme() {
-            const html = document.documentElement;
-            const currentTheme = html.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            html.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            
-            const btn = document.querySelector('.theme-toggle');
-            btn.textContent = newTheme === 'dark' ? '☀️' : '🌙';
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-            // Load saved data on page load
-            window.addEventListener('load', async () => {
-            // Load theme
-            const savedTheme = localStorage.getItem('theme');
-            if (savedTheme) {
-                document.documentElement.setAttribute('data-theme', savedTheme);
-                document.querySelector('.theme-toggle').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
-            }
-
-            // Load chat history from backend first, fallback to localStorage
-            try {
-                const historyResponse = await apiFetch(CHAT_HISTORY_URL);
-
-                if (historyResponse.ok) {
-                    const historyData = await historyResponse.json();
-                    chatHistory = historyData.history || [];
+                document.getElementById('canvasLoginForm').style.display = 'none';
+                document.getElementById('canvasDashboard').style.display = 'block';
+                
+                document.getElementById('courseCount').textContent = data.courses.length;
+                document.getElementById('assignmentCount').textContent = data.assignments.length;
+                
+                const upcoming = (data.assignments || [])
+                    .filter(a => a.due_at && new Date(a.due_at).getTime() > Date.now())
+                    .sort((a, b) => new Date(a.due_at) - new Date(b.due_at))
+                    .slice(0, 20);
+                
+                const container = document.getElementById('upcomingAssignments');
+                
+                if (upcoming.length === 0) {
+                    container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--color-text-secondary);">No upcoming assignments! 🎉</div>';
+                } else {
+                    container.innerHTML = upcoming.map(a => {
+                        const dueDate = new Date(a.due_at);
+                        const daysUntil = Math.ceil((dueDate - new Date()) / (1000 * 60 * 60 * 24));
+                        const urgencyClass = daysUntil <= 2 ? 'urgent' : daysUntil <= 7 ? 'soon' : 'normal';
+                        const urgencyColor = daysUntil <= 2 ? 'var(--color-error)' : daysUntil <= 7 ? '#FF9800' : 'var(--color-success)';
+                        
+                        return `
+                            <div class="assignment-card ${urgencyClass}">
+                                <div class="assignment-title">${a.name}</div>
+                                <div class="assignment-course">${a.course_name}</div>
+                                <div class="assignment-due" style="color: ${urgencyColor};">
+                                    📅 Due: ${dueDate.toLocaleDateString()} at ${dueDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                    ${daysUntil <= 2 ? ' 🔥' : daysUntil <= 7 ? ' ⚠️' : ''}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
                 }
+                
             } catch (error) {
-                // Ignore and fallback to local cache
+                console.error('Error loading dashboard:', error);
             }
+        }
 
-            if (!chatHistory.length) {
-                const savedHistory = localStorage.getItem('chatHistory');
-                if (savedHistory) {
-                    chatHistory = JSON.parse(savedHistory);
-                }
-            }
-
-            if (chatHistory.length > 0) {
-                messagesArea.innerHTML = '';
-                chatHistory.forEach(msg => {
-                    if (msg.role === 'user') {
-                        addUserMessage(msg.content);
-                    } else {
-                        addAssistantMessage(msg.content);
+        window.addEventListener('load', async () => {
+            // If data is already synced for this user, show dashboard automatically.
+            try {
+                const response = await apiFetch(`${CANVAS_API_URL}/data`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (!data.error) {
+                        loadCanvasDashboard();
                     }
-                });
-            }
+                }
+            } catch (error) {}
 
+            // Prefill saved Canvas URL/username for convenience (password never persisted).
+            const saved = localStorage.getItem('canvasCredentials');
+            if (saved) {
+                try {
+                    const { url, username } = JSON.parse(saved);
+                    if (url) document.getElementById('canvasUrl').value = url.replace(/^https?:\\/\\//, '');
+                    if (username) document.getElementById('canvasUsername').value = username;
+                } catch (e) {}
+            }
         });
     </script>
 </body>
