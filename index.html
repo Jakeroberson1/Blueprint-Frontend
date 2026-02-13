@@ -18,39 +18,33 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <style>
-        /* ===== CSS VARIABLES - Perplexity Design System ===== */
+        /* ===== CSS VARIABLES - Liquid Glass ===== */
         :root {
-            --color-primary: #21808D;
-            --color-primary-hover: #1D7480;
-            --color-primary-active: #1A6873;
-            --color-bg-primary: #FCFCF9;
-            --color-bg-secondary: #FFFFFE;
-            --color-surface: #FFFFFF;
-            --color-text-primary: #134252;
-            --color-text-secondary: #626C71;
-            --color-border: rgba(94, 82, 64, 0.2);
-            --color-user-msg: #E8F4F5;
-            --color-ai-msg: #FFFFFF;
-            --color-success: #21808D;
-            --color-error: #C0152F;
+            --color-primary: #1769ff;
+            --color-primary-hover: #0f58e6;
+            --color-primary-active: #0b4fcc;
+            --color-bg-primary: #070A13;
+            --color-bg-secondary: rgba(255, 255, 255, 0.06);
+            --color-surface: rgba(255, 255, 255, 0.10);
+            --color-text-primary: rgba(255, 255, 255, 0.92);
+            --color-text-secondary: rgba(255, 255, 255, 0.68);
+            --color-border: rgba(255, 255, 255, 0.18);
+            --color-user-msg: rgba(23, 105, 255, 0.16);
+            --color-ai-msg: rgba(255, 255, 255, 0.10);
+            --color-success: #2be4a7;
+            --color-error: #ff3b6a;
             --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             --radius-sm: 6px;
             --radius-base: 8px;
             --radius-lg: 12px;
-            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
-            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.04);
+            --shadow-sm: 0 10px 30px rgba(0, 0, 0, 0.25);
+            --shadow-md: 0 18px 60px rgba(0, 0, 0, 0.35);
+            --glass-blur: 18px;
         }
 
         /* Dark mode support */
         [data-theme="dark"] {
-            --color-bg-primary: #1F2121;
-            --color-bg-secondary: #262828;
-            --color-surface: #262828;
-            --color-text-primary: #F5F5F5;
-            --color-text-secondary: #B4B4B4;
-            --color-border: rgba(255, 255, 255, 0.1);
-            --color-user-msg: #1A6873;
-            --color-ai-msg: #2E3030;
+            /* Same palette; kept for compatibility with existing toggle */
         }
 
         * {
@@ -64,6 +58,30 @@
             background-color: var(--color-bg-primary);
             color: var(--color-text-primary);
             line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            inset: -20vh;
+            pointer-events: none;
+            z-index: -2;
+            background:
+                radial-gradient(60vw 50vh at 20% 20%, rgba(23, 105, 255, 0.45), transparent 60%),
+                radial-gradient(50vw 45vh at 85% 25%, rgba(43, 228, 167, 0.35), transparent 60%),
+                radial-gradient(55vw 50vh at 55% 85%, rgba(255, 59, 106, 0.22), transparent 60%);
+            filter: blur(0px);
+        }
+
+        body::after {
+            z-index: -1;
+            opacity: 0.45;
+            background:
+                radial-gradient(40vw 30vh at 25% 35%, rgba(255, 255, 255, 0.10), transparent 65%),
+                radial-gradient(38vw 28vh at 70% 65%, rgba(255, 255, 255, 0.08), transparent 65%);
+            mix-blend-mode: screen;
         }
 
         .container {
@@ -78,11 +96,13 @@
             align-items: center;
             gap: 12px;
             padding: 14px 16px;
-            background: var(--color-surface);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.08));
             border: 1px solid var(--color-border);
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow-sm);
             margin-bottom: 14px;
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
         }
 
         .brand-wrap {
@@ -111,8 +131,8 @@
 
         .user-pill {
             padding: 8px 12px;
-            background: var(--color-bg-primary);
-            border: 1px solid var(--color-border);
+            background: rgba(255, 255, 255, 0.10);
+            border: 1px solid rgba(255, 255, 255, 0.14);
             border-radius: 999px;
             font-size: 12px;
             color: var(--color-text-secondary);
@@ -123,18 +143,19 @@
         }
 
         .auth-btn {
-            border: 1px solid var(--color-border);
-            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.08);
             border-radius: var(--radius-sm);
             padding: 8px 12px;
             font-size: 12px;
             cursor: pointer;
-            color: var(--color-text-secondary);
+            color: var(--color-text-primary);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
         }
 
         .auth-btn:hover {
-            background: var(--color-bg-primary);
-            color: var(--color-text-primary);
+            background: rgba(255, 255, 255, 0.14);
         }
 
         .header {
@@ -145,7 +166,7 @@
         .header h1 {
             font-size: 42px;
             font-weight: 700;
-            color: var(--color-primary);
+            color: rgba(255, 255, 255, 0.95);
             margin-bottom: 8px;
         }
 
@@ -162,7 +183,7 @@
         .canvas-toggle-btn {
             width: 100%;
             padding: 16px;
-            background: var(--color-primary);
+            background: linear-gradient(135deg, rgba(23, 105, 255, 0.95), rgba(43, 228, 167, 0.70));
             color: white;
             border: none;
             border-radius: var(--radius-base);
@@ -177,7 +198,7 @@
         }
 
         .canvas-toggle-btn:hover {
-            background: var(--color-primary-hover);
+            background: linear-gradient(135deg, rgba(23, 105, 255, 0.98), rgba(43, 228, 167, 0.78));
             transform: translateY(-1px);
             box-shadow: var(--shadow-md);
         }
@@ -186,10 +207,12 @@
             display: none;
             margin-top: 12px;
             padding: 24px;
-            background: var(--color-surface);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow-md);
             border: 1px solid var(--color-border);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
         }
 
         .canvas-panel h3 {
@@ -202,8 +225,8 @@
             width: 100%;
             padding: 12px;
             margin-bottom: 12px;
-            background: var(--color-bg-primary);
-            border: 1px solid var(--color-border);
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.16);
             border-radius: var(--radius-base);
             color: var(--color-text-primary);
             font-size: 14px;
@@ -315,16 +338,18 @@
 
         /* ===== CHAT INTERFACE ===== */
         .chat-container {
-            background: var(--color-surface);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow-md);
             overflow: hidden;
             border: 1px solid var(--color-border);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
         }
 
         .chat-header {
             padding: 20px;
-            background: var(--color-primary);
+            background: linear-gradient(135deg, rgba(23, 105, 255, 0.92), rgba(255, 59, 106, 0.50));
             color: white;
             display: flex;
             justify-content: space-between;
@@ -350,7 +375,7 @@
             height: 500px;
             overflow-y: auto;
             padding: 20px;
-            background: var(--color-bg-primary);
+            background: rgba(0, 0, 0, 0.12);
         }
 
         .message {
@@ -431,8 +456,10 @@
 
         .input-area {
             padding: 20px;
-            background: var(--color-surface);
+            background: rgba(255, 255, 255, 0.06);
             border-top: 1px solid var(--color-border);
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
         }
 
         .composer-status {
@@ -531,13 +558,13 @@
         }
 
         .send-btn {
-            background: var(--color-primary);
+            background: linear-gradient(135deg, rgba(23, 105, 255, 0.95), rgba(43, 228, 167, 0.65));
             color: white;
             border: none;
         }
 
         .send-btn:hover {
-            background: var(--color-primary-hover);
+            background: linear-gradient(135deg, rgba(23, 105, 255, 0.98), rgba(43, 228, 167, 0.78));
         }
 
         .empty-state {
@@ -575,11 +602,13 @@
 
         .footer-actions {
             padding: 12px 20px;
-            background: var(--color-surface);
+            background: rgba(255, 255, 255, 0.06);
             border-top: 1px solid var(--color-border);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
         }
 
         .footer-btn {
@@ -599,7 +628,7 @@
         }
 
         .footer-btn.danger:hover {
-            background: var(--color-error);
+            background: rgba(255, 59, 106, 0.85);
             color: white;
             border-color: var(--color-error);
         }
