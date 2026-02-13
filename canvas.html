@@ -451,19 +451,49 @@
                 </div>
 
                 <div id="dashboard" class="dash">
-                    <div class="stats">
-                        <div class="stat">
-                            <div class="stat-num" id="courseCount">0</div>
-                            <div class="stat-label">Courses</div>
-                        </div>
-                        <div class="stat">
-                            <div class="stat-num" id="assignmentCount">0</div>
-                            <div class="stat-label">Assignments</div>
-                        </div>
+                    <div class="row" id="dashTabs" style="margin-top: 10px;">
+                        <button class="btn btn-ghost" id="tabOverview" onclick="setDashTab('overview')">Overview</button>
+                        <button class="btn btn-ghost" id="tabGrades" onclick="setDashTab('grades')">Grades</button>
+                        <button class="btn btn-ghost" id="tabPlanner" onclick="setDashTab('planner')">Planner</button>
+                        <button class="btn btn-ghost" id="tabCalendar" onclick="setDashTab('calendar')">Calendar</button>
+                        <button class="btn btn-ghost" id="tabAnnouncements" onclick="setDashTab('announcements')">Announcements</button>
                     </div>
 
-                    <div class="muted" style="margin-top: 12px;">Upcoming Assignments</div>
-                    <div id="upcomingAssignments" class="assignments"></div>
+                    <div id="dashPanelOverview">
+                        <div class="stats">
+                            <div class="stat">
+                                <div class="stat-num" id="courseCount">0</div>
+                                <div class="stat-label">Courses</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-num" id="assignmentCount">0</div>
+                                <div class="stat-label">Assignments</div>
+                            </div>
+                        </div>
+
+                        <div class="muted" style="margin-top: 12px;">Upcoming Assignments</div>
+                        <div id="upcomingAssignments" class="assignments"></div>
+                    </div>
+
+                    <div id="dashPanelGrades" style="display:none; margin-top: 12px;">
+                        <div class="muted">Grade summary by course</div>
+                        <div id="gradesList" class="assignments" style="max-height: 420px;"></div>
+                    </div>
+
+                    <div id="dashPanelPlanner" style="display:none; margin-top: 12px;">
+                        <div class="muted">Planner items (next 90 days)</div>
+                        <div id="plannerList" class="assignments" style="max-height: 420px;"></div>
+                    </div>
+
+                    <div id="dashPanelCalendar" style="display:none; margin-top: 12px;">
+                        <div class="muted">Calendar events (next 90 days)</div>
+                        <div id="calendarList" class="assignments" style="max-height: 420px;"></div>
+                    </div>
+
+                    <div id="dashPanelAnnouncements" style="display:none; margin-top: 12px;">
+                        <div class="muted">Recent announcements</div>
+                        <div id="announcementsList" class="assignments" style="max-height: 420px;"></div>
+                    </div>
 
                     <div class="muted" style="margin-top: 10px;" id="syncedAt"></div>
                 </div>
@@ -600,6 +630,133 @@
             window.open(url, '_blank', 'noreferrer');
         }
 
+        function setDashTab(tab) {
+            const tabs = ['overview','grades','planner','calendar','announcements'];
+            for (const t of tabs) {
+                const btn = document.getElementById(`tab${t.charAt(0).toUpperCase()}${t.slice(1)}`);
+                const panel = document.getElementById(`dashPanel${t.charAt(0).toUpperCase()}${t.slice(1)}`);
+                if (panel) panel.style.display = (t === tab) ? 'block' : 'none';
+                if (btn) {
+                    btn.style.borderColor = (t === tab) ? 'rgba(23, 105, 255, 0.55)' : 'rgba(255, 255, 255, 0.16)';
+                    btn.style.background = (t === tab) ? 'rgba(23, 105, 255, 0.18)' : 'rgba(255, 255, 255, 0.10)';
+                }
+            }
+        }
+
+        function renderGrades(grades) {
+            const container = document.getElementById('gradesList');
+            const list = Array.isArray(grades) ? grades : [];
+            if (!list.length) {
+                container.innerHTML = '<div class="muted" style="padding: 10px;">No grade data found.</div>';
+                return;
+            }
+
+            container.innerHTML = list
+                .filter(g => g && g.course_name)
+                .sort((a, b) => String(a.course_name).localeCompare(String(b.course_name)))
+                .map(g => {
+                    const score = (g.current_score === null || g.current_score === undefined) ? '' : ` (${g.current_score}%)`;
+                    return `
+                        <div class="assignment">
+                            <div class="assignment-title">${g.course_name}</div>
+                            <div class="assignment-course">Current grade: <strong>${g.current_grade || 'N/A'}</strong>${score}</div>
+                        </div>
+                    `;
+                }).join('');
+        }
+
+        function renderPlanner(items) {
+            const container = document.getElementById('plannerList');
+            const list = Array.isArray(items) ? items : [];
+            if (!list.length) {
+                container.innerHTML = '<div class="muted" style="padding: 10px;">No planner items found.</div>';
+                return;
+            }
+
+            const normalized = list
+                .map(i => {
+                    const dt = i?.plannable_date || i?.due_at || i?.start_at || null;
+                    return { raw: i, dt: dt ? new Date(dt) : null };
+                })
+                .sort((a, b) => (a.dt?.getTime() || 0) - (b.dt?.getTime() || 0))
+                .slice(0, 200);
+
+            container.innerHTML = normalized.map(({ raw, dt }) => {
+                const title = raw?.plannable?.title || raw?.plannable?.name || raw?.title || 'Planner item';
+                const course = raw?.context_name || raw?.context_type || raw?.context_code || '';
+                const when = dt ? dt.toLocaleString() : 'No date';
+                return `
+                    <div class="assignment">
+                        <div class="assignment-title">${title}</div>
+                        <div class="assignment-course">${course}</div>
+                        <div class="assignment-due" style="color: var(--color-warning);">${when}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderCalendar(events) {
+            const container = document.getElementById('calendarList');
+            const list = Array.isArray(events) ? events : [];
+            if (!list.length) {
+                container.innerHTML = '<div class="muted" style="padding: 10px;">No calendar events found.</div>';
+                return;
+            }
+
+            const normalized = list
+                .map(e => {
+                    const dt = e?.start_at || e?.end_at || e?.created_at || null;
+                    return { raw: e, dt: dt ? new Date(dt) : null };
+                })
+                .sort((a, b) => (a.dt?.getTime() || 0) - (b.dt?.getTime() || 0))
+                .slice(0, 200);
+
+            container.innerHTML = normalized.map(({ raw, dt }) => {
+                const title = raw?.title || raw?.summary || 'Event';
+                const context = raw?.context_name || raw?.context_code || '';
+                const when = dt ? dt.toLocaleString() : 'No date';
+                return `
+                    <div class="assignment">
+                        <div class="assignment-title">${title}</div>
+                        <div class="assignment-course">${context}</div>
+                        <div class="assignment-due" style="color: var(--color-warning);">${when}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderAnnouncements(items) {
+            const container = document.getElementById('announcementsList');
+            const list = Array.isArray(items) ? items : [];
+            if (!list.length) {
+                container.innerHTML = '<div class="muted" style="padding: 10px;">No announcements found.</div>';
+                return;
+            }
+
+            const normalized = list
+                .map(a => {
+                    const dt = a?.posted_at || a?.delayed_post_at || a?.created_at || null;
+                    return { raw: a, dt: dt ? new Date(dt) : null };
+                })
+                .sort((a, b) => (b.dt?.getTime() || 0) - (a.dt?.getTime() || 0))
+                .slice(0, 100);
+
+            container.innerHTML = normalized.map(({ raw, dt }) => {
+                const title = raw?.title || 'Announcement';
+                const context = raw?.context_name || raw?.context_code || '';
+                const when = dt ? dt.toLocaleString() : '';
+                const link = raw?.html_url || raw?.url || '';
+                const linkHtml = link ? `<a class="btn btn-ghost" style="padding: 6px 10px; border-radius: 12px;" href="${link}" target="_blank" rel="noreferrer">Open</a>` : '';
+                return `
+                    <div class="assignment">
+                        <div class="assignment-title">${title}</div>
+                        <div class="assignment-course">${context} ${when ? `• ${when}` : ''}</div>
+                        <div style="margin-top:8px;">${linkHtml}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
         function renderAssignments(assignments) {
             const container = document.getElementById('upcomingAssignments');
             const list = Array.isArray(assignments) ? assignments : [];
@@ -655,6 +812,15 @@
                 document.getElementById('assignmentCount').textContent = (data.assignments || []).length;
 
                 renderAssignments(data.assignments || []);
+
+                // Extra datasets from extension sync
+                renderGrades(data.grades || []);
+                renderPlanner(data.planner_items || []);
+                renderCalendar(data.calendar_events || []);
+                renderAnnouncements(data.announcements || []);
+
+                // Default tab
+                setDashTab('overview');
 
                 const syncedAt = data.synced_at ? new Date(data.synced_at).toLocaleString() : '';
                 document.getElementById('syncedAt').textContent = syncedAt ? `Last synced: ${syncedAt}` : '';
