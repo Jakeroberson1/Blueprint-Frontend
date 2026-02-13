@@ -28,6 +28,7 @@
             padding: 40px;
             width: 100%;
             max-width: 450px;
+            border: 1px solid rgba(102, 126, 234, 0.18);
         }
 
         .logo-section {
@@ -58,6 +59,17 @@
         .subtitle {
             color: #6c757d;
             font-size: 15px;
+        }
+
+        .meta-note {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #495057;
+            background: #f3f5ff;
+            border: 1px solid #e3e7ff;
+            border-radius: 999px;
+            display: inline-block;
+            padding: 6px 10px;
         }
 
         .form-tabs {
@@ -179,6 +191,12 @@
             color: #6c757d;
             margin-top: 5px;
         }
+
+        @media (max-width: 520px) {
+            .auth-container {
+                padding: 28px 20px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -187,6 +205,7 @@
             <div class="logo">B</div>
             <h1>Welcome to Blueprint</h1>
             <p class="subtitle">Your AI Study Companion</p>
+            <p class="meta-note">Sign in to access chat and Canvas tools</p>
         </div>
 
         <div class="form-tabs">
@@ -244,7 +263,15 @@
     </div>
 
     <script>
-        const API_URL = 'https://blueprint-backend-154275778730.us-west1.run.app';
+        const BASE_API_URL = 'https://blueprint-backend-154275778730.us-west1.run.app';
+
+        async function parseResponse(response) {
+            try {
+                return await response.json();
+            } catch {
+                return {};
+            }
+        }
 
         function switchTab(evt, tab) {
             // Update tab buttons
@@ -290,13 +317,13 @@
             btn.textContent = 'Signing in...';
 
             try {
-                const response = await fetch(`${API_URL}/auth/login`, {
+                const response = await fetch(`${BASE_API_URL}/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
 
-                const data = await response.json();
+                const data = await parseResponse(response);
 
                 if (response.ok) {
                     localStorage.setItem('sessionToken', data.sessionToken);
@@ -307,12 +334,11 @@
                     }, 1000);
                 } else {
                     showError(data.error || 'Sign in failed');
-                    btn.disabled = false;
-                    btn.textContent = 'Sign In';
                 }
             } catch (error) {
                 console.error('Sign in error:', error);
                 showError('Connection error. Please try again.');
+            } finally {
                 btn.disabled = false;
                 btn.textContent = 'Sign In';
             }
@@ -337,13 +363,13 @@
             btn.textContent = 'Creating account...';
 
             try {
-                const response = await fetch(`${API_URL}/auth/signup`, {
+                const response = await fetch(`${BASE_API_URL}/auth/signup`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password, fullName })
                 });
 
-                const data = await response.json();
+                const data = await parseResponse(response);
 
                 if (response.ok) {
                     localStorage.setItem('sessionToken', data.sessionToken);
@@ -354,12 +380,11 @@
                     }, 1000);
                 } else {
                     showError(data.error || 'Sign up failed');
-                    btn.disabled = false;
-                    btn.textContent = 'Create Account';
                 }
             } catch (error) {
                 console.error('Sign up error:', error);
                 showError('Connection error. Please try again.');
+            } finally {
                 btn.disabled = false;
                 btn.textContent = 'Create Account';
             }
@@ -370,7 +395,7 @@
             const sessionToken = localStorage.getItem('sessionToken');
             if (sessionToken) {
                 try {
-                    const response = await fetch(`${API_URL}/auth/me`, {
+                    const response = await fetch(`${BASE_API_URL}/auth/me`, {
                         headers: { 'Authorization': `Bearer ${sessionToken}` }
                     });
                     if (response.ok) {

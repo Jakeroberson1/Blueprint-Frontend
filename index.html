@@ -12,6 +12,7 @@
     
     <!-- Marked.js for Markdown rendering -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js"></script>
     
     <!-- jsPDF for PDF export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -71,9 +72,74 @@
             padding: 20px;
         }
 
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            background: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 14px;
+        }
+
+        .brand-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .brand-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--color-primary);
+            line-height: 1.2;
+        }
+
+        .brand-subtitle {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+        }
+
+        .account-wrap {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .user-pill {
+            padding: 8px 12px;
+            background: var(--color-bg-primary);
+            border: 1px solid var(--color-border);
+            border-radius: 999px;
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .auth-btn {
+            border: 1px solid var(--color-border);
+            background: transparent;
+            border-radius: var(--radius-sm);
+            padding: 8px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            color: var(--color-text-secondary);
+        }
+
+        .auth-btn:hover {
+            background: var(--color-bg-primary);
+            color: var(--color-text-primary);
+        }
+
         .header {
             text-align: center;
-            padding: 40px 20px;
+            padding: 24px 20px 28px;
         }
 
         .header h1 {
@@ -369,6 +435,21 @@
             border-top: 1px solid var(--color-border);
         }
 
+        .composer-status {
+            display: none;
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--color-text-secondary);
+        }
+
+        .composer-status.show {
+            display: block;
+        }
+
+        .composer-status.error {
+            color: var(--color-error);
+        }
+
         .input-container {
             display: flex;
             gap: 12px;
@@ -542,6 +623,15 @@
 
         /* Responsive */
         @media (max-width: 768px) {
+            .topbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .account-wrap {
+                justify-content: space-between;
+            }
+
             .header h1 {
                 font-size: 32px;
             }
@@ -558,6 +648,17 @@
 </head>
 <body>
     <div class="container">
+        <div class="topbar">
+            <div class="brand-wrap">
+                <div class="brand-title">Blueprint</div>
+                <div class="brand-subtitle">AI Study Companion</div>
+            </div>
+            <div class="account-wrap">
+                <div class="user-pill" id="userPill">Signed in</div>
+                <button class="auth-btn" id="logoutBtn" onclick="logout()">Log Out</button>
+            </div>
+        </div>
+
         <div class="header">
             <h1>🎓 Blueprint</h1>
             <p>Your AI-Powered Study Companion with Canvas Integration</p>
@@ -649,6 +750,7 @@
                         </button>
                     </div>
                 </div>
+                <div id="composerStatus" class="composer-status"></div>
             </div>
 
             <div class="footer-actions">
@@ -659,29 +761,6 @@
     </div>
 
     <script>
-                // Authentication check
-        const sessionToken = localStorage.getItem('sessionToken');
-        
-        window.addEventListener('load', async () => {
-            if (!sessionToken) {
-                window.location.href = 'login.html';
-                return;
-            }
-            
-            try {
-                const response = await fetch(`${BASE_API_URL}/auth/me`, {
-                    headers: { 'Authorization': `Bearer ${sessionToken}` }
-                });
-                
-                if (!response.ok) {
-                    localStorage.clear();
-                    window.location.href = 'login.html';
-                }
-            } catch (error) {
-                console.error('Auth check failed:', error);
-            }
-        });
-
         // API Configuration
         const BASE_API_URL = 'https://blueprint-backend-154275778730.us-west1.run.app';
         const API_URL = `${BASE_API_URL}/chat`;
@@ -689,6 +768,75 @@
         const STUDY_GUIDE_URL = `${BASE_API_URL}/generate-study-guide`;
         const CANVAS_API_URL = `${BASE_API_URL}/api/canvas`;
         const CHAT_HISTORY_URL = `${BASE_API_URL}/chat/history`;
+        const LOGOUT_URL = `${BASE_API_URL}/auth/logout`;
+        const sessionToken = localStorage.getItem('sessionToken');
+        const currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+
+        function redirectToLogin() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        function setUserUI() {
+            const userPill = document.getElementById('userPill');
+            const displayName = currentUser?.fullName || currentUser?.email || 'Signed in';
+            userPill.textContent = displayName;
+        }
+
+        async function apiFetch(url, options = {}) {
+            const headers = { ...(options.headers || {}) };
+            if (sessionToken && !headers.Authorization) {
+                headers.Authorization = `Bearer ${sessionToken}`;
+            }
+
+            const response = await fetch(url, { ...options, headers });
+
+            if (response.status === 401) {
+                redirectToLogin();
+                throw new Error('Session expired. Please sign in again.');
+            }
+            return response;
+        }
+
+        function setComposerStatus(message = '', isError = false) {
+            const composerStatus = document.getElementById('composerStatus');
+            if (!message) {
+                composerStatus.classList.remove('show', 'error');
+                composerStatus.textContent = '';
+                return;
+            }
+            composerStatus.textContent = message;
+            composerStatus.classList.add('show');
+            composerStatus.classList.toggle('error', isError);
+        }
+
+        function setChatBusy(isBusy) {
+            sendButton.disabled = isBusy;
+            fileUploadBtn.disabled = isBusy;
+            sendButton.textContent = isBusy ? '…' : '➤';
+        }
+
+        async function logout() {
+            try {
+                await apiFetch(LOGOUT_URL, { method: 'POST' });
+            } catch (error) {}
+            redirectToLogin();
+        }
+
+        window.addEventListener('load', async () => {
+            if (!sessionToken) {
+                redirectToLogin();
+                return;
+            }
+
+            setUserUI();
+            try {
+                const response = await apiFetch(`${BASE_API_URL}/auth/me`);
+                if (!response.ok) redirectToLogin();
+            } catch (error) {
+                console.error('Auth check failed:', error);
+            }
+        });
 
         // DOM Elements
         const messagesArea = document.getElementById('messagesArea');
@@ -725,19 +873,17 @@
                 return;
             }
             
-            status.innerHTML = '⏳ Syncing Canvas data... (this may take 30-60 seconds)';
+            status.innerHTML = '⏳ Syncing Canvas data... approve your 2FA prompt if asked (can take up to 90 seconds)';
             status.style.color = '#FF9800';
             syncBtn.disabled = true;
+            syncBtn.textContent = 'Syncing...';
             
             try {
                 const canvasUrl = url.includes('http') ? url : `https://${url}`;
                 
-                const response = await fetch(`${CANVAS_API_URL}/sync`, {
+                const response = await apiFetch(`${CANVAS_API_URL}/sync`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${sessionToken}`
-                     },
-                   
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         canvasUrl,
                         username,
@@ -768,6 +914,7 @@
                 status.style.color = 'var(--color-error)';
             } finally {
                 syncBtn.disabled = false;
+                syncBtn.textContent = '🔄 Sync Canvas Data';
             }
         }
 
@@ -792,9 +939,7 @@
 
         async function loadCanvasDashboard() {
             try {
-                const response = await fetch(`${CANVAS_API_URL}/data`, {
-                    headers: { 'Authorization': `Bearer ${sessionToken}` }
-                });
+                const response = await apiFetch(`${CANVAS_API_URL}/data`);
                 const data = await response.json();
                 
                 if (data.error) return;
@@ -890,11 +1035,12 @@
             
             // Render markdown and LaTeX
             const renderedContent = marked.parse(content);
+            const safeHtml = window.DOMPurify ? DOMPurify.sanitize(renderedContent) : renderedContent;
             
             messageDiv.innerHTML = `
                 <div class="message-avatar">🤖</div>
                 <div class="message-content">
-                    ${renderedContent}
+                    ${safeHtml}
                     <div class="message-actions">
                         <button class="action-btn" onclick="copyMessage(this)">📋 Copy</button>
                     </div>
@@ -940,6 +1086,7 @@
             const message = messageInput.value.trim();
             
             if (!message && !currentFile) return;
+            setComposerStatus();
 
             // Remove empty state if present
             const emptyState = messagesArea.querySelector('.empty-state');
@@ -961,8 +1108,7 @@
             messageInput.style.height = 'auto';
 
             // Disable buttons while processing
-            sendButton.disabled = true;
-            fileUploadBtn.disabled = true;
+            setChatBusy(true);
 
             // Show typing indicator
             showTypingIndicator();
@@ -977,19 +1123,17 @@
                     formData.append('message', message || '');
                     formData.append('history', JSON.stringify(chatHistory));
 
-                    response = await fetch(UPLOAD_URL, {
+                    response = await apiFetch(UPLOAD_URL, {
                         method: 'POST',
-                        headers: { 'Authorization': `Bearer ${sessionToken}` },
                         body: formData
                     });
                 } else {
                     // Regular chat message
-                    response = await fetch(API_URL, {
-                                        method: 'POST',
-                                        headers: { 
-                                            'Content-Type': 'application/json',
-                                            'Authorization': `Bearer ${sessionToken}`
-                                         },
+                    response = await apiFetch(API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
 
                         body: JSON.stringify({
                             message: message,
@@ -1003,9 +1147,12 @@
                 
                 hideTypingIndicator();
 
-                if (data.error) {
-                    addAssistantMessage(`⚠️ Error: ${data.error}`);
+                if (!response.ok || data.error) {
+                    const errorMessage = data.error || 'Request failed. Please try again.';
+                    setComposerStatus(errorMessage, true);
+                    addAssistantMessage(`⚠️ Error: ${errorMessage}`);
                 } else {
+                    setComposerStatus();
                     addAssistantMessage(data.response);
                     
                     // Update chat history
@@ -1024,12 +1171,12 @@
 
             } catch (error) {
                 hideTypingIndicator();
+                setComposerStatus(error.message || 'Connection error', true);
                 addAssistantMessage(`⚠️ Connection error: ${error.message}`);
             }
 
             // Re-enable buttons
-            sendButton.disabled = false;
-            fileUploadBtn.disabled = false;
+            setChatBusy(false);
             
             // Clear file
             if (currentFile) {
@@ -1051,9 +1198,8 @@
             if (confirm('Are you sure you want to clear the chat history?')) {
                 chatHistory = [];
                 localStorage.removeItem('chatHistory');
-                fetch(CHAT_HISTORY_URL, {
+                apiFetch(CHAT_HISTORY_URL, {
                     method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${sessionToken}` }
                 }).catch(() => {});
                 
                 messagesArea.innerHTML = `
@@ -1109,9 +1255,7 @@
 
             // Load chat history from backend first, fallback to localStorage
             try {
-                const historyResponse = await fetch(CHAT_HISTORY_URL, {
-                    headers: { 'Authorization': `Bearer ${sessionToken}` }
-                });
+                const historyResponse = await apiFetch(CHAT_HISTORY_URL);
 
                 if (historyResponse.ok) {
                     const historyData = await historyResponse.json();
@@ -1141,9 +1285,7 @@
 
             // Check for Canvas data
             try {
-                const response = await fetch(`${CANVAS_API_URL}/data`, {
-                    headers: { 'Authorization': `Bearer ${sessionToken}` }
-                });
+                const response = await apiFetch(`${CANVAS_API_URL}/data`);
                 if (response.ok) {
                     const data = await response.json();
                     if (!data.error) {
