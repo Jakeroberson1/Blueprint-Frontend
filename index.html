@@ -1632,10 +1632,23 @@
                 if (!response.ok) redirectToLogin();
             } catch (e) {}
 
-            await refreshCanvasMeta();
-            await loadConversations();
-            await refreshStudyGuides().catch(() => {});
-            await loadChatHistory();
+            try { await refreshCanvasMeta(); } catch (e) {}
+
+            try {
+                await loadConversations();
+            } catch (e) {
+                // If conversations fail, keep the chat usable by falling back to the legacy history behavior.
+                setComposerStatus(e.message || 'Failed to load conversations', true);
+                currentConversationId = null;
+            }
+
+            try { await refreshStudyGuides(); } catch (e) {}
+
+            try {
+                if (currentConversationId) await loadChatHistory();
+            } catch (e) {
+                setComposerStatus(e.message || 'Failed to load chat history', true);
+            }
         });
     </script>
 </body>
