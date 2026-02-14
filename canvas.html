@@ -7,24 +7,32 @@
 
     <style>
         :root {
-            --color-primary: #1769ff;
-            --color-primary-hover: #0f58e6;
-            --color-bg-primary: #070A13;
-            --color-surface: rgba(255, 255, 255, 0.10);
-            --color-surface-2: rgba(255, 255, 255, 0.06);
-            --color-text-primary: rgba(255, 255, 255, 0.92);
-            --color-text-secondary: rgba(255, 255, 255, 0.68);
-            --color-border: rgba(255, 255, 255, 0.18);
-            --color-success: #2be4a7;
-            --color-warning: #ffc400;
-            --color-error: #ff3b6a;
-            --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            --radius-sm: 10px;
-            --radius-md: 14px;
-            --radius-lg: 18px;
-            --shadow-sm: 0 10px 30px rgba(0, 0, 0, 0.25);
-            --shadow-md: 0 18px 60px rgba(0, 0, 0, 0.35);
-            --glass-blur: 18px;
+            --ink: rgba(8, 12, 22, 0.92);
+            --ink-2: rgba(8, 12, 22, 0.62);
+            --ink-3: rgba(8, 12, 22, 0.42);
+
+            --glass: rgba(255, 255, 255, 0.62);
+            --glass-2: rgba(255, 255, 255, 0.45);
+            --glass-3: rgba(255, 255, 255, 0.30);
+            --stroke: rgba(255, 255, 255, 0.55);
+            --stroke-2: rgba(8, 12, 22, 0.10);
+
+            --primary: #1769ff;
+            --primary-2: #ff3b6a;
+            --mint: #2be4a7;
+            --amber: #ffc400;
+            --danger: #ff3b6a;
+
+            --radius-sm: 12px;
+            --radius-md: 16px;
+            --radius-lg: 22px;
+
+            --shadow-sm: 0 10px 30px rgba(14, 24, 56, 0.10);
+            --shadow-md: 0 18px 60px rgba(14, 24, 56, 0.14);
+            --blur: 18px;
+
+            --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         }
 
         * { box-sizing: border-box; }
@@ -32,37 +40,30 @@
 
         body {
             margin: 0;
-            font-family: var(--font-family);
-            background-color: var(--color-bg-primary);
-            color: var(--color-text-primary);
-            line-height: 1.5;
+            font-family: var(--font);
+            color: var(--ink);
+            background: radial-gradient(1200px 700px at 18% 12%, rgba(23, 105, 255, 0.28), transparent 55%),
+                        radial-gradient(1000px 650px at 82% 18%, rgba(255, 59, 106, 0.20), transparent 58%),
+                        radial-gradient(1200px 700px at 55% 92%, rgba(43, 228, 167, 0.22), transparent 60%),
+                        linear-gradient(180deg, #f7f8ff, #f3f6ff 45%, #eff4ff);
             overflow-x: hidden;
         }
 
-        body::before,
-        body::after {
+        body::before {
             content: "";
             position: fixed;
-            inset: -20vh;
+            inset: 0;
             pointer-events: none;
-            z-index: -2;
-            background:
-                radial-gradient(60vw 50vh at 20% 20%, rgba(23, 105, 255, 0.45), transparent 60%),
-                radial-gradient(50vw 45vh at 85% 25%, rgba(43, 228, 167, 0.35), transparent 60%),
-                radial-gradient(55vw 50vh at 55% 85%, rgba(255, 59, 106, 0.22), transparent 60%);
-        }
-
-        body::after {
             z-index: -1;
-            opacity: 0.45;
             background:
-                radial-gradient(40vw 30vh at 25% 35%, rgba(255, 255, 255, 0.10), transparent 65%),
-                radial-gradient(38vw 28vh at 70% 65%, rgba(255, 255, 255, 0.08), transparent 65%);
+                radial-gradient(800px 500px at 25% 35%, rgba(255,255,255,0.65), transparent 60%),
+                radial-gradient(700px 520px at 70% 65%, rgba(255,255,255,0.55), transparent 62%);
+            opacity: 0.75;
             mix-blend-mode: screen;
         }
 
         .container {
-            max-width: 1100px;
+            max-width: 1160px;
             margin: 0 auto;
             padding: 18px;
         }
@@ -73,46 +74,56 @@
             align-items: center;
             gap: 12px;
             padding: 14px 16px;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.08));
-            border: 1px solid var(--color-border);
+            background: linear-gradient(180deg, var(--glass), var(--glass-2));
+            border: 1px solid var(--stroke);
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow-sm);
-            margin-bottom: 14px;
-            backdrop-filter: blur(var(--glass-blur));
-            -webkit-backdrop-filter: blur(var(--glass-blur));
+            backdrop-filter: blur(var(--blur)) saturate(1.35);
+            -webkit-backdrop-filter: blur(var(--blur)) saturate(1.35);
+            position: sticky;
+            top: 12px;
+            z-index: 10;
         }
 
-        .brand-wrap { display: flex; flex-direction: column; gap: 2px; }
+        .brand {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
 
         .brand-title {
-            font-size: 18px;
-            font-weight: 800;
-            color: var(--color-primary);
-            line-height: 1.2;
+            font-weight: 900;
             letter-spacing: 0.2px;
+            font-size: 18px;
+            background: linear-gradient(135deg, rgba(23, 105, 255, 1), rgba(255, 59, 106, 0.90));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
         }
 
-        .brand-subtitle {
+        .brand-sub {
             font-size: 12px;
-            color: var(--color-text-secondary);
+            color: var(--ink-2);
+            font-weight: 650;
         }
 
-        .account-wrap {
+        .account {
             display: flex;
             gap: 10px;
             align-items: center;
-            flex-wrap: wrap;
             justify-content: flex-end;
+            flex-wrap: wrap;
         }
 
-        .user-pill {
+        .pill {
             padding: 8px 12px;
             border-radius: 999px;
-            background: rgba(255, 255, 255, 0.10);
-            border: 1px solid rgba(255, 255, 255, 0.16);
-            color: rgba(255, 255, 255, 0.86);
+            background: rgba(255, 255, 255, 0.60);
+            border: 1px solid rgba(255, 255, 255, 0.72);
+            color: rgba(8, 12, 22, 0.72);
             font-size: 13px;
-            font-weight: 650;
+            font-weight: 800;
+            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.65) inset;
         }
 
         .btn {
@@ -121,171 +132,112 @@
             cursor: pointer;
             padding: 10px 12px;
             border-radius: 999px;
-            font-weight: 750;
+            font-weight: 900;
             font-size: 13px;
-            color: rgba(255, 255, 255, 0.92);
-            background: rgba(255, 255, 255, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.16);
-            transition: transform 0.15s ease, opacity 0.15s ease;
+            color: rgba(8, 12, 22, 0.80);
+            background: rgba(255, 255, 255, 0.56);
+            border: 1px solid rgba(255, 255, 255, 0.72);
+            transition: transform 0.15s ease, filter 0.15s ease;
             text-decoration: none;
             display: inline-flex;
-            align-items: center;
             gap: 8px;
+            align-items: center;
+            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.65) inset;
         }
 
-        .btn:hover { transform: translateY(-1px); opacity: 0.95; }
+        .btn:hover { transform: translateY(-1px); filter: saturate(1.06); }
+        .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
 
         .btn-primary {
-            background: linear-gradient(135deg, rgba(23, 105, 255, 0.92), rgba(255, 59, 106, 0.62));
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            box-shadow: 0 12px 28px rgba(23, 105, 255, 0.20);
-        }
-
-        .btn-primary:hover { background: linear-gradient(135deg, rgba(23, 105, 255, 0.98), rgba(255, 59, 106, 0.68)); }
-
-        .btn-ghost {
-            background: rgba(255, 255, 255, 0.10);
+            color: rgba(255,255,255,0.96);
+            background: linear-gradient(135deg, rgba(23, 105, 255, 0.96), rgba(255, 59, 106, 0.70));
+            border: 1px solid rgba(255, 255, 255, 0.34);
+            box-shadow: 0 14px 34px rgba(23, 105, 255, 0.18);
         }
 
         .btn-danger {
-            background: rgba(255, 59, 106, 0.16);
-            border: 1px solid rgba(255, 59, 106, 0.30);
+            color: rgba(255,255,255,0.95);
+            background: linear-gradient(135deg, rgba(255, 59, 106, 0.92), rgba(255, 196, 0, 0.46));
+            border: 1px solid rgba(255, 255, 255, 0.28);
         }
 
-        .btn:disabled {
-            opacity: 0.55;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .header {
+        .hero {
+            padding: 14px 8px 16px;
             text-align: center;
-            padding: 16px 10px 20px;
         }
 
-        .header h1 {
-            margin: 0 0 6px;
-            font-size: 40px;
-            letter-spacing: 0.2px;
+        .hero h1 {
+            margin: 12px 0 6px;
+            font-size: 42px;
+            letter-spacing: -0.6px;
         }
 
-        .header p {
+        .hero p {
             margin: 0;
-            color: var(--color-text-secondary);
+            color: var(--ink-2);
+            font-weight: 700;
         }
 
         .grid {
             display: grid;
-            grid-template-columns: 1.05fr 0.95fr;
+            grid-template-columns: 1fr 1.15fr;
             gap: 14px;
             align-items: start;
         }
 
         .card {
-            padding: 18px;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));
             border-radius: var(--radius-lg);
+            background: linear-gradient(180deg, rgba(255,255,255,0.64), rgba(255,255,255,0.42));
+            border: 1px solid rgba(255,255,255,0.70);
             box-shadow: var(--shadow-md);
-            border: 1px solid var(--color-border);
-            backdrop-filter: blur(var(--glass-blur));
-            -webkit-backdrop-filter: blur(var(--glass-blur));
+            backdrop-filter: blur(var(--blur)) saturate(1.35);
+            -webkit-backdrop-filter: blur(var(--blur)) saturate(1.35);
+            padding: 18px;
+            position: relative;
+            overflow: hidden;
         }
 
+        .card::before {
+            content: "";
+            position: absolute;
+            inset: -1px;
+            pointer-events: none;
+            background: radial-gradient(700px 240px at 20% 10%, rgba(23,105,255,0.20), transparent 55%),
+                        radial-gradient(560px 220px at 85% 25%, rgba(255,59,106,0.14), transparent 62%),
+                        radial-gradient(560px 220px at 55% 90%, rgba(43,228,167,0.14), transparent 62%);
+            opacity: 0.65;
+            z-index: 0;
+        }
+
+        .card > * { position: relative; z-index: 1; }
+
         .card h2 {
-            margin: 0 0 10px;
-            font-size: 16px;
-            letter-spacing: 0.2px;
+            margin: 0 0 8px;
+            font-size: 15px;
+            letter-spacing: 0.25px;
         }
 
         .muted {
-            color: var(--color-text-secondary);
+            color: var(--ink-2);
             font-size: 13px;
-        }
-
-        .field {
-            margin-top: 12px;
-        }
-
-        label {
-            display: block;
-            font-size: 12px;
-            font-weight: 750;
-            color: rgba(255, 255, 255, 0.78);
-            margin-bottom: 6px;
-            letter-spacing: 0.2px;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.16);
-            border-radius: var(--radius-md);
-            color: var(--color-text-primary);
-            font-size: 14px;
-            outline: none;
-        }
-
-        input[type="text"]:focus {
-            border-color: rgba(23, 105, 255, 0.70);
-            box-shadow: 0 0 0 4px rgba(23, 105, 255, 0.14);
-        }
-
-        .row {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 12px;
-        }
-
-        .status {
-            margin-top: 12px;
-            font-size: 13px;
-            padding: 10px 10px;
-            border-radius: var(--radius-md);
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.14);
-            min-height: 40px;
-            white-space: pre-wrap;
-        }
-
-        .codebox {
-            margin-top: 12px;
-            border-radius: var(--radius-lg);
-            padding: 14px;
-            background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
-            border: 1px solid rgba(255, 255, 255, 0.18);
-        }
-
-        .code {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            font-size: 24px;
-            letter-spacing: 2px;
-            font-weight: 850;
-            color: rgba(255, 255, 255, 0.95);
-        }
-
-        .code-meta {
-            margin-top: 8px;
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.66);
+            font-weight: 650;
         }
 
         .steps {
-            margin-top: 10px;
+            margin-top: 12px;
             display: grid;
-            gap: 8px;
+            gap: 10px;
         }
 
         .step {
             display: grid;
-            grid-template-columns: 26px 1fr;
+            grid-template-columns: 28px 1fr;
             gap: 10px;
-            align-items: start;
-            padding: 10px;
+            padding: 12px;
             border-radius: var(--radius-md);
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: linear-gradient(180deg, rgba(255,255,255,0.54), rgba(255,255,255,0.36));
+            border: 1px solid rgba(255,255,255,0.70);
+            box-shadow: 0 10px 30px rgba(14, 24, 56, 0.08);
         }
 
         .step-num {
@@ -294,136 +246,267 @@
             display: grid;
             place-items: center;
             border-radius: 999px;
-            background: rgba(23, 105, 255, 0.22);
-            border: 1px solid rgba(23, 105, 255, 0.35);
-            color: rgba(255, 255, 255, 0.90);
-            font-weight: 850;
+            background: linear-gradient(135deg, rgba(23,105,255,0.25), rgba(255,59,106,0.16));
+            border: 1px solid rgba(23,105,255,0.22);
+            color: rgba(8,12,22,0.72);
+            font-weight: 950;
             font-size: 12px;
         }
+
+        label {
+            display: block;
+            font-size: 12px;
+            font-weight: 900;
+            color: rgba(8,12,22,0.72);
+            margin: 12px 0 6px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255,255,255,0.72);
+            background: rgba(255, 255, 255, 0.56);
+            outline: none;
+            font-size: 14px;
+            color: rgba(8, 12, 22, 0.82);
+            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset;
+        }
+
+        input[type="text"]:focus {
+            border-color: rgba(23,105,255,0.55);
+            box-shadow: 0 0 0 4px rgba(23,105,255,0.14);
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .status {
+            margin-top: 12px;
+            padding: 12px;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255,255,255,0.70);
+            background: linear-gradient(180deg, rgba(255,255,255,0.54), rgba(255,255,255,0.32));
+            min-height: 44px;
+            white-space: pre-wrap;
+            color: rgba(8,12,22,0.78);
+            font-weight: 750;
+        }
+
+        .codebox {
+            margin-top: 12px;
+            border-radius: var(--radius-lg);
+            padding: 14px;
+            border: 1px solid rgba(255,255,255,0.72);
+            background: linear-gradient(135deg, rgba(255,255,255,0.55), rgba(255,255,255,0.32));
+            box-shadow: 0 12px 34px rgba(14, 24, 56, 0.08);
+        }
+
+        .code {
+            font-family: var(--mono);
+            font-size: 26px;
+            letter-spacing: 2px;
+            font-weight: 950;
+            color: rgba(8,12,22,0.86);
+        }
+
+        .code-meta { margin-top: 8px; font-size: 12px; color: var(--ink-2); font-weight: 750; }
 
         details {
             margin-top: 12px;
             border-radius: var(--radius-md);
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255,255,255,0.70);
+            background: rgba(255,255,255,0.40);
             padding: 10px 12px;
         }
 
-        summary {
-            cursor: pointer;
-            font-weight: 800;
-        }
+        summary { cursor: pointer; font-weight: 950; color: rgba(8,12,22,0.78); }
 
         .dash {
             display: none;
             margin-top: 10px;
         }
 
-        .stats {
+        .kpis {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .stat {
-            padding: 14px;
-            border-radius: var(--radius-lg);
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            text-align: center;
-        }
-
-        .stat-num { font-size: 34px; font-weight: 900; color: var(--color-primary); line-height: 1.05; }
-        .stat-label { font-size: 12px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
-
-        .assignments {
+            grid-template-columns: 1.2fr 1fr 1fr;
+            gap: 12px;
             margin-top: 12px;
-            max-height: 360px;
+        }
+
+        .kpi {
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(255,255,255,0.72);
+            background: linear-gradient(180deg, rgba(255,255,255,0.54), rgba(255,255,255,0.32));
+            padding: 14px;
+            box-shadow: 0 14px 40px rgba(14, 24, 56, 0.08);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .kpi::before {
+            content: "";
+            position: absolute;
+            inset: -1px;
+            opacity: 0.85;
+            pointer-events: none;
+            background: radial-gradient(480px 180px at 20% 0%, rgba(23,105,255,0.20), transparent 60%),
+                        radial-gradient(420px 180px at 90% 10%, rgba(255,59,106,0.14), transparent 60%);
+        }
+
+        .kpi > * { position: relative; z-index: 1; }
+
+        .kpi-title { font-size: 12px; color: var(--ink-2); font-weight: 900; letter-spacing: 0.6px; text-transform: uppercase; }
+        .kpi-big { font-size: 36px; font-weight: 1000; letter-spacing: -0.6px; margin-top: 4px; }
+        .kpi-sub { margin-top: 2px; font-size: 12px; color: var(--ink-2); font-weight: 750; }
+
+        .viz {
+            margin-top: 12px;
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(255,255,255,0.72);
+            background: linear-gradient(180deg, rgba(255,255,255,0.52), rgba(255,255,255,0.30));
+            padding: 14px;
+            box-shadow: 0 16px 50px rgba(14, 24, 56, 0.10);
+        }
+
+        .viz-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 10px;
+        }
+
+        .viz-title h3 {
+            margin: 0;
+            font-size: 13px;
+            font-weight: 1000;
+            letter-spacing: 0.3px;
+        }
+
+        .viz-title span { font-size: 12px; color: var(--ink-2); font-weight: 750; }
+
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .tab {
+            padding: 8px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.72);
+            background: rgba(255,255,255,0.52);
+            color: rgba(8,12,22,0.72);
+            font-weight: 950;
+            cursor: pointer;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, rgba(23,105,255,0.22), rgba(255,59,106,0.14));
+            border-color: rgba(23,105,255,0.38);
+        }
+
+        .list {
+            margin-top: 12px;
+            max-height: 440px;
             overflow: auto;
             padding-right: 4px;
         }
 
-        .assignment {
-            padding: 12px;
+        .item {
             border-radius: var(--radius-lg);
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255,255,255,0.72);
+            background: linear-gradient(180deg, rgba(255,255,255,0.54), rgba(255,255,255,0.32));
+            padding: 12px;
             margin-bottom: 10px;
-            border-left: 4px solid rgba(43, 228, 167, 0.70);
+            box-shadow: 0 12px 34px rgba(14, 24, 56, 0.08);
+            position: relative;
         }
 
-        .assignment.urgent { border-left-color: rgba(255, 59, 106, 0.95); }
-        .assignment.soon { border-left-color: rgba(255, 196, 0, 0.95); }
+        .item::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.75;
+            background: radial-gradient(500px 160px at 10% 0%, rgba(43,228,167,0.12), transparent 60%);
+        }
 
-        .assignment-title { font-weight: 850; font-size: 14px; margin-bottom: 4px; }
-        .assignment-course { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 6px; }
-        .assignment-due { font-size: 12px; font-weight: 800; }
+        .item > * { position: relative; z-index: 1; }
+
+        .item-title { font-weight: 1000; font-size: 14px; margin-bottom: 4px; }
+        .item-meta { font-size: 12px; color: var(--ink-2); font-weight: 750; }
+        .item-when { margin-top: 8px; font-size: 12px; font-weight: 950; color: rgba(23,105,255,0.92); }
 
         .empty {
             margin-top: 10px;
             padding: 12px;
             border-radius: var(--radius-lg);
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px dashed rgba(255, 255, 255, 0.18);
-            color: rgba(255, 255, 255, 0.70);
+            background: rgba(255,255,255,0.40);
+            border: 1px dashed rgba(8,12,22,0.18);
+            color: var(--ink-2);
             font-size: 13px;
+            font-weight: 750;
         }
 
-        @media (max-width: 900px) {
+        @media (max-width: 980px) {
             .grid { grid-template-columns: 1fr; }
-            .header h1 { font-size: 34px; }
+            .hero h1 { font-size: 34px; }
+            .kpis { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="topbar">
-            <div class="brand-wrap">
+            <div class="brand">
                 <div class="brand-title">Blueprint</div>
-                <div class="brand-subtitle">AI Study Companion</div>
+                <div class="brand-sub">Canvas dashboard</div>
             </div>
-            <div class="account-wrap">
-                <a class="btn btn-ghost" href="index.html">Chat</a>
-                <div class="user-pill" id="userPill">Signed in</div>
-                <button class="btn btn-danger" id="logoutBtn" onclick="logout()">Log Out</button>
+            <div class="account">
+                <a class="btn" href="index.html">Chat</a>
+                <div class="pill" id="userPill">Signed in</div>
+                <button class="btn btn-danger" onclick="logout()">Log Out</button>
             </div>
         </div>
 
-        <div class="header">
+        <div class="hero">
             <h1>Canvas</h1>
-            <p>Sync courses, assignments, and grades using the Chrome extension (works with Microsoft 2FA).</p>
+            <p>Liquid glass sync flow that actually works with Microsoft 2FA.</p>
         </div>
 
         <div class="grid">
             <div class="card">
                 <h2>Connect Canvas (Extension)</h2>
-                <div class="muted">You log into Canvas normally. Blueprint never asks for your Canvas password.</div>
+                <div class="muted">You sign in normally. Blueprint never asks for your Canvas password.</div>
 
                 <div class="steps">
-                    <div class="step"><div class="step-num">1</div><div>Generate a Link Code below.</div></div>
-                    <div class="step"><div class="step-num">2</div><div>Open Canvas and sign in (Microsoft SSO + 2FA as usual).</div></div>
-                    <div class="step"><div class="step-num">3</div><div>On Canvas, the <strong>Blueprint Sync</strong> panel appears. Paste the Link Code and click <strong>Pair</strong> (one time), then <strong>Sync now</strong>.</div></div>
+                    <div class="step"><div class="step-num">1</div><div>Generate a Link Code.</div></div>
+                    <div class="step"><div class="step-num">2</div><div>Install the Chrome extension, then open Canvas and sign in.</div></div>
+                    <div class="step"><div class="step-num">3</div><div>On Canvas, the <strong>Blueprint Sync</strong> panel appears. Paste the Link Code, click <strong>Pair</strong> once, then <strong>Sync now</strong>.</div></div>
                 </div>
 
-                <div class="field">
-                    <label for="canvasUrl">Canvas URL (optional, just for the Open Canvas button)</label>
-                    <input id="canvasUrl" type="text" placeholder="uvu.instructure.com" />
-                </div>
+                <label for="canvasUrl">Canvas URL (optional, for Open Canvas)</label>
+                <input id="canvasUrl" type="text" placeholder="uvu.instructure.com" />
 
                 <div class="row">
                     <button class="btn btn-primary" id="linkBtn" onclick="generateLinkCode()">Generate Link Code</button>
-                    <a class="btn btn-ghost" href="blueprint-canvas-extension.zip" download>Download Extension ZIP</a>
-                    <button class="btn btn-ghost" id="openCanvasBtn" onclick="openCanvas()">Open Canvas</button>
-                    <button class="btn btn-ghost" id="refreshBtn" onclick="loadCanvasDashboard()">Refresh Dashboard</button>
+                    <a class="btn" href="blueprint-canvas-extension.zip" download>Download Extension ZIP</a>
+                    <button class="btn" onclick="openCanvas()">Open Canvas</button>
+                    <button class="btn" onclick="loadCanvasDashboard()">Refresh Dashboard</button>
                 </div>
 
                 <div id="linkCodeBox" class="codebox" style="display:none;">
                     <div class="code" id="linkCodeText">-----</div>
                     <div class="code-meta" id="linkCodeMeta"></div>
                     <div class="row" style="margin-top: 10px;">
-                        <button class="btn btn-ghost" id="copyBtn" onclick="copyLinkCode()">Copy</button>
-                        <a class="btn btn-ghost" href="#install">Install Instructions</a>
+                        <button class="btn" onclick="copyLinkCode()">Copy</button>
+                        <a class="btn" href="#install">Install Instructions</a>
                     </div>
                 </div>
 
@@ -431,84 +514,102 @@
 
                 <details id="install">
                     <summary>Install Instructions (Chrome)</summary>
-                    <div class="muted" style="margin-top: 10px;">
-                        1) Open <code>chrome://extensions</code><br>
-                        2) Enable <strong>Developer mode</strong><br>
-                        3) Click <strong>Load unpacked</strong><br>
-                        4) Download <code>blueprint-canvas-extension.zip</code> from this page and unzip it<br>
-                        5) Click <strong>Load unpacked</strong> and select the unzipped <code>blueprint-canvas-extension</code> folder<br>
-                        6) Go to Canvas and look for the bottom-right panel
+                    <div class="muted" style="margin-top: 10px; line-height: 1.55;">
+                        1) Download <code>blueprint-canvas-extension.zip</code> above and unzip it.<br>
+                        2) Open <code>chrome://extensions</code><br>
+                        3) Enable <strong>Developer mode</strong><br>
+                        4) Click <strong>Load unpacked</strong> and select the unzipped <code>blueprint-canvas-extension</code> folder.<br>
+                        5) Go to Canvas and look for the bottom-right panel.
                     </div>
                 </details>
             </div>
 
             <div class="card">
                 <h2>Your Canvas Data</h2>
-                <div class="muted">After syncing via the extension, your dashboard will appear here.</div>
+                <div class="muted">After syncing via the extension, this page becomes your daily command center.</div>
 
                 <div id="emptyState" class="empty" style="display:none;">
-                    No Canvas data yet. Generate a Link Code, sync via the extension on Canvas, then click "Refresh Dashboard".
+                    No Canvas data yet. Generate a Link Code, sync via the extension on Canvas, then click Refresh.
                 </div>
 
                 <div id="dashboard" class="dash">
-                    <div class="row" id="dashTabs" style="margin-top: 10px;">
-                        <button class="btn btn-ghost" id="tabOverview" onclick="setDashTab('overview')">Overview</button>
-                        <button class="btn btn-ghost" id="tabGrades" onclick="setDashTab('grades')">Grades</button>
-                        <button class="btn btn-ghost" id="tabPlanner" onclick="setDashTab('planner')">Planner</button>
-                        <button class="btn btn-ghost" id="tabCalendar" onclick="setDashTab('calendar')">Calendar</button>
-                        <button class="btn btn-ghost" id="tabAnnouncements" onclick="setDashTab('announcements')">Announcements</button>
+                    <div class="kpis">
+                        <div class="kpi">
+                            <div class="kpi-title">Courses</div>
+                            <div class="kpi-big" id="kpiCourses">0</div>
+                            <div class="kpi-sub" id="kpiBusiest">Busiest day: -</div>
+                        </div>
+                        <div class="kpi">
+                            <div class="kpi-title">Assignments</div>
+                            <div class="kpi-big" id="kpiAssignments">0</div>
+                            <div class="kpi-sub" id="kpiNextDue">Next due: -</div>
+                        </div>
+                        <div class="kpi">
+                            <div class="kpi-title">Planner + Calendar</div>
+                            <div class="kpi-big" id="kpiEvents">0</div>
+                            <div class="kpi-sub" id="kpiSyncedAt">Last sync: -</div>
+                        </div>
+                    </div>
+
+                    <div class="viz" style="margin-top: 12px;">
+                        <div class="viz-title">
+                            <h3>Workload Pulse</h3>
+                            <span>Next 14 days</span>
+                        </div>
+                        <div id="pulseViz" style="margin-top: 10px;"></div>
+                    </div>
+
+                    <div class="viz" style="margin-top: 12px;">
+                        <div class="viz-title">
+                            <h3>Course Mix</h3>
+                            <span>Assignments by course</span>
+                        </div>
+                        <div id="courseViz" style="margin-top: 10px;"></div>
+                    </div>
+
+                    <div class="tabs" id="dashTabs">
+                        <button class="tab" id="tabOverview" onclick="setDashTab('overview')">Overview</button>
+                        <button class="tab" id="tabGrades" onclick="setDashTab('grades')">Grades</button>
+                        <button class="tab" id="tabPlanner" onclick="setDashTab('planner')">Planner</button>
+                        <button class="tab" id="tabCalendar" onclick="setDashTab('calendar')">Calendar</button>
+                        <button class="tab" id="tabAnnouncements" onclick="setDashTab('announcements')">Announcements</button>
                     </div>
 
                     <div id="dashPanelOverview">
-                        <div class="stats">
-                            <div class="stat">
-                                <div class="stat-num" id="courseCount">0</div>
-                                <div class="stat-label">Courses</div>
-                            </div>
-                            <div class="stat">
-                                <div class="stat-num" id="assignmentCount">0</div>
-                                <div class="stat-label">Assignments</div>
-                            </div>
-                        </div>
-
-                        <div class="muted" style="margin-top: 12px;">Upcoming Assignments</div>
-                        <div id="upcomingAssignments" class="assignments"></div>
+                        <div class="muted" style="margin-top: 10px;">Upcoming assignments (top 20)</div>
+                        <div id="upcomingAssignments" class="list"></div>
                     </div>
 
-                    <div id="dashPanelGrades" style="display:none; margin-top: 12px;">
-                        <div class="muted">Grade summary by course</div>
-                        <div id="gradesList" class="assignments" style="max-height: 420px;"></div>
+                    <div id="dashPanelGrades" style="display:none;">
+                        <div class="muted" style="margin-top: 10px;">Grade summary</div>
+                        <div id="gradesList" class="list"></div>
                     </div>
 
-                    <div id="dashPanelPlanner" style="display:none; margin-top: 12px;">
-                        <div class="muted">Planner items (next 90 days)</div>
-                        <div id="plannerList" class="assignments" style="max-height: 420px;"></div>
+                    <div id="dashPanelPlanner" style="display:none;">
+                        <div class="muted" style="margin-top: 10px;">Planner items (next 90 days)</div>
+                        <div id="plannerList" class="list"></div>
                     </div>
 
-                    <div id="dashPanelCalendar" style="display:none; margin-top: 12px;">
-                        <div class="muted">Calendar events (next 90 days)</div>
-                        <div id="calendarList" class="assignments" style="max-height: 420px;"></div>
+                    <div id="dashPanelCalendar" style="display:none;">
+                        <div class="muted" style="margin-top: 10px;">Calendar events (next 90 days)</div>
+                        <div id="calendarList" class="list"></div>
                     </div>
 
-                    <div id="dashPanelAnnouncements" style="display:none; margin-top: 12px;">
-                        <div class="muted">Recent announcements</div>
-                        <div id="announcementsList" class="assignments" style="max-height: 420px;"></div>
+                    <div id="dashPanelAnnouncements" style="display:none;">
+                        <div class="muted" style="margin-top: 10px;">Announcements</div>
+                        <div id="announcementsList" class="list"></div>
                     </div>
-
-                    <div class="muted" style="margin-top: 10px;" id="syncedAt"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Auth is session-scoped (clears when the tab/window closes).
-        // Remove any legacy persistent tokens from older versions.
+        // Session-scoped auth; remove legacy persistent tokens.
         try {
             localStorage.removeItem('sessionToken');
             localStorage.removeItem('user');
         } catch (e) {}
-
 
         const BASE_API_URL = 'https://blueprint-backend-154275778730.us-west1.run.app';
         const CANVAS_API_URL = `${BASE_API_URL}/api/canvas`;
@@ -525,20 +626,11 @@
             window.location.href = 'login.html';
         }
 
-        function setUserUI() {
-            const userPill = document.getElementById('userPill');
-            const displayName = currentUser?.fullName || currentUser?.email || 'Signed in';
-            userPill.textContent = displayName;
-        }
-
         async function apiFetch(url, options = {}) {
             const headers = { ...(options.headers || {}) };
-            if (sessionToken && !headers.Authorization) {
-                headers.Authorization = `Bearer ${sessionToken}`;
-            }
+            if (sessionToken && !headers.Authorization) headers.Authorization = `Bearer ${sessionToken}`;
 
             const response = await fetch(url, { ...options, headers });
-
             if (response.status === 401) {
                 redirectToLogin();
                 throw new Error('Session expired. Please sign in again.');
@@ -546,20 +638,23 @@
             return response;
         }
 
+        function setUserUI() {
+            const pill = document.getElementById('userPill');
+            pill.textContent = currentUser?.fullName || currentUser?.email || 'Signed in';
+        }
+
         async function logout() {
-            try {
-                await apiFetch(LOGOUT_URL, { method: 'POST' });
-            } catch (error) {}
+            try { await apiFetch(LOGOUT_URL, { method: 'POST' }); } catch (e) {}
             redirectToLogin();
         }
 
-        function setStatus(message, type = 'info') {
+        function setStatus(message, kind = 'info') {
             const box = document.getElementById('linkStatus');
             box.textContent = message;
-            if (type === 'error') box.style.borderColor = 'rgba(255, 59, 106, 0.35)';
-            else if (type === 'success') box.style.borderColor = 'rgba(43, 228, 167, 0.35)';
-            else if (type === 'warning') box.style.borderColor = 'rgba(255, 196, 0, 0.35)';
-            else box.style.borderColor = 'rgba(255, 255, 255, 0.14)';
+            if (kind === 'error') box.style.borderColor = 'rgba(255, 59, 106, 0.55)';
+            else if (kind === 'success') box.style.borderColor = 'rgba(43, 228, 167, 0.55)';
+            else if (kind === 'warning') box.style.borderColor = 'rgba(255, 196, 0, 0.55)';
+            else box.style.borderColor = 'rgba(255,255,255,0.70)';
         }
 
         function normalizeUrl(input) {
@@ -585,20 +680,14 @@
                 const json = await resp.json();
                 if (!json.success) throw new Error(json.error || 'Failed to generate link code');
 
-                const box = document.getElementById('linkCodeBox');
-                const codeText = document.getElementById('linkCodeText');
-                const codeMeta = document.getElementById('linkCodeMeta');
-
-                codeText.textContent = json.linkCode;
-                codeMeta.textContent = json.expiresAt ? `Expires: ${new Date(json.expiresAt).toLocaleString()}` : '';
-                box.style.display = 'block';
+                document.getElementById('linkCodeText').textContent = json.linkCode;
+                document.getElementById('linkCodeMeta').textContent = json.expiresAt ? `Expires: ${new Date(json.expiresAt).toLocaleString()}` : '';
+                document.getElementById('linkCodeBox').style.display = 'block';
 
                 const canvasUrlInput = document.getElementById('canvasUrl');
-                if (canvasUrlInput.value.trim()) {
-                    localStorage.setItem('lastCanvasUrl', canvasUrlInput.value.trim());
-                }
+                if (canvasUrlInput.value.trim()) localStorage.setItem('lastCanvasUrl', canvasUrlInput.value.trim());
 
-                setStatus('Link Code generated. Open Canvas, paste the code into the Blueprint Sync panel, then Sync.', 'success');
+                setStatus('Link Code generated. Open Canvas, pair in the Blueprint Sync panel, then Sync.', 'success');
             } catch (e) {
                 setStatus(`Error: ${e.message}`, 'error');
             } finally {
@@ -614,8 +703,8 @@
             try {
                 await navigator.clipboard.writeText(code);
                 setStatus('Copied Link Code to clipboard.', 'success');
-            } catch (e) {
-                setStatus('Copy failed. Select the code and copy manually.', 'warning');
+            } catch {
+                setStatus('Copy failed. Select and copy manually.', 'warning');
             }
         }
 
@@ -636,11 +725,54 @@
                 const btn = document.getElementById(`tab${t.charAt(0).toUpperCase()}${t.slice(1)}`);
                 const panel = document.getElementById(`dashPanel${t.charAt(0).toUpperCase()}${t.slice(1)}`);
                 if (panel) panel.style.display = (t === tab) ? 'block' : 'none';
-                if (btn) {
-                    btn.style.borderColor = (t === tab) ? 'rgba(23, 105, 255, 0.55)' : 'rgba(255, 255, 255, 0.16)';
-                    btn.style.background = (t === tab) ? 'rgba(23, 105, 255, 0.18)' : 'rgba(255, 255, 255, 0.10)';
-                }
+                if (btn) btn.classList.toggle('active', t === tab);
             }
+        }
+
+        function esc(s) {
+            return String(s || '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
+
+        function formatWhen(dt) {
+            try { return new Date(dt).toLocaleString(); } catch { return String(dt || ''); }
+        }
+
+        function pickDueDate(obj) {
+            return obj?.due_at || obj?.plannable_date || obj?.start_at || obj?.end_at || obj?.posted_at || obj?.created_at || null;
+        }
+
+        function normalizeUpcoming(assignments) {
+            const list = Array.isArray(assignments) ? assignments : [];
+            const upcoming = list
+                .filter(a => a && a.due_at && new Date(a.due_at).getTime() > Date.now())
+                .sort((a, b) => new Date(a.due_at) - new Date(b.due_at))
+                .slice(0, 20);
+
+            return upcoming;
+        }
+
+        function renderUpcoming(assignments) {
+            const container = document.getElementById('upcomingAssignments');
+            const upcoming = normalizeUpcoming(assignments);
+
+            if (!upcoming.length) {
+                container.innerHTML = '<div class="muted" style="padding: 10px;">No upcoming assignments found.</div>';
+                return;
+            }
+
+            container.innerHTML = upcoming.map(a => {
+                const due = new Date(a.due_at);
+                const days = Math.ceil((due - new Date()) / (1000 * 60 * 60 * 24));
+                const badge = days <= 2 ? 'Soon' : days <= 7 ? 'This week' : 'Later';
+                const color = days <= 2 ? 'rgba(255,59,106,0.95)' : days <= 7 ? 'rgba(255,196,0,0.95)' : 'rgba(23,105,255,0.92)';
+                return `
+                    <div class="item">
+                        <div class="item-title">${esc(a.name || 'Untitled')}</div>
+                        <div class="item-meta">${esc(a.course_name || a.course_code || '')} • <span style="color:${color}; font-weight: 950;">${badge}</span></div>
+                        <div class="item-when">Due: ${esc(due.toLocaleString())}</div>
+                    </div>
+                `;
+            }).join('');
         }
 
         function renderGrades(grades) {
@@ -656,10 +788,11 @@
                 .sort((a, b) => String(a.course_name).localeCompare(String(b.course_name)))
                 .map(g => {
                     const score = (g.current_score === null || g.current_score === undefined) ? '' : ` (${g.current_score}%)`;
+                    const gradeText = esc(g.current_grade || 'N/A');
                     return `
-                        <div class="assignment">
-                            <div class="assignment-title">${g.course_name}</div>
-                            <div class="assignment-course">Current grade: <strong>${g.current_grade || 'N/A'}</strong>${score}</div>
+                        <div class="item">
+                            <div class="item-title">${esc(g.course_name)}</div>
+                            <div class="item-meta">Current grade: <strong>${gradeText}</strong>${esc(score)}</div>
                         </div>
                     `;
                 }).join('');
@@ -675,21 +808,21 @@
 
             const normalized = list
                 .map(i => {
-                    const dt = i?.plannable_date || i?.due_at || i?.start_at || null;
-                    return { raw: i, dt: dt ? new Date(dt) : null };
+                    const dt = pickDueDate(i);
+                    return { raw: i, t: dt ? new Date(dt).getTime() : 0 };
                 })
-                .sort((a, b) => (a.dt?.getTime() || 0) - (b.dt?.getTime() || 0))
+                .sort((a, b) => a.t - b.t)
                 .slice(0, 200);
 
-            container.innerHTML = normalized.map(({ raw, dt }) => {
+            container.innerHTML = normalized.map(({ raw, t }) => {
                 const title = raw?.plannable?.title || raw?.plannable?.name || raw?.title || 'Planner item';
-                const course = raw?.context_name || raw?.context_type || raw?.context_code || '';
-                const when = dt ? dt.toLocaleString() : 'No date';
+                const course = raw?.context_name || raw?.context_code || raw?.context_type || '';
+                const when = t ? new Date(t).toLocaleString() : 'No date';
                 return `
-                    <div class="assignment">
-                        <div class="assignment-title">${title}</div>
-                        <div class="assignment-course">${course}</div>
-                        <div class="assignment-due" style="color: var(--color-warning);">${when}</div>
+                    <div class="item">
+                        <div class="item-title">${esc(title)}</div>
+                        <div class="item-meta">${esc(course)}</div>
+                        <div class="item-when">${esc(when)}</div>
                     </div>
                 `;
             }).join('');
@@ -705,21 +838,21 @@
 
             const normalized = list
                 .map(e => {
-                    const dt = e?.start_at || e?.end_at || e?.created_at || null;
-                    return { raw: e, dt: dt ? new Date(dt) : null };
+                    const dt = pickDueDate(e);
+                    return { raw: e, t: dt ? new Date(dt).getTime() : 0 };
                 })
-                .sort((a, b) => (a.dt?.getTime() || 0) - (b.dt?.getTime() || 0))
+                .sort((a, b) => a.t - b.t)
                 .slice(0, 200);
 
-            container.innerHTML = normalized.map(({ raw, dt }) => {
+            container.innerHTML = normalized.map(({ raw, t }) => {
                 const title = raw?.title || raw?.summary || 'Event';
                 const context = raw?.context_name || raw?.context_code || '';
-                const when = dt ? dt.toLocaleString() : 'No date';
+                const when = t ? new Date(t).toLocaleString() : 'No date';
                 return `
-                    <div class="assignment">
-                        <div class="assignment-title">${title}</div>
-                        <div class="assignment-course">${context}</div>
-                        <div class="assignment-due" style="color: var(--color-warning);">${when}</div>
+                    <div class="item">
+                        <div class="item-title">${esc(title)}</div>
+                        <div class="item-meta">${esc(context)}</div>
+                        <div class="item-when">${esc(when)}</div>
                     </div>
                 `;
             }).join('');
@@ -735,56 +868,182 @@
 
             const normalized = list
                 .map(a => {
-                    const dt = a?.posted_at || a?.delayed_post_at || a?.created_at || null;
-                    return { raw: a, dt: dt ? new Date(dt) : null };
+                    const dt = pickDueDate(a);
+                    return { raw: a, t: dt ? new Date(dt).getTime() : 0 };
                 })
-                .sort((a, b) => (b.dt?.getTime() || 0) - (a.dt?.getTime() || 0))
+                .sort((a, b) => b.t - a.t)
                 .slice(0, 100);
 
-            container.innerHTML = normalized.map(({ raw, dt }) => {
+            container.innerHTML = normalized.map(({ raw, t }) => {
                 const title = raw?.title || 'Announcement';
                 const context = raw?.context_name || raw?.context_code || '';
-                const when = dt ? dt.toLocaleString() : '';
+                const when = t ? new Date(t).toLocaleString() : '';
                 const link = raw?.html_url || raw?.url || '';
-                const linkHtml = link ? `<a class="btn btn-ghost" style="padding: 6px 10px; border-radius: 12px;" href="${link}" target="_blank" rel="noreferrer">Open</a>` : '';
+                const linkHtml = link ? `<a class="btn" style="padding: 6px 10px;" href="${esc(link)}" target="_blank" rel="noreferrer">Open</a>` : '';
                 return `
-                    <div class="assignment">
-                        <div class="assignment-title">${title}</div>
-                        <div class="assignment-course">${context} ${when ? `• ${when}` : ''}</div>
-                        <div style="margin-top:8px;">${linkHtml}</div>
+                    <div class="item">
+                        <div class="item-title">${esc(title)}</div>
+                        <div class="item-meta">${esc(context)}${when ? ` • ${esc(when)}` : ''}</div>
+                        <div style="margin-top: 8px;">${linkHtml}</div>
                     </div>
                 `;
             }).join('');
         }
 
-        function renderAssignments(assignments) {
-            const container = document.getElementById('upcomingAssignments');
-            const list = Array.isArray(assignments) ? assignments : [];
+        function buildPulseSvg(counts, labels) {
+            const w = 760;
+            const h = 140;
+            const pad = 18;
+            const n = counts.length;
+            const max = Math.max(1, ...counts);
+            const barW = Math.floor((w - pad * 2) / n);
 
-            const upcoming = list
-                .filter(a => a.due_at && new Date(a.due_at).getTime() > Date.now())
-                .sort((a, b) => new Date(a.due_at) - new Date(b.due_at))
-                .slice(0, 20);
-
-            if (!upcoming.length) {
-                container.innerHTML = '<div class="muted" style="padding: 10px;">No upcoming assignments found.</div>';
-                return;
-            }
-
-            container.innerHTML = upcoming.map(a => {
-                const dueDate = new Date(a.due_at);
-                const daysUntil = Math.ceil((dueDate - new Date()) / (1000 * 60 * 60 * 24));
-                const urgencyClass = daysUntil <= 2 ? 'urgent' : daysUntil <= 7 ? 'soon' : '';
-                const urgencyColor = daysUntil <= 2 ? 'var(--color-error)' : daysUntil <= 7 ? 'var(--color-warning)' : 'var(--color-success)';
-
+            const bars = counts.map((c, i) => {
+                const bh = Math.round(((h - pad * 2) * c) / max);
+                const x = pad + i * barW + 3;
+                const y = h - pad - bh;
+                const r = 10;
+                const alpha = 0.22 + (c / max) * 0.35;
                 return `
-                    <div class="assignment ${urgencyClass}">
-                        <div class="assignment-title">${a.name || 'Untitled'}</div>
-                        <div class="assignment-course">${a.course_name || 'Course'}</div>
-                        <div class="assignment-due" style="color: ${urgencyColor};">Due: ${dueDate.toLocaleDateString()} ${dueDate.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                    <g>
+                        <rect x="${x}" y="${y}" width="${Math.max(6, barW - 6)}" height="${bh}" rx="${r}" fill="rgba(23,105,255,${alpha.toFixed(2)})" stroke="rgba(23,105,255,0.25)" />
+                    </g>
+                `;
+            }).join('');
+
+            const ticks = labels.map((t, i) => {
+                if (i % 2 !== 0) return '';
+                const x = pad + i * barW + 6;
+                return `<text x="${x}" y="${h - 4}" font-size="10" fill="rgba(8,12,22,0.55)" font-family="${esc(getComputedStyle(document.documentElement).fontFamily)}">${esc(t)}</text>`;
+            }).join('');
+
+            return `
+                <svg width="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+                    <defs>
+                        <linearGradient id="bpPulse" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stop-color="rgba(23,105,255,0.55)" />
+                            <stop offset="55%" stop-color="rgba(255,59,106,0.35)" />
+                            <stop offset="100%" stop-color="rgba(43,228,167,0.30)" />
+                        </linearGradient>
+                    </defs>
+                    <rect x="0" y="0" width="${w}" height="${h}" rx="18" fill="rgba(255,255,255,0.20)" stroke="rgba(255,255,255,0.55)" />
+                    <rect x="0" y="0" width="${w}" height="${h}" rx="18" fill="url(#bpPulse)" opacity="0.18" />
+                    ${bars}
+                    ${ticks}
+                </svg>
+            `;
+        }
+
+        function buildDonutSvg(parts) {
+            const size = 180;
+            const r = 64;
+            const cx = 90;
+            const cy = 90;
+            const total = Math.max(1, parts.reduce((a, p) => a + p.value, 0));
+
+            let start = -Math.PI / 2;
+            const arcs = parts.map((p, idx) => {
+                const frac = p.value / total;
+                const end = start + frac * Math.PI * 2;
+                const x1 = cx + r * Math.cos(start);
+                const y1 = cy + r * Math.sin(start);
+                const x2 = cx + r * Math.cos(end);
+                const y2 = cy + r * Math.sin(end);
+                const large = frac > 0.5 ? 1 : 0;
+                const path = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`;
+
+                const colors = [
+                    'rgba(23,105,255,0.55)',
+                    'rgba(255,59,106,0.45)',
+                    'rgba(43,228,167,0.45)',
+                    'rgba(255,196,0,0.45)',
+                    'rgba(120,88,255,0.40)'
+                ];
+                const fill = colors[idx % colors.length];
+                start = end;
+                return `<path d="${path}" fill="${fill}" stroke="rgba(255,255,255,0.55)" stroke-width="1" />`;
+            }).join('');
+
+            const legend = parts.slice(0, 6).map((p, i) => {
+                const colors = [
+                    'rgba(23,105,255,0.55)',
+                    'rgba(255,59,106,0.45)',
+                    'rgba(43,228,167,0.45)',
+                    'rgba(255,196,0,0.45)',
+                    'rgba(120,88,255,0.40)'
+                ];
+                const fill = colors[i % colors.length];
+                return `
+                    <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
+                        <span style="width:10px;height:10px;border-radius:999px;background:${fill};border:1px solid rgba(255,255,255,0.7);"></span>
+                        <span class="muted" style="font-weight:900;">${esc(p.label)}:</span>
+                        <span class="muted">${p.value}</span>
                     </div>
                 `;
             }).join('');
+
+            const svg = `
+                <svg width="180" height="180" viewBox="0 0 ${size} ${size}">
+                    <circle cx="${cx}" cy="${cy}" r="${r + 2}" fill="rgba(255,255,255,0.20)" stroke="rgba(255,255,255,0.55)" />
+                    ${arcs}
+                    <circle cx="${cx}" cy="${cy}" r="${r * 0.58}" fill="rgba(255,255,255,0.70)" stroke="rgba(255,255,255,0.55)" />
+                    <text x="${cx}" y="${cy - 2}" text-anchor="middle" font-size="12" font-weight="900" fill="rgba(8,12,22,0.70)">Top courses</text>
+                    <text x="${cx}" y="${cy + 18}" text-anchor="middle" font-size="18" font-weight="1000" fill="rgba(8,12,22,0.86)">${total}</text>
+                </svg>
+            `;
+
+            return `<div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">${svg}<div>${legend}</div></div>`;
+        }
+
+        function buildVisuals(data) {
+            const assignments = Array.isArray(data.assignments) ? data.assignments : [];
+            const planner = Array.isArray(data.planner_items) ? data.planner_items : [];
+            const calendar = Array.isArray(data.calendar_events) ? data.calendar_events : [];
+
+            // Workload pulse (next 14 days) from assignments + planner + calendar
+            const days = 14;
+            const start = new Date();
+            start.setHours(0,0,0,0);
+
+            const counts = Array(days).fill(0);
+            const labels = Array(days).fill('').map((_, i) => {
+                const d = new Date(start.getTime() + i * 24 * 60 * 60 * 1000);
+                return d.toLocaleDateString([], { month: 'numeric', day: 'numeric' });
+            });
+
+            const bump = (dt) => {
+                if (!dt) return;
+                const t = new Date(dt);
+                if (Number.isNaN(t.getTime())) return;
+                const idx = Math.floor((t.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
+                if (idx >= 0 && idx < days) counts[idx] += 1;
+            };
+
+            for (const a of assignments) bump(a?.due_at);
+            for (const p of planner) bump(pickDueDate(p));
+            for (const e of calendar) bump(pickDueDate(e));
+
+            const max = Math.max(1, ...counts);
+            const busiestIdx = counts.indexOf(max);
+            const busiestLabel = labels[busiestIdx] || '-';
+
+            document.getElementById('pulseViz').innerHTML = buildPulseSvg(counts, labels);
+
+            // Course mix
+            const byCourse = new Map();
+            for (const a of assignments) {
+                const c = a?.course_name || a?.course_code || 'Other';
+                byCourse.set(c, (byCourse.get(c) || 0) + 1);
+            }
+
+            const parts = Array.from(byCourse.entries())
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 6)
+                .map(([label, value]) => ({ label, value }));
+
+            document.getElementById('courseViz').innerHTML = parts.length ? buildDonutSvg(parts) : '<div class="muted" style="padding: 10px;">No course mix yet.</div>';
+
+            return { busiestLabel, pulseCounts: counts };
         }
 
         async function loadCanvasDashboard() {
@@ -808,23 +1067,34 @@
                 empty.style.display = 'none';
                 dash.style.display = 'block';
 
-                document.getElementById('courseCount').textContent = (data.courses || []).length;
-                document.getElementById('assignmentCount').textContent = (data.assignments || []).length;
+                const courses = Array.isArray(data.courses) ? data.courses : [];
+                const assignments = Array.isArray(data.assignments) ? data.assignments : [];
+                const planner = Array.isArray(data.planner_items) ? data.planner_items : [];
+                const calendar = Array.isArray(data.calendar_events) ? data.calendar_events : [];
 
-                renderAssignments(data.assignments || []);
+                const { busiestLabel } = buildVisuals(data);
 
-                // Extra datasets from extension sync
+                renderUpcoming(assignments);
                 renderGrades(data.grades || []);
-                renderPlanner(data.planner_items || []);
-                renderCalendar(data.calendar_events || []);
+                renderPlanner(planner);
+                renderCalendar(calendar);
                 renderAnnouncements(data.announcements || []);
 
-                // Default tab
+                // KPIs
+                document.getElementById('kpiCourses').textContent = courses.length;
+                document.getElementById('kpiAssignments').textContent = assignments.length;
+                document.getElementById('kpiEvents').textContent = planner.length + calendar.length;
+
+                // Next due
+                const upcoming = normalizeUpcoming(assignments);
+                const nextDue = upcoming[0]?.due_at ? new Date(upcoming[0].due_at) : null;
+                document.getElementById('kpiNextDue').textContent = nextDue ? `Next due: ${nextDue.toLocaleString()}` : 'Next due: -';
+                document.getElementById('kpiBusiest').textContent = busiestLabel ? `Busiest day: ${busiestLabel}` : 'Busiest day: -';
+
+                const syncedAt = data.synced_at ? new Date(data.synced_at).toLocaleString() : '-';
+                document.getElementById('kpiSyncedAt').textContent = `Last sync: ${syncedAt}`;
+
                 setDashTab('overview');
-
-                const syncedAt = data.synced_at ? new Date(data.synced_at).toLocaleString() : '';
-                document.getElementById('syncedAt').textContent = syncedAt ? `Last synced: ${syncedAt}` : '';
-
                 setStatus('Dashboard updated.', 'success');
             } catch (e) {
                 setStatus(`Dashboard error: ${e.message}`, 'error');
@@ -840,18 +1110,13 @@
             setUserUI();
 
             const lastCanvasUrl = localStorage.getItem('lastCanvasUrl');
-            if (lastCanvasUrl) {
-                document.getElementById('canvasUrl').value = lastCanvasUrl;
-            }
+            if (lastCanvasUrl) document.getElementById('canvasUrl').value = lastCanvasUrl;
 
             try {
                 const response = await apiFetch(`${BASE_API_URL}/auth/me`);
                 if (!response.ok) redirectToLogin();
-            } catch (error) {
-                console.error('Auth check failed:', error);
-            }
+            } catch (e) {}
 
-            // Try loading existing data on page open.
             await loadCanvasDashboard();
         });
     </script>
