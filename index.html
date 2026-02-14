@@ -235,6 +235,115 @@
 
         .chip:hover { transform: translateY(-1px); filter: saturate(1.06); }
 
+        .section {
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(229,231,235,1);
+        }
+
+        .section:first-child {
+            margin-top: 0;
+            padding-top: 0;
+            border-top: none;
+        }
+
+        .row-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sbtn {
+            appearance: none;
+            border: 1px solid rgba(229,231,235,1);
+            background: rgba(243,244,246,1);
+            color: rgba(15,23,42,0.86);
+            border-radius: 10px;
+            padding: 8px 10px;
+            font-weight: 900;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .sbtn.primary {
+            background: rgba(26,115,232,1);
+            border-color: rgba(26,115,232,1);
+            color: rgba(255,255,255,0.96);
+        }
+
+        .sbtn.danger {
+            background: rgba(239,68,68,1);
+            border-color: rgba(239,68,68,1);
+            color: rgba(255,255,255,0.96);
+        }
+
+        .listbox {
+            margin-top: 10px;
+            border: 1px solid rgba(229,231,235,1);
+            border-radius: var(--radius-md);
+            background: rgba(255,255,255,1);
+            overflow: hidden;
+        }
+
+        .listbox .item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-top: 1px solid rgba(229,231,235,1);
+            cursor: pointer;
+        }
+
+        .listbox .item:first-child { border-top: none; }
+        .listbox .item.active { background: rgba(232,240,254,1); }
+
+        .item-title {
+            font-weight: 950;
+            font-size: 13px;
+            color: rgba(15,23,42,0.92);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 240px;
+        }
+
+        .item-sub {
+            font-size: 11px;
+            font-weight: 800;
+            color: rgba(15,23,42,0.58);
+            margin-top: 2px;
+        }
+
+        .item-meta {
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .input-sm, select.select-sm {
+            width: 100%;
+            padding: 10px 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(209,213,219,1);
+            background: rgba(255,255,255,1);
+            outline: none;
+            font-size: 13px;
+            color: rgba(15,23,42,0.92);
+        }
+
+        .input-sm:focus, select.select-sm:focus {
+            border-color: rgba(26,115,232,1);
+            box-shadow: 0 0 0 4px rgba(26,115,232,0.12);
+        }
+
         .meta-box {
             margin-top: 12px;
             border-radius: var(--radius-lg);
@@ -583,22 +692,52 @@
 
         <div class="layout">
             <div class="card">
-                <h2>Try These</h2>
-                <div class="muted">Click a prompt to send it.</div>
-
-                <div class="chip-row" id="exampleChips"></div>
-
-                <div class="tool">
-                    <h2 style="margin:0; font-size: 14px;">Study Guide Generator</h2>
-                    <div class="muted">Upload a syllabus or notes and I’ll generate a clean guide you can download.</div>
-
-                    <label for="studyGuideFile">File</label>
-                    <input id="studyGuideFile" type="file" accept=".txt,.pdf,.docx" />
-                    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top: 10px;">
-                        <button class="btn btn-primary" id="studyGuideBtn" onclick="generateStudyGuide()">Create study guide</button>
-                        <button class="btn" onclick="clearChat()">Clear chat</button>
+                <div class="section">
+                    <div class="row-between">
+                        <h2 style="margin:0;">Conversations</h2>
+                        <button class="sbtn primary" id="newChatBtn" onclick="createNewConversation()">New</button>
                     </div>
-                    <div id="toolStatus" class="status" aria-live="polite">Ready.</div>
+                    <div style="margin-top:10px;">
+                        <input class="input-sm" id="convoSearch" type="text" placeholder="Search conversations..." oninput="renderConversations()" />
+                    </div>
+                    <div class="listbox" id="conversationsList" aria-label="Conversation list"></div>
+                </div>
+
+                <div class="section">
+                    <div class="row-between">
+                        <h2 style="margin:0;">Study Guides</h2>
+                        <button class="sbtn" onclick="refreshStudyGuides()">Refresh</button>
+                    </div>
+
+                    <div class="tool" style="margin-top:10px;">
+                        <div class="muted">Upload a syllabus or notes and save a reusable guide.</div>
+
+                        <label for="studyGuideTemplate">Template</label>
+                        <select id="studyGuideTemplate" class="select-sm">
+                            <option value="standard">Standard</option>
+                            <option value="exam_cram">Exam cram</option>
+                            <option value="plan_7day">7-day plan</option>
+                            <option value="flashcards">Flashcards</option>
+                            <option value="practice_test">Practice test</option>
+                        </select>
+
+                        <label for="studyGuideFile">File</label>
+                        <input id="studyGuideFile" type="file" accept=".txt,.pdf,.docx" />
+
+                        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top: 10px;">
+                            <button class="btn btn-primary" id="studyGuideBtn" onclick="generateStudyGuide()">Generate</button>
+                            <button class="btn" onclick="clearChat()">Clear chat</button>
+                        </div>
+                        <div id="toolStatus" class="status" aria-live="polite">Ready.</div>
+                    </div>
+
+                    <div class="listbox" id="studyGuidesList" style="margin-top:10px;" aria-label="Study guides list"></div>
+                </div>
+
+                <div class="section">
+                    <h2 style="margin:0;">Try These</h2>
+                    <div class="muted">Click a prompt to send it.</div>
+                    <div class="chip-row" id="exampleChips"></div>
                 </div>
             </div>
 
@@ -608,6 +747,9 @@
                         <strong>Blueprint Chat</strong>
                     </div>
                     <div class="chat-actions">
+                        <button class="tiny" onclick="editLastUserMessage()">Edit last</button>
+                        <button class="tiny" onclick="continueAssistant()">Continue</button>
+                        <button class="tiny" onclick="regenerateAssistant()">Regenerate</button>
                         <button class="tiny" onclick="exportChat()">Export</button>
                     </div>
                 </div>
@@ -667,6 +809,10 @@
         const UPLOAD_URL = `${BASE_API_URL}/upload`;
         const STUDY_GUIDE_URL = `${BASE_API_URL}/generate-study-guide`;
         const CHAT_HISTORY_URL = `${BASE_API_URL}/chat/history`;
+        const CONVERSATIONS_URL = `${BASE_API_URL}/conversations`;
+        const STUDY_GUIDES_URL = `${BASE_API_URL}/study-guides`;
+        const CHAT_REGENERATE_URL = `${BASE_API_URL}/chat/regenerate`;
+        const CHAT_CONTINUE_URL = `${BASE_API_URL}/chat/continue`;
         const LOGOUT_URL = `${BASE_API_URL}/auth/logout`;
         const CANVAS_STATUS_URL = `${BASE_API_URL}/api/canvas/status`;
         const CANVAS_DISCONNECT_URL = `${BASE_API_URL}/api/canvas/disconnect`;
@@ -758,6 +904,9 @@
         // State
         let chatHistory = [];
         let currentFile = null;
+        let conversations = [];
+        let currentConversationId = null;
+        let studyGuides = [];
 
         const EXAMPLE_PROMPTS = [
             'What should I work on today based on my Canvas deadlines?',
@@ -913,7 +1062,7 @@
                     const formData = new FormData();
                     formData.append('file', currentFile);
                     formData.append('message', message || '');
-                    formData.append('history', JSON.stringify(chatHistory));
+                    if (currentConversationId) formData.append('conversationId', String(currentConversationId));
 
                     response = await apiFetch(UPLOAD_URL, {
                         method: 'POST',
@@ -923,7 +1072,7 @@
                     response = await apiFetch(API_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message, subject: '', history: chatHistory })
+                        body: JSON.stringify({ message, subject: '', conversationId: currentConversationId })
                     });
                 }
 
@@ -941,7 +1090,8 @@
                     chatHistory.push({ role: 'user', content: displayMessage });
                     chatHistory.push({ role: 'assistant', content: data.response });
 
-                    localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+                    try { localStorage.setItem('chatHistory', JSON.stringify(chatHistory)); } catch {}
+                    loadConversations().catch(() => {});
                 }
 
             } catch (e) {
@@ -1023,7 +1173,11 @@
             if (!confirm('Clear the chat history?')) return;
             chatHistory = [];
             localStorage.removeItem('chatHistory');
-            apiFetch(CHAT_HISTORY_URL, { method: 'DELETE' }).catch(() => {});
+            if (currentConversationId) {
+                apiFetch(`${CHAT_HISTORY_URL}?conversationId=${encodeURIComponent(currentConversationId)}`, { method: 'DELETE' }).catch(() => {});
+            } else {
+                apiFetch(CHAT_HISTORY_URL, { method: 'DELETE' }).catch(() => {});
+            }
 
             messagesArea.innerHTML = `
                 <div class="empty" id="emptyState">
@@ -1059,6 +1213,279 @@
             }
         }
 
+        function formatRelative(iso) {
+            try {
+                const ts = new Date(iso).getTime();
+                if (!ts) return '';
+                const delta = Date.now() - ts;
+                const mins = Math.floor(delta / 60000);
+                if (mins < 1) return 'just now';
+                if (mins < 60) return `${mins}m ago`;
+                const hrs = Math.floor(mins / 60);
+                if (hrs < 24) return `${hrs}h ago`;
+                const days = Math.floor(hrs / 24);
+                return `${days}d ago`;
+            } catch {
+                return '';
+            }
+        }
+
+        async function loadConversations() {
+            const resp = await apiFetch(CONVERSATIONS_URL);
+            const data = await safeReadJson(resp);
+            if (!resp.ok || data.error) throw new Error(data.error || 'Failed to load conversations');
+
+            conversations = Array.isArray(data.conversations) ? data.conversations : [];
+            if (!currentConversationId) currentConversationId = conversations[0]?.id || null;
+            if (currentConversationId && !conversations.some((c) => c.id === currentConversationId)) {
+                currentConversationId = conversations[0]?.id || null;
+            }
+
+            renderConversations();
+        }
+
+        function renderConversations() {
+            const wrap = document.getElementById('conversationsList');
+            if (!wrap) return;
+            const q = (document.getElementById('convoSearch')?.value || '').trim().toLowerCase();
+            wrap.innerHTML = '';
+
+            const filtered = conversations.filter((c) => {
+                if (!q) return true;
+                return String(c.title || '').toLowerCase().includes(q);
+            });
+
+            if (!filtered.length) {
+                wrap.innerHTML = `<div class="item"><div class="item-meta"><div class="item-title">No matches</div><div class="item-sub">Try another search.</div></div></div>`;
+                return;
+            }
+
+            filtered.forEach((c) => {
+                const row = document.createElement('div');
+                row.className = 'item' + (c.id === currentConversationId ? ' active' : '');
+
+                const meta = document.createElement('div');
+                meta.className = 'item-meta';
+                const title = document.createElement('div');
+                title.className = 'item-title';
+                title.textContent = c.title || 'Untitled';
+                const sub = document.createElement('div');
+                sub.className = 'item-sub';
+                const stamp = c.lastMessageAt || c.updatedAt || c.createdAt;
+                sub.textContent = stamp ? `Active ${formatRelative(stamp)}` : '';
+                meta.appendChild(title);
+                meta.appendChild(sub);
+
+                const actions = document.createElement('div');
+                actions.className = 'item-actions';
+
+                const rename = document.createElement('button');
+                rename.className = 'sbtn';
+                rename.type = 'button';
+                rename.textContent = 'Rename';
+                rename.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const next = prompt('Rename conversation:', c.title || '');
+                    if (!next) return;
+                    await renameConversation(c.id, next);
+                });
+
+                const del = document.createElement('button');
+                del.className = 'sbtn danger';
+                del.type = 'button';
+                del.textContent = 'Del';
+                del.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    await deleteConversation(c.id);
+                });
+
+                actions.appendChild(rename);
+                actions.appendChild(del);
+
+                row.appendChild(meta);
+                row.appendChild(actions);
+                row.addEventListener('click', async () => {
+                    await selectConversation(c.id);
+                });
+                wrap.appendChild(row);
+            });
+        }
+
+        async function createNewConversation() {
+            const resp = await apiFetch(CONVERSATIONS_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: 'New chat' })
+            });
+            const data = await safeReadJson(resp);
+            if (!resp.ok || data.error) throw new Error(data.error || 'Failed to create conversation');
+            conversations.unshift(data.conversation);
+            currentConversationId = data.conversation.id;
+            renderConversations();
+            await loadChatHistory();
+        }
+
+        async function renameConversation(id, title) {
+            const resp = await apiFetch(`${CONVERSATIONS_URL}/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title })
+            });
+            const data = await safeReadJson(resp);
+            if (!resp.ok || data.error) throw new Error(data.error || 'Failed to rename conversation');
+            conversations = conversations.map((c) => (c.id === id ? { ...c, title: data.conversation.title } : c));
+            renderConversations();
+        }
+
+        async function deleteConversation(id) {
+            if (!confirm('Delete this conversation?')) return;
+            const resp = await apiFetch(`${CONVERSATIONS_URL}/${id}`, { method: 'DELETE' });
+            const data = await safeReadJson(resp);
+            if (!resp.ok || data.error) throw new Error(data.error || 'Failed to delete conversation');
+            conversations = conversations.filter((c) => c.id !== id);
+            if (currentConversationId === id) {
+                currentConversationId = data?.defaultConversation?.id || conversations[0]?.id || null;
+            }
+            await loadConversations();
+            await loadChatHistory();
+        }
+
+        async function selectConversation(id) {
+            currentConversationId = id;
+            renderConversations();
+            await loadChatHistory();
+        }
+
+        async function loadChatHistory() {
+            if (!currentConversationId) return;
+            const resp = await apiFetch(`${CHAT_HISTORY_URL}?conversationId=${encodeURIComponent(currentConversationId)}`);
+            const data = await safeReadJson(resp);
+            if (!resp.ok || data.error) throw new Error(data.error || 'Failed to load chat history');
+
+            chatHistory = Array.isArray(data.history) ? data.history.map((m) => ({ role: m.role, content: m.content })) : [];
+
+            messagesArea.innerHTML = '';
+            if (!chatHistory.length) {
+                messagesArea.innerHTML = `
+                    <div class="empty" id="emptyState">
+                        <h3>Start anywhere.</h3>
+                        <p>Ask a question, or click a prompt on the left. Upload a file if you want the tutor to work from your material.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            chatHistory.forEach((msg) => {
+                if (msg.role === 'user') addUserMessage(msg.content);
+                else addAssistantMessage(msg.content);
+            });
+        }
+
+        async function refreshStudyGuides() {
+            const resp = await apiFetch(STUDY_GUIDES_URL);
+            const data = await safeReadJson(resp);
+            if (!resp.ok || data.error) throw new Error(data.error || 'Failed to load study guides');
+            studyGuides = Array.isArray(data.studyGuides) ? data.studyGuides : [];
+            renderStudyGuides();
+        }
+
+        function renderStudyGuides() {
+            const wrap = document.getElementById('studyGuidesList');
+            if (!wrap) return;
+            wrap.innerHTML = '';
+            if (!studyGuides.length) {
+                wrap.innerHTML = `<div class="item"><div class="item-meta"><div class="item-title">No guides yet</div><div class="item-sub">Generate one to save it here.</div></div></div>`;
+                return;
+            }
+
+            studyGuides.slice(0, 20).forEach((g) => {
+                const row = document.createElement('div');
+                row.className = 'item';
+
+                const meta = document.createElement('div');
+                meta.className = 'item-meta';
+                const title = document.createElement('div');
+                title.className = 'item-title';
+                title.textContent = g.title || 'Study guide';
+                const sub = document.createElement('div');
+                sub.className = 'item-sub';
+                sub.textContent = `${g.template || 'standard'}${g.createdAt ? ` • ${formatRelative(g.createdAt)}` : ''}`;
+                meta.appendChild(title);
+                meta.appendChild(sub);
+
+                const actions = document.createElement('div');
+                actions.className = 'item-actions';
+
+                const open = document.createElement('button');
+                open.className = 'sbtn';
+                open.type = 'button';
+                open.textContent = 'Open';
+                open.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    await openStudyGuide(g.id);
+                });
+
+                const rename = document.createElement('button');
+                rename.className = 'sbtn';
+                rename.type = 'button';
+                rename.textContent = 'Rename';
+                rename.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const next = prompt('Rename study guide:', g.title || '');
+                    if (!next) return;
+                    await renameStudyGuide(g.id, next);
+                });
+
+                const del = document.createElement('button');
+                del.className = 'sbtn danger';
+                del.type = 'button';
+                del.textContent = 'Del';
+                del.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    await deleteStudyGuide(g.id);
+                });
+
+                actions.appendChild(open);
+                actions.appendChild(rename);
+                actions.appendChild(del);
+
+                row.appendChild(meta);
+                row.appendChild(actions);
+                wrap.appendChild(row);
+            });
+        }
+
+        async function openStudyGuide(id) {
+            const resp = await apiFetch(`${STUDY_GUIDES_URL}/${id}`);
+            const data = await safeReadJson(resp);
+            if (!resp.ok || data.error) throw new Error(data.error || 'Failed to open study guide');
+            const guide = data.studyGuide?.content || '';
+            if (!guide) return;
+            addAssistantMessage(guide, { kind: 'study-guide' });
+            chatHistory.push({ role: 'assistant', content: guide });
+        }
+
+        async function renameStudyGuide(id, title) {
+            const resp = await apiFetch(`${STUDY_GUIDES_URL}/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title })
+            });
+            const data = await safeReadJson(resp);
+            if (!resp.ok || data.error) throw new Error(data.error || 'Failed to rename study guide');
+            studyGuides = studyGuides.map((g) => (g.id === id ? { ...g, title: data.studyGuide.title } : g));
+            renderStudyGuides();
+        }
+
+        async function deleteStudyGuide(id) {
+            if (!confirm('Delete this study guide from your library?')) return;
+            const resp = await apiFetch(`${STUDY_GUIDES_URL}/${id}`, { method: 'DELETE' });
+            const data = await safeReadJson(resp);
+            if (!resp.ok || data.error) throw new Error(data.error || 'Failed to delete study guide');
+            studyGuides = studyGuides.filter((g) => g.id !== id);
+            renderStudyGuides();
+        }
+
         async function refreshCanvasMeta() {
             const el = document.getElementById('canvasMeta');
             if (!el) return;
@@ -1090,23 +1517,82 @@
             try {
                 const formData = new FormData();
                 formData.append('file', file);
+                const template = document.getElementById('studyGuideTemplate')?.value || 'standard';
+                formData.append('template', template);
+                if (currentConversationId) formData.append('conversationId', String(currentConversationId));
 
                 const resp = await apiFetch(STUDY_GUIDE_URL, { method: 'POST', body: formData });
                 const data = await safeReadJson(resp);
                 if (!resp.ok || data.error) throw new Error(data.error || 'Failed to generate study guide');
 
-                const guide = data.studyGuide || '';
-                addAssistantMessage(guide, { kind: 'study-guide' });
-                chatHistory.push({ role: 'assistant', content: guide });
-                localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+                await refreshStudyGuides().catch(() => {});
+                await loadChatHistory();
 
-                setToolStatus('Study guide generated. Use the MD/PDF buttons under the message to download.', 'success');
+                setToolStatus(data.cached ? 'Study guide loaded from your library.' : 'Study guide generated and saved to your library.', 'success');
                 studyGuideFile.value = '';
-                messagesArea.scrollTop = messagesArea.scrollHeight;
             } catch (e) {
                 setToolStatus(e.message || 'Failed to generate study guide', 'error');
             } finally {
                 studyGuideBtn.disabled = false;
+            }
+        }
+
+        function editLastUserMessage() {
+            for (let i = chatHistory.length - 1; i >= 0; i--) {
+                if (chatHistory[i]?.role === 'user') {
+                    messageInput.value = chatHistory[i].content || '';
+                    messageInput.dispatchEvent(new Event('input'));
+                    messageInput.focus();
+                    return;
+                }
+            }
+        }
+
+        async function regenerateAssistant() {
+            if (!currentConversationId) return;
+            setChatBusy(true);
+            showTypingIndicator();
+            try {
+                const resp = await apiFetch(CHAT_REGENERATE_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ conversationId: currentConversationId })
+                });
+                const data = await safeReadJson(resp);
+                if (!resp.ok || data.error) throw new Error(data.error || 'Regenerate failed');
+                hideTypingIndicator();
+                addAssistantMessage(data.response);
+                chatHistory.push({ role: 'assistant', content: data.response });
+                loadConversations().catch(() => {});
+            } catch (e) {
+                hideTypingIndicator();
+                setComposerStatus(e.message || 'Regenerate failed', true);
+            } finally {
+                setChatBusy(false);
+            }
+        }
+
+        async function continueAssistant() {
+            if (!currentConversationId) return;
+            setChatBusy(true);
+            showTypingIndicator();
+            try {
+                const resp = await apiFetch(CHAT_CONTINUE_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ conversationId: currentConversationId })
+                });
+                const data = await safeReadJson(resp);
+                if (!resp.ok || data.error) throw new Error(data.error || 'Continue failed');
+                hideTypingIndicator();
+                addAssistantMessage(data.response);
+                chatHistory.push({ role: 'assistant', content: data.response });
+                loadConversations().catch(() => {});
+            } catch (e) {
+                hideTypingIndicator();
+                setComposerStatus(e.message || 'Continue failed', true);
+            } finally {
+                setChatBusy(false);
             }
         }
 
@@ -1125,28 +1611,9 @@
             } catch (e) {}
 
             await refreshCanvasMeta();
-
-            // Load chat history from backend first, fallback to localStorage
-            try {
-                const historyResponse = await apiFetch(CHAT_HISTORY_URL);
-                if (historyResponse.ok) {
-                    const historyData = await historyResponse.json();
-                    chatHistory = historyData.history || [];
-                }
-            } catch (e) {}
-
-            if (!chatHistory.length) {
-                const savedHistory = localStorage.getItem('chatHistory');
-                if (savedHistory) chatHistory = JSON.parse(savedHistory);
-            }
-
-            if (chatHistory.length > 0) {
-                messagesArea.innerHTML = '';
-                for (const msg of chatHistory) {
-                    if (msg.role === 'user') addUserMessage(msg.content);
-                    else addAssistantMessage(msg.content);
-                }
-            }
+            await loadConversations();
+            await refreshStudyGuides().catch(() => {});
+            await loadChatHistory();
         });
     </script>
 </body>
