@@ -846,7 +846,7 @@
                 const context = raw?.context_name || raw?.context_code || '';
                 const when = t ? new Date(t).toLocaleString() : '';
                 const link = raw?.html_url || raw?.url || '';
-                const linkHtml = link ? `<a class="btn" style="padding: 6px 10px;" href="${esc(link)}" target="_blank" rel="noreferrer">Open</a>` : '';
+                const linkHtml = link ? `<a class="btn" style="padding: 6px 10px;" href="${esc(link)}" target="_blank" rel="noopener noreferrer">Open</a>` : '';
                 return `
                     <div class="item">
                         <div class="item-title">${esc(title)}</div>

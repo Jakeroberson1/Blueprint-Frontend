@@ -6,16 +6,16 @@
     <title>Blueprint - Chat</title>
 
     <!-- KaTeX for LaTeX rendering -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" integrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzUOEleOLALmuqehneUG+vnGctmUb0ZY0l8" crossorigin="anonymous"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"></script>
 
     <!-- Marked.js for Markdown rendering -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" integrity="sha384-948ahk4ZmxYVYOc+rxN1H2gM1EJ2Duhp7uHtZ4WSLkV4Vtx5MUqnV+l7u9B+jFv+" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.7/dist/purify.min.js" integrity="sha384-XQqX/4yiUGu+oyr87jvWzRuqBUK/adrY0DunhL+tID9m/9dwSpV8h9Fk/Sg6ifVQ" crossorigin="anonymous"></script>
 
     <!-- jsPDF for downloads -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk" crossorigin="anonymous"></script>
 
     <style>
         :root {
@@ -820,6 +820,25 @@
         const sessionToken = sessionStorage.getItem('sessionToken');
         const currentUser = JSON.parse(sessionStorage.getItem('user') || 'null');
 
+        // Harden markdown rendering defaults.
+        try {
+            if (window.marked?.setOptions) {
+                marked.setOptions({ mangle: false, headerIds: false });
+            }
+        } catch (e) {}
+
+        // Ensure any links in model output are safe when clicked.
+        try {
+            if (window.DOMPurify?.addHook) {
+                DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+                    if (node?.tagName === 'A' && node.getAttribute('href')) {
+                        node.setAttribute('target', '_blank');
+                        node.setAttribute('rel', 'noopener noreferrer');
+                    }
+                });
+            }
+        } catch (e) {}
+
         function redirectToLogin() {
             try {
                 sessionStorage.removeItem('sessionToken');
@@ -984,7 +1003,10 @@
             messageDiv.dataset.kind = meta.kind || '';
 
             const renderedContent = marked.parse(content);
-            const safeHtml = window.DOMPurify ? DOMPurify.sanitize(renderedContent) : renderedContent;
+            // If DOMPurify fails to load, render as plain text to avoid XSS.
+            const safeHtml = window.DOMPurify
+                ? DOMPurify.sanitize(renderedContent)
+                : `<pre style="white-space:pre-wrap; margin:0;">${escapeHtml(content)}</pre>`;
 
             messageDiv.innerHTML = `
                 <div class="avatar">BP</div>
