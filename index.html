@@ -215,26 +215,6 @@
             font-weight: 750;
         }
 
-        .chip-row {
-            margin-top: 12px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .chip {
-            padding: 8px 10px;
-            border-radius: 999px;
-            border: 1px solid rgba(229,231,235,1);
-            background: rgba(243,244,246,1);
-            color: rgba(15,23,42,0.88);
-            font-weight: 950;
-            cursor: pointer;
-            transition: transform 0.12s ease, filter 0.12s ease;
-        }
-
-        .chip:hover { transform: translateY(-1px); filter: saturate(1.06); }
-
         .section {
             margin-top: 14px;
             padding-top: 14px;
@@ -342,6 +322,59 @@
         .input-sm:focus, select.select-sm:focus {
             border-color: rgba(26,115,232,1);
             box-shadow: 0 0 0 4px rgba(26,115,232,0.12);
+        }
+
+        .filepick {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border: 1px dashed rgba(148,163,184,0.9);
+            border-radius: 14px;
+            background: rgba(255,255,255,1);
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.12s ease, border-color 0.12s ease, transform 0.12s ease;
+        }
+
+        .filepick:hover {
+            border-color: rgba(26,115,232,0.65);
+            background: rgba(232,240,254,0.55);
+        }
+
+        .filepick.dragover {
+            border-color: rgba(26,115,232,1);
+            background: rgba(232,240,254,0.85);
+            transform: translateY(-1px);
+        }
+
+        .filepick-ico {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            border: 1px solid rgba(229,231,235,1);
+            background: rgba(255,255,255,1);
+            display: grid;
+            place-items: center;
+            color: rgba(15,23,42,0.72);
+            flex-shrink: 0;
+        }
+
+        .filepick-meta {
+            min-width: 0;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .filepick-name {
+            font-weight: 950;
+            color: rgba(15,23,42,0.92);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .meta-box {
@@ -721,8 +754,24 @@
                             <option value="practice_test">Practice test</option>
                         </select>
 
-                        <label for="studyGuideFile">File</label>
-                        <input id="studyGuideFile" type="file" accept=".txt,.pdf,.docx" />
+                        <label>File</label>
+                        <input id="studyGuideFile" type="file" accept=".txt,.pdf,.docx" style="display:none" />
+                        <div class="filepick" id="studyGuidePicker" role="button" tabindex="0" aria-label="Upload a file to generate a study guide">
+                            <div class="filepick-ico" aria-hidden="true">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                    <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7l-5-5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                                    <path d="M14 2v5h5" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                                    <path d="M9 13h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M9 17h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                            <div class="filepick-meta">
+                                <div id="studyGuideFileName" class="filepick-name">No file selected</div>
+                                <div class="muted" style="font-size: 12px;">Drag and drop PDF/DOCX/TXT, or click to browse</div>
+                            </div>
+                            <button class="sbtn" type="button" id="studyGuideBrowseBtn">Browse</button>
+                            <button class="sbtn danger" id="studyGuideClearBtn" type="button" onclick="clearStudyGuideFile()" style="display:none;">Remove</button>
+                        </div>
 
                         <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top: 10px;">
                             <button class="btn btn-primary" id="studyGuideBtn" onclick="generateStudyGuide()">Generate</button>
@@ -732,12 +781,6 @@
                     </div>
 
                     <div class="listbox" id="studyGuidesList" style="margin-top:10px;" aria-label="Study guides list"></div>
-                </div>
-
-                <div class="section">
-                    <h2 style="margin:0;">Try These</h2>
-                    <div class="muted">Click a prompt to send it.</div>
-                    <div class="chip-row" id="exampleChips"></div>
                 </div>
             </div>
 
@@ -757,7 +800,7 @@
                 <div class="messages" id="messagesArea">
                     <div class="empty" id="emptyState">
                         <h3>Start anywhere.</h3>
-                        <p>Ask a question, or click a prompt on the left. Upload a file if you want the tutor to work from your material.</p>
+                        <p>Ask a question, or upload a file if you want the tutor to work from your material.</p>
                     </div>
                 </div>
 
@@ -927,32 +970,14 @@
         let currentConversationId = null;
         let studyGuides = [];
 
-        const EXAMPLE_PROMPTS = [
-            'What should I work on today based on my Canvas deadlines?',
-            'Explain this concept like I’m smart but rusty: [paste topic]',
-            'Quiz me on Chapter 5 (make 10 questions, then grade me).',
-            'I’m stuck. I don’t know what to do next. Just tell me the answer and why.',
-            'Turn my notes into a study guide with key terms, practice questions, and a 7-day plan.',
-            'Analyze this PDF and create a summary + 5 practice problems.'
-        ];
-
-        function mountExampleChips() {
-            const wrap = document.getElementById('exampleChips');
-            wrap.innerHTML = '';
-            EXAMPLE_PROMPTS.forEach((t) => {
-                const b = document.createElement('button');
-                b.type = 'button';
-                b.className = 'chip';
-                b.textContent = t;
-                b.addEventListener('click', () => sendExample(t));
-                wrap.appendChild(b);
-            });
-        }
-
-        function sendExample(text) {
-            messageInput.value = text;
-            messageInput.dispatchEvent(new Event('input'));
-            sendMessage();
+        function clearStudyGuideFile() {
+            try { studyGuideFile.value = ''; } catch (e) {}
+            const nameEl = document.getElementById('studyGuideFileName');
+            if (nameEl) nameEl.textContent = 'No file selected';
+            const clearBtn = document.getElementById('studyGuideClearBtn');
+            if (clearBtn) clearBtn.style.display = 'none';
+            const picker = document.getElementById('studyGuidePicker');
+            if (picker) picker.classList.remove('dragover');
         }
 
         // Auto-resize textarea
@@ -978,6 +1003,68 @@
                 filePreview.classList.add('active');
             }
         });
+
+        // Study guide file selection UI
+        studyGuideFile.addEventListener('change', function() {
+            const f = studyGuideFile.files?.[0];
+            const nameEl = document.getElementById('studyGuideFileName');
+            const clearBtn = document.getElementById('studyGuideClearBtn');
+            if (nameEl) nameEl.textContent = f ? f.name : 'No file selected';
+            if (clearBtn) clearBtn.style.display = f ? 'inline-flex' : 'none';
+        });
+
+        // Study guide picker (click + drag/drop)
+        (function initStudyGuidePicker() {
+            const picker = document.getElementById('studyGuidePicker');
+            const browseBtn = document.getElementById('studyGuideBrowseBtn');
+            if (!picker || !studyGuideFile) return;
+
+            function openFileDialog() {
+                try { studyGuideFile.click(); } catch (e) {}
+            }
+
+            browseBtn?.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                openFileDialog();
+            });
+
+            picker.addEventListener('click', function(e) {
+                if (e.target?.closest?.('#studyGuideClearBtn')) return;
+                openFileDialog();
+            });
+
+            picker.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openFileDialog();
+                }
+            });
+
+            picker.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                picker.classList.add('dragover');
+            });
+            picker.addEventListener('dragleave', function() {
+                picker.classList.remove('dragover');
+            });
+            picker.addEventListener('drop', function(e) {
+                e.preventDefault();
+                picker.classList.remove('dragover');
+                const file = e.dataTransfer?.files?.[0];
+                if (!file) return;
+
+                try {
+                    const dt = new DataTransfer();
+                    dt.items.add(file);
+                    studyGuideFile.files = dt.files;
+                    studyGuideFile.dispatchEvent(new Event('change', { bubbles: true }));
+                } catch (err) {
+                    // Fallback: user can still click Browse if the browser blocks programmatic assignment.
+                    setToolStatus('Drag-and-drop is not supported in this browser. Click Browse to choose a file.', 'warning');
+                }
+            });
+        })();
 
         function removeFile() {
             currentFile = null;
@@ -1204,7 +1291,7 @@
             messagesArea.innerHTML = `
                 <div class="empty" id="emptyState">
                     <h3>Start anywhere.</h3>
-                    <p>Ask a question, or click a prompt on the left. Upload a file if you want the tutor to work from your material.</p>
+                    <p>Ask a question, or upload a file if you want the tutor to work from your material.</p>
                 </div>
             `;
         }
@@ -1391,7 +1478,7 @@
                 messagesArea.innerHTML = `
                     <div class="empty" id="emptyState">
                         <h3>Start anywhere.</h3>
-                        <p>Ask a question, or click a prompt on the left. Upload a file if you want the tutor to work from your material.</p>
+                        <p>Ask a question, or upload a file if you want the tutor to work from your material.</p>
                     </div>
                 `;
                 return;
@@ -1625,7 +1712,6 @@
             }
 
             setUserUI();
-            mountExampleChips();
 
             try {
                 const response = await apiFetch(`${BASE_API_URL}/auth/me`);
