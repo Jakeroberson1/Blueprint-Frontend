@@ -1,0 +1,10 @@
+{
+  "name": "blueprint-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Static frontend for Blueprint (Cloudflare Pages).",
+  "scripts": {
+    "build": "node -e \"console.log('No build step (static site).')\""
+  }
+}
+
