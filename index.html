@@ -593,7 +593,7 @@
                     <div class="muted">Upload a syllabus or notes and I’ll generate a clean guide you can download.</div>
 
                     <label for="studyGuideFile">File</label>
-                    <input id="studyGuideFile" type="file" accept=".txt,.pdf,.doc,.docx" />
+                    <input id="studyGuideFile" type="file" accept=".txt,.pdf,.docx" />
                     <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top: 10px;">
                         <button class="btn btn-primary" id="studyGuideBtn" onclick="generateStudyGuide()">Create study guide</button>
                         <button class="btn" onclick="clearChat()">Clear chat</button>
@@ -636,7 +636,7 @@
                             rows="1"
                         ></textarea>
 
-                        <input type="file" id="fileInput" style="display:none" accept=".txt,.pdf,.doc,.docx,.png,.jpg,.jpeg,.webp" />
+                        <input type="file" id="fileInput" style="display:none" accept=".txt,.pdf,.docx,.png,.jpg,.jpeg,.webp" />
 
                         <button class="icon" id="fileUploadBtn" onclick="document.getElementById('fileInput').click()" title="Attach file">+</button>
                         <button class="icon send" id="sendButton" onclick="sendMessage()" title="Send">→</button>
@@ -927,7 +927,7 @@
                     });
                 }
 
-                const data = await response.json();
+                const data = await safeReadJson(response);
                 hideTypingIndicator();
 
                 if (!response.ok || data.error) {
@@ -1050,12 +1050,21 @@
             return div.innerHTML;
         }
 
+        async function safeReadJson(response) {
+            const raw = await response.text();
+            try {
+                return raw ? JSON.parse(raw) : {};
+            } catch (e) {
+                return { error: raw || `Non-JSON response (HTTP ${response.status})` };
+            }
+        }
+
         async function refreshCanvasMeta() {
             const el = document.getElementById('canvasMeta');
             if (!el) return;
             try {
                 const resp = await apiFetch(CANVAS_STATUS_URL);
-                const data = await resp.json();
+                const data = await safeReadJson(resp);
 
                 if (data?.hasData) {
                     const when = data.syncedAt ? new Date(data.syncedAt).toLocaleString() : 'synced';
@@ -1083,7 +1092,7 @@
                 formData.append('file', file);
 
                 const resp = await apiFetch(STUDY_GUIDE_URL, { method: 'POST', body: formData });
-                const data = await resp.json();
+                const data = await safeReadJson(resp);
                 if (!resp.ok || data.error) throw new Error(data.error || 'Failed to generate study guide');
 
                 const guide = data.studyGuide || '';
