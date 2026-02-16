@@ -546,10 +546,16 @@
                         <button class="tab" id="tabCalendar" onclick="setDashTab('calendar')">Calendar</button>
                         <button class="tab" id="tabAnnouncements" onclick="setDashTab('announcements')">Announcements</button>
                         <button class="tab" id="tabModules" onclick="setDashTab('modules')">Modules</button>
-                        <button class="tab" id="tabFiles" onclick="setDashTab('files')">Files</button>
                         <button class="tab" id="tabSubmissions" onclick="setDashTab('submissions')">Submissions</button>
                         <button class="tab" id="tabDiscussions" onclick="setDashTab('discussions')">Discussions</button>
                         <button class="tab" id="tabSyllabi" onclick="setDashTab('syllabi')">Syllabi</button>
+                    </div>
+
+                    <div style="margin-top: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <label for="courseFilter" style="margin: 0; font-size: 12px; font-weight: 900;">Filter by course</label>
+                        <select id="courseFilter" class="input-sm" style="max-width: 360px; padding: 8px 10px;" onchange="onCourseFilterChange(this.value)">
+                            <option value="__all__">All courses</option>
+                        </select>
                     </div>
 
                     <div id="dashPanelOverview">
@@ -580,11 +586,6 @@
                     <div id="dashPanelModules" style="display:none;">
                         <div class="muted" style="margin-top: 10px;">Course modules</div>
                         <div id="modulesList" class="list"></div>
-                    </div>
-
-                    <div id="dashPanelFiles" style="display:none;">
-                        <div class="muted" style="margin-top: 10px;">Course files</div>
-                        <div id="filesList" class="list"></div>
                     </div>
 
                     <div id="dashPanelSubmissions" style="display:none;">
@@ -620,6 +621,8 @@
 
         const sessionToken = sessionStorage.getItem('sessionToken');
         const currentUser = JSON.parse(sessionStorage.getItem('user') || 'null');
+        let currentCanvasData = null;
+        let selectedCourse = '__all__';
 
         function redirectToLogin() {
             try {
@@ -723,7 +726,7 @@
         }
 
         function setDashTab(tab) {
-            const tabs = ['overview','grades','planner','calendar','announcements','modules','files','submissions','discussions','syllabi'];
+            const tabs = ['overview','grades','planner','calendar','announcements','modules','submissions','discussions','syllabi'];
             for (const t of tabs) {
                 const btn = document.getElementById(`tab${t.charAt(0).toUpperCase()}${t.slice(1)}`);
                 const panel = document.getElementById(`dashPanel${t.charAt(0).toUpperCase()}${t.slice(1)}`);
@@ -736,30 +739,125 @@
             return String(s || '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
         }
 
-        function formatWhen(dt) {
-            try {
-                return new Intl.DateTimeFormat(undefined, {
-                    dateStyle: 'medium',
-                    timeStyle: 'short',
-                    timeZoneName: 'short'
-                }).format(new Date(dt));
-            } catch {
-                return String(dt || '');
+        function parseCanvasDate(value) {
+            if (value === null || value === undefined || value === '') return null;
+            if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
+            if (typeof value === 'number') {
+                const ms = value > 1e12 ? value : value > 1e9 ? value * 1000 : value;
+                const d = new Date(ms);
+                return Number.isNaN(d.getTime()) ? null : d;
             }
+            const s = String(value).trim();
+            if (!s) return null;
+            if (/^\d+$/.test(s)) {
+                const n = Number(s);
+                const ms = n > 1e12 ? n : n > 1e9 ? n * 1000 : n;
+                const d = new Date(ms);
+                if (!Number.isNaN(d.getTime())) return d;
+            }
+            const d = new Date(s);
+            return Number.isNaN(d.getTime()) ? null : d;
+        }
+
+        function formatWhen(dt) {
+            const d = parseCanvasDate(dt);
+            if (!d) return String(dt || '');
+            return new Intl.DateTimeFormat(undefined, {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+                timeZoneName: 'short'
+            }).format(d);
         }
 
         function pickDueDate(obj) {
             return obj?.due_at || obj?.plannable_date || obj?.start_at || obj?.end_at || obj?.posted_at || obj?.created_at || null;
         }
 
+        function stripHtmlToText(html) {
+            const raw = String(html || '').trim();
+            if (!raw) return '';
+            try {
+                const doc = new DOMParser().parseFromString(raw, 'text/html');
+                return (doc.body?.textContent || '').replace(/\s+/g, ' ').trim();
+            } catch {
+                return raw.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+            }
+        }
+
+        function getCourseKey(raw) {
+            if (!raw) return '';
+            const id = raw.course_id ?? raw?.plannable?.course_id ?? raw?.assignment?.course_id ?? raw?.context_id;
+            if (id !== undefined && id !== null && String(id) !== '') return `id:${id}`;
+            const code = raw.course_code || raw.context_code || raw?.plannable?.context_code || raw.course_name || raw.context_name;
+            if (code) return `code:${String(code).toLowerCase()}`;
+            return '';
+        }
+
+        function isCourseMatch(raw) {
+            if (selectedCourse === '__all__') return true;
+            return getCourseKey(raw) === selectedCourse;
+        }
+
+        function buildCourseFilter(data) {
+            const select = document.getElementById('courseFilter');
+            if (!select) return;
+
+            const map = new Map();
+            const add = (key, label) => {
+                if (!key || !label) return;
+                if (!map.has(key)) map.set(key, label);
+            };
+
+            const courses = Array.isArray(data.courses) ? data.courses : [];
+            for (const c of courses) {
+                const key = c?.id !== undefined ? `id:${c.id}` : (c?.course_code ? `code:${String(c.course_code).toLowerCase()}` : '');
+                add(key, c?.name || c?.course_code || `Course ${c?.id || ''}`);
+            }
+
+            const inject = (arr) => {
+                for (const i of Array.isArray(arr) ? arr : []) {
+                    const key = getCourseKey(i);
+                    const label = i?.course_name || i?.course_code || i?.context_name || i?.context_code || '';
+                    add(key, label);
+                }
+            };
+            inject(data.assignments);
+            inject(data.grades);
+            inject(data.planner_items);
+            inject(data.calendar_events);
+            inject(data.announcements);
+            inject(data.modules);
+            inject(data.submissions);
+            inject(data.discussion_topics);
+            inject(data.syllabi);
+
+            const options = [`<option value="__all__">All courses</option>`]
+                .concat(
+                    Array.from(map.entries())
+                        .sort((a, b) => a[1].localeCompare(b[1]))
+                        .map(([key, label]) => `<option value="${esc(key)}">${esc(label)}</option>`)
+                );
+            select.innerHTML = options.join('');
+            if (!map.has(selectedCourse)) selectedCourse = '__all__';
+            select.value = selectedCourse;
+        }
+
+        function onCourseFilterChange(value) {
+            selectedCourse = value || '__all__';
+            if (!currentCanvasData) return;
+            renderDashboard(currentCanvasData);
+        }
+
         function normalizeUpcoming(assignments) {
             const list = Array.isArray(assignments) ? assignments : [];
             const upcoming = list
-                .filter(a => a && a.due_at && new Date(a.due_at).getTime() > Date.now())
-                .sort((a, b) => new Date(a.due_at) - new Date(b.due_at))
+                .filter(a => a && isCourseMatch(a))
+                .map((a) => ({ raw: a, due: parseCanvasDate(a?.due_at) }))
+                .filter((x) => x.due && x.due.getTime() > Date.now())
+                .sort((a, b) => a.due - b.due)
                 .slice(0, 20);
 
-            return upcoming;
+            return upcoming.map((x) => x.raw);
         }
 
         function renderUpcoming(assignments) {
@@ -772,7 +870,8 @@
             }
 
             container.innerHTML = upcoming.map(a => {
-                const due = new Date(a.due_at);
+                const due = parseCanvasDate(a.due_at);
+                if (!due) return '';
                 const days = Math.ceil((due - new Date()) / (1000 * 60 * 60 * 24));
                 const badge = days <= 2 ? 'Soon' : days <= 7 ? 'This week' : 'Later';
                 const color = days <= 2 ? 'rgba(255,59,106,0.95)' : days <= 7 ? 'rgba(255,196,0,0.95)' : 'rgba(23,105,255,0.92)';
@@ -795,7 +894,7 @@
             }
 
             container.innerHTML = list
-                .filter(g => g && g.course_name)
+                .filter(g => g && g.course_name && isCourseMatch(g))
                 .sort((a, b) => String(a.course_name).localeCompare(String(b.course_name)))
                 .map(g => {
                     const score = (g.current_score === null || g.current_score === undefined) ? '' : ` (${g.current_score}%)`;
@@ -820,8 +919,10 @@
             const normalized = list
                 .map(i => {
                     const dt = pickDueDate(i);
-                    return { raw: i, t: dt ? new Date(dt).getTime() : 0 };
+                    const d = parseCanvasDate(dt);
+                    return { raw: i, t: d ? d.getTime() : 0 };
                 })
+                .filter(({ raw }) => isCourseMatch(raw))
                 .sort((a, b) => a.t - b.t)
                 .slice(0, 200);
 
@@ -850,8 +951,10 @@
             const normalized = list
                 .map(e => {
                     const dt = pickDueDate(e);
-                    return { raw: e, t: dt ? new Date(dt).getTime() : 0 };
+                    const d = parseCanvasDate(dt);
+                    return { raw: e, t: d ? d.getTime() : 0 };
                 })
+                .filter(({ raw }) => isCourseMatch(raw))
                 .sort((a, b) => a.t - b.t)
                 .slice(0, 200);
 
@@ -880,8 +983,10 @@
             const normalized = list
                 .map(a => {
                     const dt = pickDueDate(a);
-                    return { raw: a, t: dt ? new Date(dt).getTime() : 0 };
+                    const d = parseCanvasDate(dt);
+                    return { raw: a, t: d ? d.getTime() : 0 };
                 })
+                .filter(({ raw }) => isCourseMatch(raw))
                 .sort((a, b) => b.t - a.t)
                 .slice(0, 100);
 
@@ -908,39 +1013,28 @@
                 container.innerHTML = '<div class="muted" style="padding: 10px;">No modules found.</div>';
                 return;
             }
-            container.innerHTML = list.slice(0, 300).map((m) => {
-                const name = m?.name || 'Module';
-                const course = m?.course_name || m?.course_code || m?.context_name || '';
-                const itemCount = Array.isArray(m?.items) ? m.items.length : 0;
-                const unlockAt = m?.unlock_at ? ` • Unlocks ${formatWhen(m.unlock_at)}` : '';
-                return `
-                    <div class="item">
-                        <div class="item-title">${esc(name)}</div>
-                        <div class="item-meta">${esc(course)} • ${itemCount} items${esc(unlockAt)}</div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function renderFiles(items) {
-            const container = document.getElementById('filesList');
-            const list = Array.isArray(items) ? items : [];
-            if (!list.length) {
-                container.innerHTML = '<div class="muted" style="padding: 10px;">No files found.</div>';
-                return;
+            const filtered = list.filter((m) => isCourseMatch(m));
+            const grouped = new Map();
+            for (const m of filtered) {
+                const course = m?.course_name || m?.course_code || m?.context_name || 'Other';
+                if (!grouped.has(course)) grouped.set(course, []);
+                grouped.get(course).push(m);
             }
-            container.innerHTML = list.slice(0, 400).map((f) => {
-                const title = f?.display_name || f?.filename || 'File';
-                const course = f?.course_name || f?.course_code || '';
-                const size = Number.isFinite(f?.size) ? `${Math.round(f.size / 1024)} KB` : '';
-                const when = f?.updated_at ? formatWhen(f.updated_at) : '';
-                return `
-                    <div class="item">
-                        <div class="item-title">${esc(title)}</div>
-                        <div class="item-meta">${esc(course)}${size ? ` • ${esc(size)}` : ''}${when ? ` • Updated ${esc(when)}` : ''}</div>
-                    </div>
-                `;
-            }).join('');
+            const blocks = Array.from(grouped.entries())
+                .sort((a, b) => a[0].localeCompare(b[0]))
+                .map(([course, mods]) => {
+                    const rows = mods
+                        .sort((a, b) => (a?.position ?? 9999) - (b?.position ?? 9999))
+                        .slice(0, 80)
+                        .map((m) => {
+                            const name = m?.name || 'Module';
+                            const itemCount = Array.isArray(m?.items) ? m.items.length : 0;
+                            const unlockAt = m?.unlock_at ? ` • Unlocks ${formatWhen(m.unlock_at)}` : '';
+                            return `<div class="item"><div class="item-title">${esc(name)}</div><div class="item-meta">${itemCount} items${esc(unlockAt)}</div></div>`;
+                        }).join('');
+                    return `<div class="item" style="display:block;"><div class="item-title">${esc(course)} (${mods.length})</div></div>${rows}`;
+                }).join('');
+            container.innerHTML = blocks || '<div class="muted" style="padding: 10px;">No modules found for this course.</div>';
         }
 
         function renderSubmissions(items) {
@@ -953,15 +1047,18 @@
             const normalized = list
                 .map((s) => {
                     const dt = s?.submitted_at || s?.graded_at || s?.updated_at || s?.created_at || null;
-                    return { raw: s, t: dt ? new Date(dt).getTime() : 0 };
+                    const d = parseCanvasDate(dt);
+                    return { raw: s, t: d ? d.getTime() : 0 };
                 })
+                .filter(({ raw }) => isCourseMatch(raw))
                 .sort((a, b) => b.t - a.t)
                 .slice(0, 300);
 
             container.innerHTML = normalized.map(({ raw, t }) => {
-                const name = raw?.assignment_name || raw?.assignment?.name || `Assignment #${raw?.assignment_id || ''}`;
+                const name = raw?.assignment_name || raw?.assignment?.name || raw?.cached_assignment_name || `Assignment #${raw?.assignment_id || ''}`;
                 const course = raw?.course_name || raw?.course_code || '';
-                const score = raw?.score !== undefined && raw?.score !== null ? `${raw.score}${raw?.grade ? ` (${raw.grade})` : ''}` : (raw?.grade || 'Not graded');
+                const state = raw?.workflow_state ? ` (${raw.workflow_state})` : '';
+                const score = raw?.score !== undefined && raw?.score !== null ? `${raw.score}${raw?.grade ? ` (${raw.grade})` : ''}` : (raw?.grade || `Not graded${state}`);
                 const when = t ? formatWhen(t) : 'No timestamp';
                 return `
                     <div class="item">
@@ -983,8 +1080,10 @@
             const normalized = list
                 .map((d) => {
                     const dt = pickDueDate(d);
-                    return { raw: d, t: dt ? new Date(dt).getTime() : 0 };
+                    const parsed = parseCanvasDate(dt);
+                    return { raw: d, t: parsed ? parsed.getTime() : 0 };
                 })
+                .filter(({ raw }) => isCourseMatch(raw))
                 .sort((a, b) => b.t - a.t)
                 .slice(0, 250);
 
@@ -1012,10 +1111,10 @@
                 container.innerHTML = '<div class="muted" style="padding: 10px;">No syllabi found.</div>';
                 return;
             }
-            container.innerHTML = list.slice(0, 120).map((s) => {
+            container.innerHTML = list.filter((s) => isCourseMatch(s)).slice(0, 120).map((s) => {
                 const course = s?.course_name || s?.course_code || `Course ${s?.course_id || ''}`;
-                const body = String(s?.syllabus_body || '').trim();
-                const preview = body ? body.replace(/\s+/g, ' ').slice(0, 260) : 'No syllabus body available for this course.';
+                const body = stripHtmlToText(s?.syllabus_body || '');
+                const preview = body ? body.slice(0, 260) : 'No syllabus body available for this course.';
                 return `
                     <div class="item">
                         <div class="item-title">${esc(course)}</div>
@@ -1131,9 +1230,9 @@
         }
 
         function buildVisuals(data) {
-            const assignments = Array.isArray(data.assignments) ? data.assignments : [];
-            const planner = Array.isArray(data.planner_items) ? data.planner_items : [];
-            const calendar = Array.isArray(data.calendar_events) ? data.calendar_events : [];
+            const assignments = (Array.isArray(data.assignments) ? data.assignments : []).filter((a) => isCourseMatch(a));
+            const planner = (Array.isArray(data.planner_items) ? data.planner_items : []).filter((p) => isCourseMatch(p));
+            const calendar = (Array.isArray(data.calendar_events) ? data.calendar_events : []).filter((e) => isCourseMatch(e));
 
             // Workload pulse (next 14 days) from assignments + planner + calendar
             const days = 14;
@@ -1148,8 +1247,8 @@
 
             const bump = (dt) => {
                 if (!dt) return;
-                const t = new Date(dt);
-                if (Number.isNaN(t.getTime())) return;
+                const t = parseCanvasDate(dt);
+                if (!t) return;
                 const idx = Math.floor((t.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
                 if (idx >= 0 && idx < days) counts[idx] += 1;
             };
@@ -1181,6 +1280,60 @@
             return { busiestLabel, pulseCounts: counts };
         }
 
+        function renderDashboard(data) {
+            const courses = Array.isArray(data.courses) ? data.courses : [];
+            const assignments = Array.isArray(data.assignments) ? data.assignments : [];
+            const planner = Array.isArray(data.planner_items) ? data.planner_items : [];
+            const calendar = Array.isArray(data.calendar_events) ? data.calendar_events : [];
+            const modules = Array.isArray(data.modules) ? data.modules : [];
+            const submissions = Array.isArray(data.submissions) ? data.submissions : [];
+            const discussions = Array.isArray(data.discussion_topics) ? data.discussion_topics : [];
+            const syllabi = Array.isArray(data.syllabi) ? data.syllabi : [];
+
+            const byAssignmentId = new Map(assignments.map((a) => [String(a?.id), a?.name]).filter(([id, name]) => id && name));
+            for (const s of submissions) {
+                if (!s || s.cached_assignment_name) continue;
+                const name = byAssignmentId.get(String(s.assignment_id));
+                if (name) s.cached_assignment_name = name;
+            }
+
+            const { busiestLabel } = buildVisuals(data);
+
+            renderUpcoming(assignments);
+            renderGrades(data.grades || []);
+            renderPlanner(planner);
+            renderCalendar(calendar);
+            renderAnnouncements(data.announcements || []);
+            renderModules(modules);
+            renderSubmissions(submissions);
+            renderDiscussions(discussions);
+            renderSyllabi(syllabi);
+
+            const filteredAssignments = assignments.filter((a) => isCourseMatch(a));
+            const filteredPlanner = planner.filter((p) => isCourseMatch(p));
+            const filteredCalendar = calendar.filter((e) => isCourseMatch(e));
+            const filteredModules = modules.filter((m) => isCourseMatch(m));
+            const filteredSubmissions = submissions.filter((s) => isCourseMatch(s));
+            const filteredDiscussions = discussions.filter((d) => isCourseMatch(d));
+            const filteredSyllabi = syllabi.filter((s) => isCourseMatch(s));
+
+            document.getElementById('kpiCourses').textContent = selectedCourse === '__all__'
+                ? courses.length
+                : new Set(filteredAssignments.map((a) => getCourseKey(a)).filter(Boolean)).size || 1;
+            document.getElementById('kpiAssignments').textContent = filteredAssignments.length;
+            document.getElementById('kpiEvents').textContent = filteredPlanner.length + filteredCalendar.length;
+            document.getElementById('kpiArtifacts').textContent = filteredModules.length + filteredSubmissions.length + filteredDiscussions.length + filteredSyllabi.length;
+            document.getElementById('kpiTimeZone').textContent = `Time zone: ${USER_TIME_ZONE}`;
+
+            const upcoming = normalizeUpcoming(assignments);
+            const nextDue = parseCanvasDate(upcoming[0]?.due_at);
+            document.getElementById('kpiNextDue').textContent = nextDue ? `Next due: ${formatWhen(nextDue)}` : 'Next due: -';
+            document.getElementById('kpiBusiest').textContent = busiestLabel ? `Busiest day: ${busiestLabel}` : 'Busiest day: -';
+
+            const syncedAt = data.synced_at ? formatWhen(data.synced_at) : '-';
+            document.getElementById('kpiSyncedAt').textContent = `Last sync: ${syncedAt}`;
+        }
+
         async function loadCanvasDashboard() {
             const empty = document.getElementById('emptyState');
             const dash = document.getElementById('dashboard');
@@ -1201,45 +1354,9 @@
 
                 empty.style.display = 'none';
                 dash.style.display = 'block';
-
-                const courses = Array.isArray(data.courses) ? data.courses : [];
-                const assignments = Array.isArray(data.assignments) ? data.assignments : [];
-                const planner = Array.isArray(data.planner_items) ? data.planner_items : [];
-                const calendar = Array.isArray(data.calendar_events) ? data.calendar_events : [];
-                const modules = Array.isArray(data.modules) ? data.modules : [];
-                const files = Array.isArray(data.files) ? data.files : [];
-                const submissions = Array.isArray(data.submissions) ? data.submissions : [];
-                const discussions = Array.isArray(data.discussion_topics) ? data.discussion_topics : [];
-                const syllabi = Array.isArray(data.syllabi) ? data.syllabi : [];
-
-                const { busiestLabel } = buildVisuals(data);
-
-                renderUpcoming(assignments);
-                renderGrades(data.grades || []);
-                renderPlanner(planner);
-                renderCalendar(calendar);
-                renderAnnouncements(data.announcements || []);
-                renderModules(modules);
-                renderFiles(files);
-                renderSubmissions(submissions);
-                renderDiscussions(discussions);
-                renderSyllabi(syllabi);
-
-                // KPIs
-                document.getElementById('kpiCourses').textContent = courses.length;
-                document.getElementById('kpiAssignments').textContent = assignments.length;
-                document.getElementById('kpiEvents').textContent = planner.length + calendar.length;
-                document.getElementById('kpiArtifacts').textContent = modules.length + files.length + submissions.length + discussions.length + syllabi.length;
-                document.getElementById('kpiTimeZone').textContent = `Time zone: ${USER_TIME_ZONE}`;
-
-                // Next due
-                const upcoming = normalizeUpcoming(assignments);
-                const nextDue = upcoming[0]?.due_at ? new Date(upcoming[0].due_at) : null;
-                document.getElementById('kpiNextDue').textContent = nextDue ? `Next due: ${formatWhen(nextDue)}` : 'Next due: -';
-                document.getElementById('kpiBusiest').textContent = busiestLabel ? `Busiest day: ${busiestLabel}` : 'Busiest day: -';
-
-                const syncedAt = data.synced_at ? formatWhen(data.synced_at) : '-';
-                document.getElementById('kpiSyncedAt').textContent = `Last sync: ${syncedAt}`;
+                currentCanvasData = data;
+                buildCourseFilter(data);
+                renderDashboard(data);
 
                 setDashTab('overview');
                 setStatus('Dashboard updated.', 'success');
