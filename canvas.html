@@ -604,15 +604,15 @@
                     </div>
 
                     <div class="tabs" id="dashTabs">
-                        <button class="tab" id="tabOverview" onclick="setDashTab('overview')">Overview</button>
-                        <button class="tab" id="tabGrades" onclick="setDashTab('grades')">Grades</button>
-                        <button class="tab" id="tabPlanner" onclick="setDashTab('planner')">Planner</button>
-                        <button class="tab" id="tabCalendar" onclick="setDashTab('calendar')">Calendar</button>
-                        <button class="tab" id="tabAnnouncements" onclick="setDashTab('announcements')">Announcements</button>
-                        <button class="tab" id="tabModules" onclick="setDashTab('modules')">Modules</button>
-                        <button class="tab" id="tabSubmissions" onclick="setDashTab('submissions')">Submissions</button>
-                        <button class="tab" id="tabDiscussions" onclick="setDashTab('discussions')">Discussions</button>
-                        <button class="tab" id="tabSyllabi" onclick="setDashTab('syllabi')">Syllabi</button>
+                        <button class="tab" type="button" id="tabOverview" data-tab="overview">Overview</button>
+                        <button class="tab" type="button" id="tabGrades" data-tab="grades">Grades</button>
+                        <button class="tab" type="button" id="tabPlanner" data-tab="planner">Planner</button>
+                        <button class="tab" type="button" id="tabCalendar" data-tab="calendar">Calendar</button>
+                        <button class="tab" type="button" id="tabAnnouncements" data-tab="announcements">Announcements</button>
+                        <button class="tab" type="button" id="tabModules" data-tab="modules">Modules</button>
+                        <button class="tab" type="button" id="tabSubmissions" data-tab="submissions">Submissions</button>
+                        <button class="tab" type="button" id="tabDiscussions" data-tab="discussions">Discussions</button>
+                        <button class="tab" type="button" id="tabSyllabi" data-tab="syllabi">Syllabi</button>
                     </div>
 
                     <div class="dash-controls">
@@ -635,9 +635,9 @@
                             <div id="priorityQueue" class="focus-list"></div>
                         </div>
                         <div class="focus-card">
-                            <h4>Risk Signals</h4>
-                            <div class="muted" style="margin-top: 4px;">Potential issues to act on before they grow.</div>
-                            <div id="riskSignals" class="focus-list"></div>
+                            <h4>Quick Actions</h4>
+                            <div class="muted" style="margin-top: 4px;">Concrete next moves based on your current data.</div>
+                            <div id="quickActions" class="focus-list"></div>
                         </div>
                     </div>
 
@@ -810,13 +810,37 @@
         }
 
         function setDashTab(tab) {
-            const tabs = ['overview','grades','planner','calendar','announcements','modules','submissions','discussions','syllabi'];
-            for (const t of tabs) {
-                const btn = document.getElementById(`tab${t.charAt(0).toUpperCase()}${t.slice(1)}`);
-                const panel = document.getElementById(`dashPanel${t.charAt(0).toUpperCase()}${t.slice(1)}`);
-                if (panel) panel.style.display = (t === tab) ? 'block' : 'none';
-                if (btn) btn.classList.toggle('active', t === tab);
+            const tabMap = {
+                overview: { btn: 'tabOverview', panel: 'dashPanelOverview' },
+                grades: { btn: 'tabGrades', panel: 'dashPanelGrades' },
+                planner: { btn: 'tabPlanner', panel: 'dashPanelPlanner' },
+                calendar: { btn: 'tabCalendar', panel: 'dashPanelCalendar' },
+                announcements: { btn: 'tabAnnouncements', panel: 'dashPanelAnnouncements' },
+                modules: { btn: 'tabModules', panel: 'dashPanelModules' },
+                submissions: { btn: 'tabSubmissions', panel: 'dashPanelSubmissions' },
+                discussions: { btn: 'tabDiscussions', panel: 'dashPanelDiscussions' },
+                syllabi: { btn: 'tabSyllabi', panel: 'dashPanelSyllabi' },
+            };
+            const keys = Object.keys(tabMap);
+            const target = tabMap[tab] ? tab : 'overview';
+
+            for (const t of keys) {
+                const btn = document.getElementById(tabMap[t].btn);
+                const panel = document.getElementById(tabMap[t].panel);
+                if (panel) panel.style.display = (t === target) ? 'block' : 'none';
+                if (btn) btn.classList.toggle('active', t === target);
             }
+        }
+
+        function initDashTabs() {
+            const root = document.getElementById('dashTabs');
+            if (!root) return;
+            root.querySelectorAll('.tab[data-tab]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const tab = btn.getAttribute('data-tab') || 'overview';
+                    setDashTab(tab);
+                });
+            });
         }
 
         function esc(s) {
@@ -1307,31 +1331,41 @@
             }).join('');
         }
 
-        function renderRiskSignals(grades, submissions, announcements) {
-            const container = document.getElementById('riskSignals');
+        function renderQuickActions(grades, assignments, planner, calendar, announcements) {
+            const container = document.getElementById('quickActions');
             if (!container) return;
 
-            const risks = [];
+            const actions = [];
+            const now = Date.now();
             const gradeList = (Array.isArray(grades) ? grades : []).filter((g) => isCourseMatch(g));
-            const subList = (Array.isArray(submissions) ? submissions : []).filter((s) => isCourseMatch(s));
+            const assignmentList = (Array.isArray(assignments) ? assignments : []).filter((a) => isCourseMatch(a));
+            const plannerList = (Array.isArray(planner) ? planner : []).filter((p) => isCourseMatch(p));
+            const calendarList = (Array.isArray(calendar) ? calendar : []).filter((e) => isCourseMatch(e));
             const annList = (Array.isArray(announcements) ? announcements : []).filter((a) => isCourseMatch(a));
 
             const lowGrades = gradeList.filter((g) => {
                 const score = Number(g?.current_score);
                 return Number.isFinite(score) && score < 75;
             });
-            for (const g of lowGrades.slice(0, 4)) {
-                risks.push({
-                    title: `Low grade watch: ${g.course_name || 'Course'}`,
-                    meta: `Current score ${g.current_score}%${g.current_grade ? ` (${g.current_grade})` : ''}`,
+            for (const g of lowGrades.slice(0, 3)) {
+                actions.push({
+                    title: `Recover ${g.course_name || 'course'} this week`,
+                    meta: `Current score ${g.current_score}%${g.current_grade ? ` (${g.current_grade})` : ''}. Ask Blueprint Chat for a 7-day catch-up plan.`,
                 });
             }
 
-            const unsubmitted = subList.filter((s) => s?.workflow_state && s.workflow_state !== 'graded' && s.workflow_state !== 'submitted');
-            for (const s of unsubmitted.slice(0, 4)) {
-                risks.push({
-                    title: `${s.assignment_name || s.assignment?.name || 'Assignment'} not submitted`,
-                    meta: `${s.course_name || s.course_code || ''} • State: ${s.workflow_state}`,
+            const urgentWork = []
+                .concat(
+                    assignmentList.map((a) => ({ title: a?.name || 'Assignment', when: parseCanvasDate(a?.due_at), course: a?.course_name || a?.course_code || '', type: 'Assignment' })),
+                    plannerList.map((p) => ({ title: p?.plannable?.title || p?.plannable?.name || p?.title || 'Planner item', when: parseCanvasDate(pickDueDate(p)), course: p?.context_name || p?.context_code || '', type: 'Planner' })),
+                    calendarList.map((e) => ({ title: e?.title || e?.summary || 'Calendar event', when: parseCanvasDate(pickDueDate(e)), course: e?.context_name || e?.context_code || '', type: 'Calendar' }))
+                )
+                .filter((x) => x.when && (x.when.getTime() - now) <= (48 * 60 * 60 * 1000) && (x.when.getTime() - now) >= -(24 * 60 * 60 * 1000))
+                .sort((a, b) => a.when - b.when);
+            if (urgentWork.length) {
+                actions.push({
+                    title: `Handle ${urgentWork.length} urgent item${urgentWork.length > 1 ? 's' : ''} in next 48h`,
+                    meta: `${urgentWork[0].title} (${urgentWork[0].type}) is first. Open ${urgentWork[0].course || 'that course'} now.`,
                 });
             }
 
@@ -1340,15 +1374,15 @@
                 return d && (Date.now() - d.getTime()) <= 7 * 24 * 60 * 60 * 1000;
             });
             if (recentAnnouncements.length) {
-                risks.push({
-                    title: `${recentAnnouncements.length} new announcement${recentAnnouncements.length > 1 ? 's' : ''} this week`,
-                    meta: 'Review course announcements for policy/due-date changes.',
+                actions.push({
+                    title: `Review ${recentAnnouncements.length} recent announcement${recentAnnouncements.length > 1 ? 's' : ''}`,
+                    meta: 'Check for due-date changes or exam logistics and update your study plan.',
                 });
             }
 
-            const filtered = risks.filter((r) => matchesSearch(r.title, r.meta)).slice(0, 8);
+            const filtered = actions.filter((r) => matchesSearch(r.title, r.meta)).slice(0, 8);
             if (!filtered.length) {
-                container.innerHTML = '<div class="muted">No major risk signals detected for current filters.</div>';
+                container.innerHTML = '<div class="muted">No immediate actions. You look caught up for current filters.</div>';
                 return;
             }
 
@@ -1545,7 +1579,7 @@
             renderDiscussions(discussions);
             renderSyllabi(syllabi);
             renderPriorityQueue(assignments, planner, calendar);
-            renderRiskSignals(data.grades || [], submissions, data.announcements || []);
+            renderQuickActions(data.grades || [], assignments, planner, calendar, data.announcements || []);
 
             const filteredAssignments = assignments.filter((a) => isCourseMatch(a));
             const filteredPlanner = planner.filter((p) => isCourseMatch(p));
@@ -1610,6 +1644,7 @@
             }
 
             setUserUI();
+            initDashTabs();
 
             const lastCanvasUrl = localStorage.getItem('lastCanvasUrl');
             if (lastCanvasUrl) document.getElementById('canvasUrl').value = lastCanvasUrl;
