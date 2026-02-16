@@ -762,11 +762,22 @@
         function formatWhen(dt) {
             const d = parseCanvasDate(dt);
             if (!d) return String(dt || '');
-            return new Intl.DateTimeFormat(undefined, {
-                dateStyle: 'medium',
-                timeStyle: 'short',
-                timeZoneName: 'short'
-            }).format(d);
+            try {
+                return new Intl.DateTimeFormat(undefined, {
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                    timeZoneName: 'short'
+                }).format(d);
+            } catch {
+                try {
+                    return new Intl.DateTimeFormat(undefined, {
+                        dateStyle: 'medium',
+                        timeStyle: 'short'
+                    }).format(d);
+                } catch {
+                    return d.toLocaleString();
+                }
+            }
         }
 
         function pickDueDate(obj) {
