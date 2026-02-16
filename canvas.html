@@ -607,12 +607,7 @@
                         <button class="tab" type="button" id="tabOverview" data-tab="overview">Overview</button>
                         <button class="tab" type="button" id="tabGrades" data-tab="grades">Grades</button>
                         <button class="tab" type="button" id="tabPlanner" data-tab="planner">Planner</button>
-                        <button class="tab" type="button" id="tabCalendar" data-tab="calendar">Calendar</button>
                         <button class="tab" type="button" id="tabAnnouncements" data-tab="announcements">Announcements</button>
-                        <button class="tab" type="button" id="tabModules" data-tab="modules">Modules</button>
-                        <button class="tab" type="button" id="tabSubmissions" data-tab="submissions">Submissions</button>
-                        <button class="tab" type="button" id="tabDiscussions" data-tab="discussions">Discussions</button>
-                        <button class="tab" type="button" id="tabSyllabi" data-tab="syllabi">Syllabi</button>
                     </div>
 
                     <div class="dash-controls">
@@ -630,8 +625,11 @@
 
                     <div class="focus-grid">
                         <div class="focus-card">
-                            <h4>Priority Queue</h4>
-                            <div class="muted" style="margin-top: 4px;">Most urgent upcoming work from assignments, planner, and calendar.</div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                                <h4>Today’s Top 3</h4>
+                                <button class="btn" type="button" style="padding: 6px 10px;" onclick="focusToday()">What should I do today?</button>
+                            </div>
+                            <div class="muted" style="margin-top: 4px;">Most urgent items right now.</div>
                             <div id="priorityQueue" class="focus-list"></div>
                         </div>
                         <div class="focus-card">
@@ -652,13 +650,8 @@
                     </div>
 
                     <div id="dashPanelPlanner" style="display:none;">
-                        <div class="muted" style="margin-top: 10px;">Planner items (next 90 days)</div>
+                        <div class="muted" style="margin-top: 10px;">Planner + Calendar timeline (next 90 days)</div>
                         <div id="plannerList" class="list"></div>
-                    </div>
-
-                    <div id="dashPanelCalendar" style="display:none;">
-                        <div class="muted" style="margin-top: 10px;">Calendar events (next 90 days)</div>
-                        <div id="calendarList" class="list"></div>
                     </div>
 
                     <div id="dashPanelAnnouncements" style="display:none;">
@@ -666,25 +659,17 @@
                         <div id="announcementsList" class="list"></div>
                     </div>
 
-                    <div id="dashPanelModules" style="display:none;">
-                        <div class="muted" style="margin-top: 10px;">Course modules</div>
+                    <details style="margin-top: 12px;">
+                        <summary>More Data (Optional)</summary>
+                        <div class="muted" style="margin-top: 10px;">Modules</div>
                         <div id="modulesList" class="list"></div>
-                    </div>
-
-                    <div id="dashPanelSubmissions" style="display:none;">
-                        <div class="muted" style="margin-top: 10px;">Recent submissions</div>
+                        <div class="muted" style="margin-top: 10px;">Submissions</div>
                         <div id="submissionsList" class="list"></div>
-                    </div>
-
-                    <div id="dashPanelDiscussions" style="display:none;">
-                        <div class="muted" style="margin-top: 10px;">Discussion topics</div>
+                        <div class="muted" style="margin-top: 10px;">Discussions</div>
                         <div id="discussionsList" class="list"></div>
-                    </div>
-
-                    <div id="dashPanelSyllabi" style="display:none;">
-                        <div class="muted" style="margin-top: 10px;">Course syllabus snapshots</div>
+                        <div class="muted" style="margin-top: 10px;">Syllabi</div>
                         <div id="syllabiList" class="list"></div>
-                    </div>
+                    </details>
                 </div>
             </div>
         </div>
@@ -814,12 +799,7 @@
                 overview: { btn: 'tabOverview', panel: 'dashPanelOverview' },
                 grades: { btn: 'tabGrades', panel: 'dashPanelGrades' },
                 planner: { btn: 'tabPlanner', panel: 'dashPanelPlanner' },
-                calendar: { btn: 'tabCalendar', panel: 'dashPanelCalendar' },
                 announcements: { btn: 'tabAnnouncements', panel: 'dashPanelAnnouncements' },
-                modules: { btn: 'tabModules', panel: 'dashPanelModules' },
-                submissions: { btn: 'tabSubmissions', panel: 'dashPanelSubmissions' },
-                discussions: { btn: 'tabDiscussions', panel: 'dashPanelDiscussions' },
-                syllabi: { btn: 'tabSyllabi', panel: 'dashPanelSyllabi' },
             };
             const keys = Object.keys(tabMap);
             const target = tabMap[tab] ? tab : 'overview';
@@ -841,6 +821,13 @@
                     setDashTab(tab);
                 });
             });
+        }
+
+        function focusToday() {
+            setDashTab('overview');
+            const el = document.getElementById('priorityQueue');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setStatus('Focus mode: top 3 priorities are highlighted below.', 'success');
         }
 
         function esc(s) {
@@ -1309,7 +1296,7 @@
             const upcoming = items
                 .filter((i) => i.when.getTime() >= now - (24 * 60 * 60 * 1000))
                 .sort((a, b) => a.when - b.when)
-                .slice(0, 10);
+                .slice(0, 3);
 
             if (!upcoming.length) {
                 container.innerHTML = '<div class="muted">No urgent items match your current filter.</div>';
@@ -1318,7 +1305,7 @@
 
             container.innerHTML = upcoming.map((i) => {
                 const hoursAway = Math.round((i.when.getTime() - now) / (1000 * 60 * 60));
-                const urgency = hoursAway <= 24 ? 'Due soon' : hoursAway <= 72 ? 'Next 3 days' : 'Upcoming';
+                const urgency = hoursAway <= 24 ? 'Do this first' : hoursAway <= 72 ? 'Do next' : 'Upcoming';
                 return `
                     <div class="focus-item">
                         <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
@@ -1571,8 +1558,7 @@
 
             renderUpcoming(assignments);
             renderGrades(data.grades || []);
-            renderPlanner(planner);
-            renderCalendar(calendar);
+            renderPlanner([...(Array.isArray(planner) ? planner : []), ...(Array.isArray(calendar) ? calendar : [])]);
             renderAnnouncements(data.announcements || []);
             renderModules(modules);
             renderSubmissions(submissions);
