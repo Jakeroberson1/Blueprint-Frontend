@@ -148,20 +148,21 @@
         }
 
         .hero {
-            padding: 14px 8px 16px;
+            padding: 10px 8px 12px;
             text-align: center;
         }
 
         .hero h1 {
-            margin: 12px 0 6px;
-            font-size: 42px;
+            margin: 8px 0 4px;
+            font-size: 34px;
             letter-spacing: -0.6px;
         }
 
         .hero p {
             margin: 0;
             color: var(--ink-2);
-            font-weight: 700;
+            font-weight: 650;
+            font-size: 14px;
         }
 
         .grid {
@@ -311,7 +312,7 @@
 
         .kpis {
             display: grid;
-            grid-template-columns: 1.2fr 1fr 1fr;
+            grid-template-columns: repeat(3, 1fr);
             gap: 12px;
             margin-top: 12px;
         }
@@ -507,19 +508,19 @@
         </div>
 
         <div class="hero">
-            <h1>Canvas</h1>
-            <p>Connect Canvas to power your dashboard and deadlines.</p>
+            <h1>Canvas Dashboard</h1>
+            <p>Sync once. Stay on top of classwork.</p>
         </div>
 
         <div class="grid">
             <div class="card">
-                <h2>Connect Canvas (Extension)</h2>
-                <div class="muted">You sign in normally. Blueprint never asks for your Canvas password.</div>
+                <h2>Connect Canvas</h2>
+                <div class="muted">Secure sync through your browser session.</div>
 
                 <div class="steps">
                     <div class="step"><div class="step-num">1</div><div>Generate a Link Code.</div></div>
-                    <div class="step"><div class="step-num">2</div><div>Install the Chrome extension, then open Canvas and sign in.</div></div>
-                    <div class="step"><div class="step-num">3</div><div>On Canvas, the <strong>Blueprint Sync</strong> panel appears. Paste the Link Code, click <strong>Pair</strong> once, then <strong>Sync now</strong>.</div></div>
+                    <div class="step"><div class="step-num">2</div><div>Install extension and open Canvas.</div></div>
+                    <div class="step"><div class="step-num">3</div><div>Pair once, then click <strong>Sync now</strong>.</div></div>
                 </div>
 
                 <label for="canvasUrl">Canvas URL (optional, for Open Canvas)</label>
@@ -529,7 +530,7 @@
                     <button class="btn btn-primary" id="linkBtn" onclick="generateLinkCode()">Generate Link Code</button>
                     <a class="btn" href="blueprint-canvas-extension.zip" download>Download Extension ZIP</a>
                     <button class="btn" onclick="openCanvas()">Open Canvas</button>
-                    <button class="btn" onclick="loadCanvasDashboard()">Refresh Dashboard</button>
+                    <button class="btn" onclick="loadCanvasDashboard()">Refresh</button>
                 </div>
 
                 <div id="linkCodeBox" class="codebox" style="display:none;">
@@ -557,7 +558,7 @@
 
             <div class="card">
                 <h2>Your Canvas Data</h2>
-                <div class="muted">After syncing via the extension, this page becomes your daily command center.</div>
+                <div class="muted">Daily view of what to do next.</div>
 
                 <div id="emptyState" class="empty" style="display:none;">
                     No Canvas data yet. Generate a Link Code, sync via the extension on Canvas, then click Refresh.
@@ -579,11 +580,6 @@
                             <div class="kpi-title">Planner + Calendar</div>
                             <div class="kpi-big" id="kpiEvents">0</div>
                             <div class="kpi-sub" id="kpiSyncedAt">Last sync: -</div>
-                        </div>
-                        <div class="kpi">
-                            <div class="kpi-title">Canvas Artifacts</div>
-                            <div class="kpi-big" id="kpiArtifacts">0</div>
-                            <div class="kpi-sub" id="kpiTimeZone">Time zone: -</div>
                         </div>
                     </div>
 
@@ -619,7 +615,7 @@
                         </div>
                         <div class="control">
                             <label for="dashboardSearch" style="margin: 0; font-size: 12px; font-weight: 900;">Search dashboard</label>
-                            <input id="dashboardSearch" type="text" class="input-sm" style="padding: 8px 10px;" placeholder="Search assignments, modules, discussions..." oninput="onDashboardSearch(this.value)" />
+                            <input id="dashboardSearch" type="text" class="input-sm" style="padding: 8px 10px;" placeholder="Search..." oninput="onDashboardSearch(this.value)" />
                         </div>
                     </div>
 
@@ -1570,18 +1566,11 @@
             const filteredAssignments = assignments.filter((a) => isCourseMatch(a));
             const filteredPlanner = planner.filter((p) => isCourseMatch(p));
             const filteredCalendar = calendar.filter((e) => isCourseMatch(e));
-            const filteredModules = modules.filter((m) => isCourseMatch(m));
-            const filteredSubmissions = submissions.filter((s) => isCourseMatch(s));
-            const filteredDiscussions = discussions.filter((d) => isCourseMatch(d));
-            const filteredSyllabi = syllabi.filter((s) => isCourseMatch(s));
-
             document.getElementById('kpiCourses').textContent = selectedCourse === '__all__'
                 ? courses.length
                 : new Set(filteredAssignments.map((a) => getCourseKey(a)).filter(Boolean)).size || 1;
             document.getElementById('kpiAssignments').textContent = filteredAssignments.length;
             document.getElementById('kpiEvents').textContent = filteredPlanner.length + filteredCalendar.length;
-            document.getElementById('kpiArtifacts').textContent = filteredModules.length + filteredSubmissions.length + filteredDiscussions.length + filteredSyllabi.length;
-            document.getElementById('kpiTimeZone').textContent = `Time zone: ${USER_TIME_ZONE}`;
 
             const upcoming = normalizeUpcoming(assignments);
             const nextDue = parseCanvasDate(upcoming[0]?.due_at);
@@ -1589,7 +1578,7 @@
             document.getElementById('kpiBusiest').textContent = busiestLabel ? `Busiest day: ${busiestLabel}` : 'Busiest day: -';
 
             const syncedAt = data.synced_at ? formatWhen(data.synced_at) : '-';
-            document.getElementById('kpiSyncedAt').textContent = `Last sync: ${syncedAt}`;
+            document.getElementById('kpiSyncedAt').textContent = `Last sync: ${syncedAt} (${USER_TIME_ZONE})`;
         }
 
         async function loadCanvasDashboard() {
