@@ -516,6 +516,11 @@
                             <div class="kpi-big" id="kpiEvents">0</div>
                             <div class="kpi-sub" id="kpiSyncedAt">Last sync: -</div>
                         </div>
+                        <div class="kpi">
+                            <div class="kpi-title">Canvas Artifacts</div>
+                            <div class="kpi-big" id="kpiArtifacts">0</div>
+                            <div class="kpi-sub" id="kpiTimeZone">Time zone: -</div>
+                        </div>
                     </div>
 
                     <div class="viz" style="margin-top: 12px;">
@@ -540,6 +545,11 @@
                         <button class="tab" id="tabPlanner" onclick="setDashTab('planner')">Planner</button>
                         <button class="tab" id="tabCalendar" onclick="setDashTab('calendar')">Calendar</button>
                         <button class="tab" id="tabAnnouncements" onclick="setDashTab('announcements')">Announcements</button>
+                        <button class="tab" id="tabModules" onclick="setDashTab('modules')">Modules</button>
+                        <button class="tab" id="tabFiles" onclick="setDashTab('files')">Files</button>
+                        <button class="tab" id="tabSubmissions" onclick="setDashTab('submissions')">Submissions</button>
+                        <button class="tab" id="tabDiscussions" onclick="setDashTab('discussions')">Discussions</button>
+                        <button class="tab" id="tabSyllabi" onclick="setDashTab('syllabi')">Syllabi</button>
                     </div>
 
                     <div id="dashPanelOverview">
@@ -566,6 +576,31 @@
                         <div class="muted" style="margin-top: 10px;">Announcements</div>
                         <div id="announcementsList" class="list"></div>
                     </div>
+
+                    <div id="dashPanelModules" style="display:none;">
+                        <div class="muted" style="margin-top: 10px;">Course modules</div>
+                        <div id="modulesList" class="list"></div>
+                    </div>
+
+                    <div id="dashPanelFiles" style="display:none;">
+                        <div class="muted" style="margin-top: 10px;">Course files</div>
+                        <div id="filesList" class="list"></div>
+                    </div>
+
+                    <div id="dashPanelSubmissions" style="display:none;">
+                        <div class="muted" style="margin-top: 10px;">Recent submissions</div>
+                        <div id="submissionsList" class="list"></div>
+                    </div>
+
+                    <div id="dashPanelDiscussions" style="display:none;">
+                        <div class="muted" style="margin-top: 10px;">Discussion topics</div>
+                        <div id="discussionsList" class="list"></div>
+                    </div>
+
+                    <div id="dashPanelSyllabi" style="display:none;">
+                        <div class="muted" style="margin-top: 10px;">Course syllabus snapshots</div>
+                        <div id="syllabiList" class="list"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -581,6 +616,7 @@
         const BASE_API_URL = 'https://blueprint-backend-154275778730.us-west1.run.app';
         const CANVAS_API_URL = `${BASE_API_URL}/api/canvas`;
         const LOGOUT_URL = `${BASE_API_URL}/auth/logout`;
+        const USER_TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Local time';
 
         const sessionToken = sessionStorage.getItem('sessionToken');
         const currentUser = JSON.parse(sessionStorage.getItem('user') || 'null');
@@ -687,7 +723,7 @@
         }
 
         function setDashTab(tab) {
-            const tabs = ['overview','grades','planner','calendar','announcements'];
+            const tabs = ['overview','grades','planner','calendar','announcements','modules','files','submissions','discussions','syllabi'];
             for (const t of tabs) {
                 const btn = document.getElementById(`tab${t.charAt(0).toUpperCase()}${t.slice(1)}`);
                 const panel = document.getElementById(`dashPanel${t.charAt(0).toUpperCase()}${t.slice(1)}`);
@@ -701,7 +737,15 @@
         }
 
         function formatWhen(dt) {
-            try { return new Date(dt).toLocaleString(); } catch { return String(dt || ''); }
+            try {
+                return new Intl.DateTimeFormat(undefined, {
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                    timeZoneName: 'short'
+                }).format(new Date(dt));
+            } catch {
+                return String(dt || '');
+            }
         }
 
         function pickDueDate(obj) {
@@ -736,7 +780,7 @@
                     <div class="item">
                         <div class="item-title">${esc(a.name || 'Untitled')}</div>
                         <div class="item-meta">${esc(a.course_name || a.course_code || '')} • <span style="color:${color}; font-weight: 950;">${badge}</span></div>
-                        <div class="item-when">Due: ${esc(due.toLocaleString())}</div>
+                        <div class="item-when">Due: ${esc(formatWhen(due))}</div>
                     </div>
                 `;
             }).join('');
@@ -784,7 +828,7 @@
             container.innerHTML = normalized.map(({ raw, t }) => {
                 const title = raw?.plannable?.title || raw?.plannable?.name || raw?.title || 'Planner item';
                 const course = raw?.context_name || raw?.context_code || raw?.context_type || '';
-                const when = t ? new Date(t).toLocaleString() : 'No date';
+                const when = t ? formatWhen(t) : 'No date';
                 return `
                     <div class="item">
                         <div class="item-title">${esc(title)}</div>
@@ -814,7 +858,7 @@
             container.innerHTML = normalized.map(({ raw, t }) => {
                 const title = raw?.title || raw?.summary || 'Event';
                 const context = raw?.context_name || raw?.context_code || '';
-                const when = t ? new Date(t).toLocaleString() : 'No date';
+                const when = t ? formatWhen(t) : 'No date';
                 return `
                     <div class="item">
                         <div class="item-title">${esc(title)}</div>
@@ -844,7 +888,7 @@
             container.innerHTML = normalized.map(({ raw, t }) => {
                 const title = raw?.title || 'Announcement';
                 const context = raw?.context_name || raw?.context_code || '';
-                const when = t ? new Date(t).toLocaleString() : '';
+                const when = t ? formatWhen(t) : '';
                 const link = raw?.html_url || raw?.url || '';
                 const linkHtml = link ? `<a class="btn" style="padding: 6px 10px;" href="${esc(link)}" target="_blank" rel="noopener noreferrer">Open</a>` : '';
                 return `
@@ -852,6 +896,130 @@
                         <div class="item-title">${esc(title)}</div>
                         <div class="item-meta">${esc(context)}${when ? ` • ${esc(when)}` : ''}</div>
                         <div style="margin-top: 8px;">${linkHtml}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderModules(items) {
+            const container = document.getElementById('modulesList');
+            const list = Array.isArray(items) ? items : [];
+            if (!list.length) {
+                container.innerHTML = '<div class="muted" style="padding: 10px;">No modules found.</div>';
+                return;
+            }
+            container.innerHTML = list.slice(0, 300).map((m) => {
+                const name = m?.name || 'Module';
+                const course = m?.course_name || m?.course_code || m?.context_name || '';
+                const itemCount = Array.isArray(m?.items) ? m.items.length : 0;
+                const unlockAt = m?.unlock_at ? ` • Unlocks ${formatWhen(m.unlock_at)}` : '';
+                return `
+                    <div class="item">
+                        <div class="item-title">${esc(name)}</div>
+                        <div class="item-meta">${esc(course)} • ${itemCount} items${esc(unlockAt)}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderFiles(items) {
+            const container = document.getElementById('filesList');
+            const list = Array.isArray(items) ? items : [];
+            if (!list.length) {
+                container.innerHTML = '<div class="muted" style="padding: 10px;">No files found.</div>';
+                return;
+            }
+            container.innerHTML = list.slice(0, 400).map((f) => {
+                const title = f?.display_name || f?.filename || 'File';
+                const course = f?.course_name || f?.course_code || '';
+                const size = Number.isFinite(f?.size) ? `${Math.round(f.size / 1024)} KB` : '';
+                const when = f?.updated_at ? formatWhen(f.updated_at) : '';
+                return `
+                    <div class="item">
+                        <div class="item-title">${esc(title)}</div>
+                        <div class="item-meta">${esc(course)}${size ? ` • ${esc(size)}` : ''}${when ? ` • Updated ${esc(when)}` : ''}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderSubmissions(items) {
+            const container = document.getElementById('submissionsList');
+            const list = Array.isArray(items) ? items : [];
+            if (!list.length) {
+                container.innerHTML = '<div class="muted" style="padding: 10px;">No submissions found.</div>';
+                return;
+            }
+            const normalized = list
+                .map((s) => {
+                    const dt = s?.submitted_at || s?.graded_at || s?.updated_at || s?.created_at || null;
+                    return { raw: s, t: dt ? new Date(dt).getTime() : 0 };
+                })
+                .sort((a, b) => b.t - a.t)
+                .slice(0, 300);
+
+            container.innerHTML = normalized.map(({ raw, t }) => {
+                const name = raw?.assignment_name || raw?.assignment?.name || `Assignment #${raw?.assignment_id || ''}`;
+                const course = raw?.course_name || raw?.course_code || '';
+                const score = raw?.score !== undefined && raw?.score !== null ? `${raw.score}${raw?.grade ? ` (${raw.grade})` : ''}` : (raw?.grade || 'Not graded');
+                const when = t ? formatWhen(t) : 'No timestamp';
+                return `
+                    <div class="item">
+                        <div class="item-title">${esc(name)}</div>
+                        <div class="item-meta">${esc(course)} • Score: ${esc(score)}</div>
+                        <div class="item-when">${esc(when)}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderDiscussions(items) {
+            const container = document.getElementById('discussionsList');
+            const list = Array.isArray(items) ? items : [];
+            if (!list.length) {
+                container.innerHTML = '<div class="muted" style="padding: 10px;">No discussions found.</div>';
+                return;
+            }
+            const normalized = list
+                .map((d) => {
+                    const dt = pickDueDate(d);
+                    return { raw: d, t: dt ? new Date(dt).getTime() : 0 };
+                })
+                .sort((a, b) => b.t - a.t)
+                .slice(0, 250);
+
+            container.innerHTML = normalized.map(({ raw, t }) => {
+                const title = raw?.title || 'Discussion topic';
+                const course = raw?.course_name || raw?.course_code || raw?.context_code || '';
+                const count = Number.isFinite(raw?.discussion_subentry_count) ? `${raw.discussion_subentry_count} replies` : '';
+                const when = t ? formatWhen(t) : '';
+                const link = raw?.html_url || raw?.url || '';
+                const linkHtml = link ? `<a class="btn" style="padding: 6px 10px;" href="${esc(link)}" target="_blank" rel="noopener noreferrer">Open</a>` : '';
+                return `
+                    <div class="item">
+                        <div class="item-title">${esc(title)}</div>
+                        <div class="item-meta">${esc(course)}${count ? ` • ${esc(count)}` : ''}${when ? ` • ${esc(when)}` : ''}</div>
+                        <div style="margin-top: 8px;">${linkHtml}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderSyllabi(items) {
+            const container = document.getElementById('syllabiList');
+            const list = Array.isArray(items) ? items : [];
+            if (!list.length) {
+                container.innerHTML = '<div class="muted" style="padding: 10px;">No syllabi found.</div>';
+                return;
+            }
+            container.innerHTML = list.slice(0, 120).map((s) => {
+                const course = s?.course_name || s?.course_code || `Course ${s?.course_id || ''}`;
+                const body = String(s?.syllabus_body || '').trim();
+                const preview = body ? body.replace(/\s+/g, ' ').slice(0, 260) : 'No syllabus body available for this course.';
+                return `
+                    <div class="item">
+                        <div class="item-title">${esc(course)}</div>
+                        <div class="item-meta">${esc(preview)}${body.length > 260 ? '…' : ''}</div>
                     </div>
                 `;
             }).join('');
@@ -1038,6 +1206,11 @@
                 const assignments = Array.isArray(data.assignments) ? data.assignments : [];
                 const planner = Array.isArray(data.planner_items) ? data.planner_items : [];
                 const calendar = Array.isArray(data.calendar_events) ? data.calendar_events : [];
+                const modules = Array.isArray(data.modules) ? data.modules : [];
+                const files = Array.isArray(data.files) ? data.files : [];
+                const submissions = Array.isArray(data.submissions) ? data.submissions : [];
+                const discussions = Array.isArray(data.discussion_topics) ? data.discussion_topics : [];
+                const syllabi = Array.isArray(data.syllabi) ? data.syllabi : [];
 
                 const { busiestLabel } = buildVisuals(data);
 
@@ -1046,19 +1219,26 @@
                 renderPlanner(planner);
                 renderCalendar(calendar);
                 renderAnnouncements(data.announcements || []);
+                renderModules(modules);
+                renderFiles(files);
+                renderSubmissions(submissions);
+                renderDiscussions(discussions);
+                renderSyllabi(syllabi);
 
                 // KPIs
                 document.getElementById('kpiCourses').textContent = courses.length;
                 document.getElementById('kpiAssignments').textContent = assignments.length;
                 document.getElementById('kpiEvents').textContent = planner.length + calendar.length;
+                document.getElementById('kpiArtifacts').textContent = modules.length + files.length + submissions.length + discussions.length + syllabi.length;
+                document.getElementById('kpiTimeZone').textContent = `Time zone: ${USER_TIME_ZONE}`;
 
                 // Next due
                 const upcoming = normalizeUpcoming(assignments);
                 const nextDue = upcoming[0]?.due_at ? new Date(upcoming[0].due_at) : null;
-                document.getElementById('kpiNextDue').textContent = nextDue ? `Next due: ${nextDue.toLocaleString()}` : 'Next due: -';
+                document.getElementById('kpiNextDue').textContent = nextDue ? `Next due: ${formatWhen(nextDue)}` : 'Next due: -';
                 document.getElementById('kpiBusiest').textContent = busiestLabel ? `Busiest day: ${busiestLabel}` : 'Busiest day: -';
 
-                const syncedAt = data.synced_at ? new Date(data.synced_at).toLocaleString() : '-';
+                const syncedAt = data.synced_at ? formatWhen(data.synced_at) : '-';
                 document.getElementById('kpiSyncedAt').textContent = `Last sync: ${syncedAt}`;
 
                 setDashTab('overview');
