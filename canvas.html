@@ -361,6 +361,68 @@
 
         .viz-title span { font-size: 12px; color: var(--ink-2); font-weight: 750; }
 
+        .dash-controls {
+            margin-top: 12px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .control {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .focus-grid {
+            margin-top: 12px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .focus-card {
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(229,231,235,1);
+            background: rgba(255,255,255,1);
+            padding: 12px;
+        }
+
+        .focus-card h4 {
+            margin: 0;
+            font-size: 13px;
+            font-weight: 1000;
+            letter-spacing: 0.2px;
+        }
+
+        .focus-list {
+            margin-top: 8px;
+            display: grid;
+            gap: 8px;
+            max-height: 240px;
+            overflow: auto;
+        }
+
+        .focus-item {
+            border-radius: 12px;
+            border: 1px solid rgba(229,231,235,1);
+            background: rgba(249,250,251,1);
+            padding: 8px 10px;
+        }
+
+        .focus-title { font-weight: 900; font-size: 12px; color: rgba(15,23,42,0.92); }
+        .focus-meta { margin-top: 2px; font-size: 11px; font-weight: 700; color: rgba(15,23,42,0.62); }
+        .focus-tag {
+            display: inline-flex;
+            padding: 2px 7px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 900;
+            border: 1px solid rgba(26,115,232,0.25);
+            background: rgba(232,240,254,1);
+            color: rgba(26,115,232,1);
+        }
+
         .tabs {
             display: flex;
             flex-wrap: wrap;
@@ -425,6 +487,8 @@
             .grid { grid-template-columns: 1fr; }
             .hero h1 { font-size: 34px; }
             .kpis { grid-template-columns: 1fr; }
+            .focus-grid { grid-template-columns: 1fr; }
+            .dash-controls { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -551,11 +615,30 @@
                         <button class="tab" id="tabSyllabi" onclick="setDashTab('syllabi')">Syllabi</button>
                     </div>
 
-                    <div style="margin-top: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                        <label for="courseFilter" style="margin: 0; font-size: 12px; font-weight: 900;">Filter by course</label>
-                        <select id="courseFilter" class="input-sm" style="max-width: 360px; padding: 8px 10px;" onchange="onCourseFilterChange(this.value)">
-                            <option value="__all__">All courses</option>
-                        </select>
+                    <div class="dash-controls">
+                        <div class="control">
+                            <label for="courseFilter" style="margin: 0; font-size: 12px; font-weight: 900;">Filter by course</label>
+                            <select id="courseFilter" class="input-sm" style="max-width: 100%; padding: 8px 10px;" onchange="onCourseFilterChange(this.value)">
+                                <option value="__all__">All courses</option>
+                            </select>
+                        </div>
+                        <div class="control">
+                            <label for="dashboardSearch" style="margin: 0; font-size: 12px; font-weight: 900;">Search dashboard</label>
+                            <input id="dashboardSearch" type="text" class="input-sm" style="padding: 8px 10px;" placeholder="Search assignments, modules, discussions..." oninput="onDashboardSearch(this.value)" />
+                        </div>
+                    </div>
+
+                    <div class="focus-grid">
+                        <div class="focus-card">
+                            <h4>Priority Queue</h4>
+                            <div class="muted" style="margin-top: 4px;">Most urgent upcoming work from assignments, planner, and calendar.</div>
+                            <div id="priorityQueue" class="focus-list"></div>
+                        </div>
+                        <div class="focus-card">
+                            <h4>Risk Signals</h4>
+                            <div class="muted" style="margin-top: 4px;">Potential issues to act on before they grow.</div>
+                            <div id="riskSignals" class="focus-list"></div>
+                        </div>
                     </div>
 
                     <div id="dashPanelOverview">
@@ -623,6 +706,7 @@
         const currentUser = JSON.parse(sessionStorage.getItem('user') || 'null');
         let currentCanvasData = null;
         let selectedCourse = '__all__';
+        let dashboardSearch = '';
 
         function redirectToLogin() {
             try {
@@ -859,10 +943,23 @@
             renderDashboard(currentCanvasData);
         }
 
+        function onDashboardSearch(value) {
+            dashboardSearch = String(value || '').trim().toLowerCase();
+            if (!currentCanvasData) return;
+            renderDashboard(currentCanvasData);
+        }
+
+        function matchesSearch(...vals) {
+            if (!dashboardSearch) return true;
+            const text = vals.map((v) => String(v || '').toLowerCase()).join(' ');
+            return text.includes(dashboardSearch);
+        }
+
         function normalizeUpcoming(assignments) {
             const list = Array.isArray(assignments) ? assignments : [];
             const upcoming = list
                 .filter(a => a && isCourseMatch(a))
+                .filter(a => matchesSearch(a?.name, a?.course_name, a?.course_code))
                 .map((a) => ({ raw: a, due: parseCanvasDate(a?.due_at) }))
                 .filter((x) => x.due && x.due.getTime() > Date.now())
                 .sort((a, b) => a.due - b.due)
@@ -906,6 +1003,7 @@
 
             container.innerHTML = list
                 .filter(g => g && g.course_name && isCourseMatch(g))
+                .filter(g => matchesSearch(g?.course_name, g?.current_grade, g?.current_score))
                 .sort((a, b) => String(a.course_name).localeCompare(String(b.course_name)))
                 .map(g => {
                     const score = (g.current_score === null || g.current_score === undefined) ? '' : ` (${g.current_score}%)`;
@@ -934,6 +1032,7 @@
                     return { raw: i, t: d ? d.getTime() : 0 };
                 })
                 .filter(({ raw }) => isCourseMatch(raw))
+                .filter(({ raw }) => matchesSearch(raw?.plannable?.title, raw?.plannable?.name, raw?.title, raw?.context_name, raw?.context_code))
                 .sort((a, b) => a.t - b.t)
                 .slice(0, 200);
 
@@ -966,6 +1065,7 @@
                     return { raw: e, t: d ? d.getTime() : 0 };
                 })
                 .filter(({ raw }) => isCourseMatch(raw))
+                .filter(({ raw }) => matchesSearch(raw?.title, raw?.summary, raw?.context_name, raw?.context_code))
                 .sort((a, b) => a.t - b.t)
                 .slice(0, 200);
 
@@ -998,6 +1098,7 @@
                     return { raw: a, t: d ? d.getTime() : 0 };
                 })
                 .filter(({ raw }) => isCourseMatch(raw))
+                .filter(({ raw }) => matchesSearch(raw?.title, raw?.context_name, raw?.context_code))
                 .sort((a, b) => b.t - a.t)
                 .slice(0, 100);
 
@@ -1024,7 +1125,7 @@
                 container.innerHTML = '<div class="muted" style="padding: 10px;">No modules found.</div>';
                 return;
             }
-            const filtered = list.filter((m) => isCourseMatch(m));
+            const filtered = list.filter((m) => isCourseMatch(m) && matchesSearch(m?.name, m?.course_name, m?.course_code));
             const grouped = new Map();
             for (const m of filtered) {
                 const course = m?.course_name || m?.course_code || m?.context_name || 'Other';
@@ -1062,6 +1163,7 @@
                     return { raw: s, t: d ? d.getTime() : 0 };
                 })
                 .filter(({ raw }) => isCourseMatch(raw))
+                .filter(({ raw }) => matchesSearch(raw?.assignment_name, raw?.assignment?.name, raw?.course_name, raw?.course_code, raw?.grade, raw?.workflow_state))
                 .sort((a, b) => b.t - a.t)
                 .slice(0, 300);
 
@@ -1095,6 +1197,7 @@
                     return { raw: d, t: parsed ? parsed.getTime() : 0 };
                 })
                 .filter(({ raw }) => isCourseMatch(raw))
+                .filter(({ raw }) => matchesSearch(raw?.title, raw?.course_name, raw?.course_code, raw?.context_code))
                 .sort((a, b) => b.t - a.t)
                 .slice(0, 250);
 
@@ -1122,7 +1225,10 @@
                 container.innerHTML = '<div class="muted" style="padding: 10px;">No syllabi found.</div>';
                 return;
             }
-            container.innerHTML = list.filter((s) => isCourseMatch(s)).slice(0, 120).map((s) => {
+            container.innerHTML = list
+                .filter((s) => isCourseMatch(s))
+                .filter((s) => matchesSearch(s?.course_name, s?.course_code, stripHtmlToText(s?.syllabus_body || '')))
+                .slice(0, 120).map((s) => {
                 const course = s?.course_name || s?.course_code || `Course ${s?.course_id || ''}`;
                 const body = stripHtmlToText(s?.syllabus_body || '');
                 const preview = body ? body.slice(0, 260) : 'No syllabus body available for this course.';
@@ -1133,6 +1239,125 @@
                     </div>
                 `;
             }).join('');
+        }
+
+        function renderPriorityQueue(assignments, planner, calendar) {
+            const container = document.getElementById('priorityQueue');
+            if (!container) return;
+
+            const now = Date.now();
+            const items = [];
+
+            for (const a of assignments) {
+                if (!a || !isCourseMatch(a) || !matchesSearch(a?.name, a?.course_name, a?.course_code)) continue;
+                const d = parseCanvasDate(a?.due_at);
+                if (!d) continue;
+                items.push({
+                    title: a?.name || 'Assignment',
+                    course: a?.course_name || a?.course_code || '',
+                    when: d,
+                    tag: 'Assignment'
+                });
+            }
+            for (const p of planner) {
+                if (!p || !isCourseMatch(p) || !matchesSearch(p?.title, p?.plannable?.title, p?.context_name, p?.context_code)) continue;
+                const d = parseCanvasDate(pickDueDate(p));
+                if (!d) continue;
+                items.push({
+                    title: p?.plannable?.title || p?.plannable?.name || p?.title || 'Planner item',
+                    course: p?.context_name || p?.context_code || '',
+                    when: d,
+                    tag: 'Planner'
+                });
+            }
+            for (const e of calendar) {
+                if (!e || !isCourseMatch(e) || !matchesSearch(e?.title, e?.summary, e?.context_name, e?.context_code)) continue;
+                const d = parseCanvasDate(pickDueDate(e));
+                if (!d) continue;
+                items.push({
+                    title: e?.title || e?.summary || 'Calendar event',
+                    course: e?.context_name || e?.context_code || '',
+                    when: d,
+                    tag: 'Calendar'
+                });
+            }
+
+            const upcoming = items
+                .filter((i) => i.when.getTime() >= now - (24 * 60 * 60 * 1000))
+                .sort((a, b) => a.when - b.when)
+                .slice(0, 10);
+
+            if (!upcoming.length) {
+                container.innerHTML = '<div class="muted">No urgent items match your current filter.</div>';
+                return;
+            }
+
+            container.innerHTML = upcoming.map((i) => {
+                const hoursAway = Math.round((i.when.getTime() - now) / (1000 * 60 * 60));
+                const urgency = hoursAway <= 24 ? 'Due soon' : hoursAway <= 72 ? 'Next 3 days' : 'Upcoming';
+                return `
+                    <div class="focus-item">
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                            <div class="focus-title">${esc(i.title)}</div>
+                            <span class="focus-tag">${esc(i.tag)}</span>
+                        </div>
+                        <div class="focus-meta">${esc(i.course)} • ${esc(formatWhen(i.when))} • ${esc(urgency)}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderRiskSignals(grades, submissions, announcements) {
+            const container = document.getElementById('riskSignals');
+            if (!container) return;
+
+            const risks = [];
+            const gradeList = (Array.isArray(grades) ? grades : []).filter((g) => isCourseMatch(g));
+            const subList = (Array.isArray(submissions) ? submissions : []).filter((s) => isCourseMatch(s));
+            const annList = (Array.isArray(announcements) ? announcements : []).filter((a) => isCourseMatch(a));
+
+            const lowGrades = gradeList.filter((g) => {
+                const score = Number(g?.current_score);
+                return Number.isFinite(score) && score < 75;
+            });
+            for (const g of lowGrades.slice(0, 4)) {
+                risks.push({
+                    title: `Low grade watch: ${g.course_name || 'Course'}`,
+                    meta: `Current score ${g.current_score}%${g.current_grade ? ` (${g.current_grade})` : ''}`,
+                });
+            }
+
+            const unsubmitted = subList.filter((s) => s?.workflow_state && s.workflow_state !== 'graded' && s.workflow_state !== 'submitted');
+            for (const s of unsubmitted.slice(0, 4)) {
+                risks.push({
+                    title: `${s.assignment_name || s.assignment?.name || 'Assignment'} not submitted`,
+                    meta: `${s.course_name || s.course_code || ''} • State: ${s.workflow_state}`,
+                });
+            }
+
+            const recentAnnouncements = annList.filter((a) => {
+                const d = parseCanvasDate(a?.posted_at || a?.created_at);
+                return d && (Date.now() - d.getTime()) <= 7 * 24 * 60 * 60 * 1000;
+            });
+            if (recentAnnouncements.length) {
+                risks.push({
+                    title: `${recentAnnouncements.length} new announcement${recentAnnouncements.length > 1 ? 's' : ''} this week`,
+                    meta: 'Review course announcements for policy/due-date changes.',
+                });
+            }
+
+            const filtered = risks.filter((r) => matchesSearch(r.title, r.meta)).slice(0, 8);
+            if (!filtered.length) {
+                container.innerHTML = '<div class="muted">No major risk signals detected for current filters.</div>';
+                return;
+            }
+
+            container.innerHTML = filtered.map((r) => `
+                <div class="focus-item">
+                    <div class="focus-title">${esc(r.title)}</div>
+                    <div class="focus-meta">${esc(r.meta)}</div>
+                </div>
+            `).join('');
         }
 
         function buildPulseSvg(counts, labels) {
@@ -1319,6 +1544,8 @@
             renderSubmissions(submissions);
             renderDiscussions(discussions);
             renderSyllabi(syllabi);
+            renderPriorityQueue(assignments, planner, calendar);
+            renderRiskSignals(data.grades || [], submissions, data.announcements || []);
 
             const filteredAssignments = assignments.filter((a) => isCourseMatch(a));
             const filteredPlanner = planner.filter((p) => isCourseMatch(p));
