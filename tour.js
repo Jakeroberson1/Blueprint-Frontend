@@ -3,6 +3,7 @@
   const OVERLAY_ID = 'bpTourOverlay';
   const POPOVER_ID = 'bpTourPopover';
   const TARGET_CLASS = 'bp-tour-target';
+  const STEP_QUERY_KEY = 'bp_tour_step';
 
   function getPageName() {
     const p = window.location.pathname.split('/').pop();
@@ -43,9 +44,9 @@
       .${TARGET_CLASS} {
         position: relative !important;
         z-index: 10001 !important;
-        outline: 3px solid rgba(26,115,232,0.92) !important;
+        outline: 4px solid rgba(26,115,232,0.98) !important;
         border-radius: 12px !important;
-        box-shadow: 0 0 0 6px rgba(26,115,232,0.2) !important;
+        box-shadow: 0 0 0 10px rgba(26,115,232,0.26), 0 0 28px rgba(26,115,232,0.55) !important;
       }
       #${OVERLAY_ID} {
         position: fixed;
@@ -94,6 +95,29 @@
     }
   }
 
+  function getStepFromUrl() {
+    try {
+      const params = new URLSearchParams(window.location.search || '');
+      const raw = params.get(STEP_QUERY_KEY);
+      if (raw === null) return null;
+      const n = Number(raw);
+      return Number.isFinite(n) ? n : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function clearStepQueryFromUrl() {
+    try {
+      const url = new URL(window.location.href);
+      if (!url.searchParams.has(STEP_QUERY_KEY)) return;
+      url.searchParams.delete(STEP_QUERY_KEY);
+      const nextSearch = url.searchParams.toString();
+      const next = `${url.pathname}${nextSearch ? `?${nextSearch}` : ''}${url.hash || ''}`;
+      window.history.replaceState({}, '', next);
+    } catch {}
+  }
+
   function positionPopover(pop, target) {
     const viewportW = window.innerWidth;
     const viewportH = window.innerHeight;
@@ -130,11 +154,13 @@
       const step = steps[stepIndex];
       if (!step) return;
       if (step.page !== getPageName()) {
-        window.location.href = step.page;
+        const dest = new URL(step.page, window.location.href);
+        dest.searchParams.set(STEP_QUERY_KEY, String(stepIndex));
+        window.location.href = dest.toString();
       }
     }
 
-    function showStep(stepIndex) {
+    function showStep(stepIndex, attempt) {
       const step = steps[stepIndex];
       if (!step) return finishTour(false);
 
@@ -151,6 +177,12 @@
       document.body.appendChild(overlay);
 
       const target = getTarget(step.selector);
+      const tries = Number(attempt || 0);
+      if (step.selector && !target && tries < 20) {
+        // Cross-page render timing can delay target availability.
+        window.setTimeout(() => showStep(stepIndex, tries + 1), 100);
+        return;
+      }
       if (target) {
         target.classList.add(TARGET_CLASS);
         target.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -204,9 +236,16 @@
       finishTour(true);
     };
 
+    const stepFromUrl = getStepFromUrl();
+    if (stepFromUrl !== null) {
+      writeState({ active: true, step: stepFromUrl });
+      clearStepQueryFromUrl();
+    }
+
     const state = readState();
     if (state.active) {
-      window.resumeBlueprintTour();
+      // Allow full page layout to settle before trying to attach highlight.
+      window.setTimeout(() => window.resumeBlueprintTour(), 50);
     }
   };
 })();
