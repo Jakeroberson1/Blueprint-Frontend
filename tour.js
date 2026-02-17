@@ -63,7 +63,7 @@
         padding: 12px;
         z-index: 10002;
         box-shadow: 0 18px 40px rgba(15,23,42,0.22);
-        font-family: Inter, "Segoe UI", sans-serif;
+        font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
       }
       #${POPOVER_ID} .bp-tour-title { font-size: 16px; font-weight: 900; margin: 0 0 6px; }
       #${POPOVER_ID} .bp-tour-body { margin: 0; color: rgba(71,85,105,0.95); font-size: 13px; line-height: 1.45; }
@@ -185,7 +185,7 @@
       }
       if (target) {
         target.classList.add(TARGET_CLASS);
-        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        target.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'nearest' });
       }
 
       const pop = document.createElement('div');
@@ -203,7 +203,7 @@
         </div>
       `;
       document.body.appendChild(pop);
-      positionPopover(pop, target);
+      window.setTimeout(() => positionPopover(pop, target), 80);
 
       const back = document.getElementById('bpTourBack');
       const skip = document.getElementById('bpTourSkip');
