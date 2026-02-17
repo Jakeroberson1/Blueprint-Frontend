@@ -552,6 +552,8 @@
             <div class="account">
                 <a class="btn" href="canvas.html">Connect</a>
                 <a class="btn" href="index.html">Chat</a>
+                <a class="btn" href="settings.html">Settings</a>
+                <button class="btn" type="button" onclick="showOnboarding()">Tour</button>
                 <button class="btn" id="themeToggleBtn" type="button" onclick="toggleTheme()">Dark</button>
                 <div class="pill" id="userPill">Signed in</div>
                 <button class="btn btn-danger" onclick="logout()">Log Out</button>
@@ -579,17 +581,17 @@
 
                 <div id="dashboard" class="dash">
                     <div class="kpis">
-                        <div class="kpi">
+                        <div class="kpi" role="button" tabindex="0" onclick="setDashTab('overview')">
                             <div class="kpi-title">Courses</div>
                             <div class="kpi-big" id="kpiCourses">0</div>
                             <div class="kpi-sub" id="kpiBusiest">Busiest day: -</div>
                         </div>
-                        <div class="kpi">
+                        <div class="kpi" role="button" tabindex="0" onclick="setDashTab('overview')">
                             <div class="kpi-title">Assignments</div>
                             <div class="kpi-big" id="kpiAssignments">0</div>
                             <div class="kpi-sub" id="kpiNextDue">Next due: -</div>
                         </div>
-                        <div class="kpi">
+                        <div class="kpi" role="button" tabindex="0" onclick="setDashTab('planner')">
                             <div class="kpi-title">Planner + Calendar</div>
                             <div class="kpi-big" id="kpiEvents">0</div>
                             <div class="kpi-sub" id="kpiSyncedAt">Last sync: -</div>
@@ -630,6 +632,12 @@
                             <label for="dashboardSearch" style="margin: 0; font-size: 12px; font-weight: 900;">Search dashboard</label>
                             <input id="dashboardSearch" type="text" class="input-sm" style="padding: 8px 10px;" placeholder="Search..." oninput="onDashboardSearch(this.value)" />
                         </div>
+                    </div>
+                    <div class="row" style="margin-top: 10px; gap: 8px; flex-wrap: wrap;">
+                        <button class="btn" type="button" id="quickAll" onclick="setQuickFilter('all')">All Items</button>
+                        <button class="btn" type="button" id="quickOverdue" onclick="setQuickFilter('overdue')">Overdue</button>
+                        <button class="btn" type="button" id="quick48h" onclick="setQuickFilter('next48h')">Next 48h</button>
+                        <button class="btn" type="button" id="quickWeek" onclick="setQuickFilter('week')">This Week</button>
                     </div>
 
                     <div class="focus-grid">
@@ -684,6 +692,7 @@
         </div>
     </div>
 
+    <script src="tour.js"></script>
     <script>
         // Session-scoped auth; remove legacy persistent tokens.
         try {
@@ -694,14 +703,25 @@
         const BASE_API_URL = 'https://blueprint-backend-154275778730.us-west1.run.app';
         const CANVAS_API_URL = `${BASE_API_URL}/api/canvas`;
         const LOGOUT_URL = `${BASE_API_URL}/auth/logout`;
-        const USER_TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Local time';
+        const ONBOARDING_COMPLETE_URL = `${BASE_API_URL}/auth/onboarding-complete`;
         const THEME_STORAGE_KEY = 'bpTheme';
+        const PREFS_STORAGE_KEY = 'bpPrefs';
+        const TOUR_STEPS = [
+            { page: 'index.html', selector: '#messageInput', title: 'Ask Questions Fast', body: 'Use the main composer to ask course questions, get explanations, and request direct answers when needed.' },
+            { page: 'index.html', selector: '#studyGuidePicker', title: 'Upload Files', body: 'Attach PDF, DOCX, TXT, or image files in chat for analysis. Use Study Guides in the left panel to build reusable guides from class content.' },
+            { page: 'canvas.html', selector: '#linkBtn', title: 'Connect Canvas', body: 'Generate a Link Code and pair your Canvas session in the extension panel.' },
+            { page: 'dashboard.html', selector: '#priorityQueue', title: 'Use The Dashboard', body: 'This section highlights your highest-priority work from assignments, planner items, and calendar events.' },
+            { page: 'settings.html', selector: '#timeZoneMode', title: 'Set Preferences', body: 'Open Settings to choose your timezone and dashboard defaults so due dates and day names stay accurate.' }
+        ];
 
         const sessionToken = sessionStorage.getItem('sessionToken');
         const currentUser = JSON.parse(sessionStorage.getItem('user') || 'null');
         let currentCanvasData = null;
+        let userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
         let selectedCourse = '__all__';
         let dashboardSearch = '';
+        let quickFilter = 'all';
+        let defaultDashboardTab = 'overview';
 
         function applyTheme(theme) {
             const dark = theme === 'dark';
@@ -748,9 +768,50 @@
             pill.textContent = currentUser?.fullName || currentUser?.email || 'Signed in';
         }
 
+        function getPrefs() {
+            try {
+                const raw = localStorage.getItem(PREFS_STORAGE_KEY);
+                if (!raw) return {};
+                const parsed = JSON.parse(raw);
+                return parsed && typeof parsed === 'object' ? parsed : {};
+            } catch {
+                return {};
+            }
+        }
+
+        function readDashboardPrefs() {
+            const prefs = getPrefs();
+            const configuredTz = prefs?.timeZoneMode === 'custom' ? String(prefs.customTimeZone || '').trim() : '';
+            userTimeZone = configuredTz || (Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
+            quickFilter = String(prefs.defaultDashboardFilter || 'all');
+            if (!['all', 'overdue', 'next48h', 'week'].includes(quickFilter)) quickFilter = 'all';
+            defaultDashboardTab = String(prefs.defaultDashboardTab || 'overview');
+            if (!['overview', 'grades', 'planner', 'announcements'].includes(defaultDashboardTab)) defaultDashboardTab = 'overview';
+        }
+
         async function logout() {
             try { await apiFetch(LOGOUT_URL, { method: 'POST' }); } catch (e) {}
             redirectToLogin();
+        }
+
+        async function completeOnboarding() {
+            try { await apiFetch(ONBOARDING_COMPLETE_URL, { method: 'POST' }); } catch (e) {}
+            try {
+                const user = JSON.parse(sessionStorage.getItem('user') || 'null') || {};
+                user.hasSeenOnboarding = true;
+                sessionStorage.setItem('user', JSON.stringify(user));
+            } catch (e) {}
+        }
+
+        function showOnboarding() {
+            if (window.startBlueprintTour) window.startBlueprintTour();
+        }
+
+        if (window.initBlueprintTour) {
+            window.initBlueprintTour({
+                steps: TOUR_STEPS,
+                onComplete: completeOnboarding
+            });
         }
 
         function setStatus(message, kind = 'info') {
@@ -854,6 +915,28 @@
             });
         }
 
+        function refreshQuickFilterButtons() {
+            const map = {
+                all: 'quickAll',
+                overdue: 'quickOverdue',
+                next48h: 'quick48h',
+                week: 'quickWeek'
+            };
+            for (const [key, id] of Object.entries(map)) {
+                const btn = document.getElementById(id);
+                if (!btn) continue;
+                const active = quickFilter === key;
+                btn.classList.toggle('btn-primary', active);
+            }
+        }
+
+        function setQuickFilter(mode) {
+            quickFilter = ['all', 'overdue', 'next48h', 'week'].includes(mode) ? mode : 'all';
+            refreshQuickFilterButtons();
+            if (!currentCanvasData) return;
+            renderDashboard(currentCanvasData);
+        }
+
         function focusToday() {
             setDashTab('overview');
             const el = document.getElementById('priorityQueue');
@@ -914,13 +997,15 @@
                 return new Intl.DateTimeFormat(undefined, {
                     dateStyle: 'medium',
                     timeStyle: 'short',
-                    timeZoneName: 'short'
+                    timeZoneName: 'short',
+                    timeZone: userTimeZone
                 }).format(d);
             } catch {
                 try {
                     return new Intl.DateTimeFormat(undefined, {
                         dateStyle: 'medium',
-                        timeStyle: 'short'
+                        timeStyle: 'short',
+                        timeZone: userTimeZone
                     }).format(d);
                 } catch {
                     return d.toLocaleString();
@@ -931,14 +1016,37 @@
         function pickDueDate(obj, opts = {}) {
             const includePosted = !!opts.includePosted;
             const includeCreated = !!opts.includeCreated;
-            return obj?.due_at
+            return obj?.due_date
+                || obj?.all_day_date
+                || obj?.due_at
                 || obj?.plannable_date
                 || obj?.start_at
                 || obj?.end_at
-                || obj?.all_day_date
                 || (includePosted ? obj?.posted_at : null)
                 || (includeCreated ? obj?.created_at : null)
                 || null;
+        }
+
+        function getItemDate(raw, opts = {}) {
+            const picked = pickDueDate(raw, opts);
+            return parseCanvasDate(picked);
+        }
+
+        function passesQuickFilter(dateObj) {
+            if (quickFilter === 'all') return true;
+            if (!dateObj || Number.isNaN(dateObj.getTime())) return false;
+            const now = Date.now();
+            const delta = dateObj.getTime() - now;
+            if (quickFilter === 'overdue') return delta < 0;
+            if (quickFilter === 'next48h') return delta >= 0 && delta <= (48 * 60 * 60 * 1000);
+            if (quickFilter === 'week') return delta >= 0 && delta <= (7 * 24 * 60 * 60 * 1000);
+            return true;
+        }
+
+        function askBlueprint(text) {
+            const q = String(text || '').trim();
+            if (!q) return;
+            window.location.href = `index.html?prompt=${encodeURIComponent(q)}`;
         }
 
         function stripHtmlToText(html) {
@@ -1033,8 +1141,9 @@
             const upcoming = list
                 .filter(a => a && isCourseMatch(a))
                 .filter(a => matchesSearch(a?.name, a?.course_name, a?.course_code))
-                .map((a) => ({ raw: a, due: parseCanvasDate(a?.due_at) }))
-                .filter((x) => x.due && x.due.getTime() > Date.now())
+                .map((a) => ({ raw: a, due: getItemDate(a) }))
+                .filter((x) => x.due && (quickFilter === 'overdue' ? x.due.getTime() < Date.now() : x.due.getTime() > Date.now()))
+                .filter((x) => passesQuickFilter(x.due))
                 .sort((a, b) => a.due - b.due)
                 .slice(0, 20);
 
@@ -1051,16 +1160,20 @@
             }
 
             container.innerHTML = upcoming.map(a => {
-                const due = parseCanvasDate(a.due_at);
+                const due = getItemDate(a);
                 if (!due) return '';
                 const days = Math.ceil((due - new Date()) / (1000 * 60 * 60 * 24));
                 const badge = days <= 2 ? 'Soon' : days <= 7 ? 'This week' : 'Later';
                 const color = days <= 2 ? 'rgba(255,59,106,0.95)' : days <= 7 ? 'rgba(255,196,0,0.95)' : 'rgba(23,105,255,0.92)';
+                const askPrompt = encodeURIComponent(`Help me plan ${a.name || 'this assignment'} in ${a.course_name || 'my course'}.`);
                 return `
                     <div class="item">
                         <div class="item-title">${esc(a.name || 'Untitled')}</div>
                         <div class="item-meta">${esc(a.course_name || a.course_code || '')} • <span style="color:${color}; font-weight: 950;">${badge}</span></div>
                         <div class="item-when">Due: ${esc(formatWhen(due))}</div>
+                        <div style="margin-top: 8px;">
+                            <button class="btn" type="button" style="padding: 6px 10px;" onclick="askBlueprint(decodeURIComponent('${askPrompt}'))">Ask Blueprint</button>
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -1106,6 +1219,7 @@
                 })
                 .filter(({ raw }) => isCourseMatch(raw))
                 .filter(({ raw }) => matchesSearch(raw?.plannable?.title, raw?.plannable?.name, raw?.title, raw?.context_name, raw?.context_code))
+                .filter(({ t }) => passesQuickFilter(t ? new Date(t) : null))
                 .sort((a, b) => a.t - b.t)
                 .slice(0, 200);
 
@@ -1113,11 +1227,15 @@
                 const title = raw?.plannable?.title || raw?.plannable?.name || raw?.title || 'Planner item';
                 const course = raw?.context_name || raw?.context_code || raw?.context_type || '';
                 const when = t ? formatWhen(t) : 'No date';
+                const askPrompt = encodeURIComponent(`What should I do first for ${title}?`);
                 return `
                     <div class="item">
                         <div class="item-title">${esc(title)}</div>
                         <div class="item-meta">${esc(course)}</div>
                         <div class="item-when">${esc(when)}</div>
+                        <div style="margin-top: 8px;">
+                            <button class="btn" type="button" style="padding: 6px 10px;" onclick="askBlueprint(decodeURIComponent('${askPrompt}'))">Ask Blueprint</button>
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -1139,6 +1257,7 @@
                 })
                 .filter(({ raw }) => isCourseMatch(raw))
                 .filter(({ raw }) => matchesSearch(raw?.title, raw?.summary, raw?.context_name, raw?.context_code))
+                .filter(({ t }) => passesQuickFilter(t ? new Date(t) : null))
                 .sort((a, b) => a.t - b.t)
                 .slice(0, 200);
 
@@ -1323,8 +1442,9 @@
 
             for (const a of assignments) {
                 if (!a || !isCourseMatch(a) || !matchesSearch(a?.name, a?.course_name, a?.course_code)) continue;
-                const d = parseCanvasDate(a?.due_at);
+                const d = getItemDate(a);
                 if (!d) continue;
+                if (!passesQuickFilter(d)) continue;
                 items.push({
                     title: a?.name || 'Assignment',
                     course: a?.course_name || a?.course_code || '',
@@ -1336,6 +1456,7 @@
                 if (!p || !isCourseMatch(p) || !matchesSearch(p?.title, p?.plannable?.title, p?.context_name, p?.context_code)) continue;
                 const d = parseCanvasDate(pickDueDate(p));
                 if (!d) continue;
+                if (!passesQuickFilter(d)) continue;
                 items.push({
                     title: p?.plannable?.title || p?.plannable?.name || p?.title || 'Planner item',
                     course: p?.context_name || p?.context_code || '',
@@ -1347,6 +1468,7 @@
                 if (!e || !isCourseMatch(e) || !matchesSearch(e?.title, e?.summary, e?.context_name, e?.context_code)) continue;
                 const d = parseCanvasDate(pickDueDate(e));
                 if (!d) continue;
+                if (!passesQuickFilter(d)) continue;
                 items.push({
                     title: e?.title || e?.summary || 'Calendar event',
                     course: e?.context_name || e?.context_code || '',
@@ -1572,7 +1694,7 @@
                 if (idx >= 0 && idx < days) counts[idx] += 1;
             };
 
-            for (const a of assignments) bump(a?.due_at);
+            for (const a of assignments) bump(getItemDate(a));
             for (const p of planner) bump(pickDueDate(p));
             for (const e of calendar) bump(pickDueDate(e));
 
@@ -1639,12 +1761,12 @@
             document.getElementById('kpiEvents').textContent = filteredPlanner.length + filteredCalendar.length;
 
             const upcoming = normalizeUpcoming(assignments);
-            const nextDue = parseCanvasDate(upcoming[0]?.due_at);
+            const nextDue = getItemDate(upcoming[0]);
             document.getElementById('kpiNextDue').textContent = nextDue ? `Next due: ${formatWhen(nextDue)}` : 'Next due: -';
             document.getElementById('kpiBusiest').textContent = busiestLabel ? `Busiest day: ${busiestLabel}` : 'Busiest day: -';
 
             const syncedAt = data.synced_at ? formatWhen(data.synced_at) : '-';
-            document.getElementById('kpiSyncedAt').textContent = `Last sync: ${syncedAt} (${USER_TIME_ZONE})`;
+            document.getElementById('kpiSyncedAt').textContent = `Last sync: ${syncedAt} (${userTimeZone})`;
         }
 
         async function loadCanvasDashboard() {
@@ -1671,7 +1793,8 @@
                 buildCourseFilter(data);
                 renderDashboard(data);
 
-                setDashTab('overview');
+                refreshQuickFilterButtons();
+                setDashTab(defaultDashboardTab);
                 setStatus('Dashboard updated.', 'success');
             } catch (e) {
                 setStatus(`Dashboard error: ${e.message}`, 'error');
@@ -1680,6 +1803,8 @@
 
         window.addEventListener('load', async () => {
             initializeTheme();
+            readDashboardPrefs();
+            refreshQuickFilterButtons();
             if (!sessionToken) {
                 redirectToLogin();
                 return;

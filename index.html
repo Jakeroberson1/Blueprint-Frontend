@@ -769,6 +769,7 @@
                 <div class="brand-sub">AI chat</div>
             </div>
             <div class="account">
+                <a class="btn" href="canvas.html">Connect</a>
                 <a class="btn" href="dashboard.html">Dashboard</a>
                 <a class="btn" href="settings.html">Settings</a>
                 <button class="btn" type="button" onclick="showOnboarding()">Tour</button>
@@ -896,26 +897,7 @@
             </div>
         </div>
     </div>
-    <div id="onboardingModal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(15,23,42,0.45); align-items:center; justify-content:center; padding:20px;">
-        <div style="width:min(640px, 95vw); background:rgba(255,255,255,0.98); border:1px solid rgba(229,231,235,1); border-radius:18px; box-shadow:0 20px 50px rgba(15,23,42,0.22);">
-            <div style="padding:16px 18px; border-bottom:1px solid rgba(229,231,235,1); display:flex; justify-content:space-between; align-items:center; gap:10px;">
-                <strong style="font-size:18px; letter-spacing:-0.02em;">Welcome to Blueprint</strong>
-                <button class="btn" type="button" onclick="skipOnboarding()">Skip</button>
-            </div>
-            <div style="padding:16px 18px;">
-                <div id="onboardingStepBadge" class="muted" style="font-weight:900; font-size:12px; text-transform:uppercase;"></div>
-                <h3 id="onboardingTitle" style="margin:8px 0 6px; font-size:24px;"></h3>
-                <p id="onboardingBody" class="muted" style="margin:0; line-height:1.6; font-size:14px;"></p>
-            </div>
-            <div style="padding:14px 18px; border-top:1px solid rgba(229,231,235,1); display:flex; justify-content:space-between; gap:8px;">
-                <button id="onboardingPrevBtn" class="btn" type="button" onclick="prevOnboardingStep()">Back</button>
-                <div style="display:flex; gap:8px;">
-                    <button id="onboardingNextBtn" class="btn btn-primary" type="button" onclick="nextOnboardingStep()">Next</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
+    <script src="tour.js"></script>
     <script>
         // Auth is session-scoped (clears when the tab/window closes).
         // Remove any legacy persistent tokens from older versions.
@@ -1071,50 +1053,38 @@
         let conversations = [];
         let currentConversationId = null;
         let studyGuides = [];
-        let onboardingStep = 0;
-        let onboardingOpen = false;
-
-        const onboardingSteps = [
+        const TOUR_STEPS = [
             {
+                page: 'index.html',
+                selector: '#messageInput',
                 title: 'Ask Questions Fast',
                 body: 'Use the main composer to ask course questions, get explanations, and request direct answers when needed.'
             },
             {
+                page: 'index.html',
+                selector: '#studyGuidePicker',
                 title: 'Upload Files',
                 body: 'Attach PDF, DOCX, TXT, or image files in chat for analysis. Use Study Guides in the left panel to build reusable guides from class content.'
             },
             {
+                page: 'canvas.html',
+                selector: '#linkBtn',
                 title: 'Connect Canvas',
-                body: 'Open Connect to pair Canvas once. Then Dashboard gives your upcoming work, grades, planner items, and announcements in one place.'
+                body: 'Generate a Link Code and pair your Canvas session in the extension panel.'
             },
             {
+                page: 'dashboard.html',
+                selector: '#priorityQueue',
+                title: 'Use The Dashboard',
+                body: 'This section highlights your highest-priority work from assignments, planner items, and calendar events.'
+            },
+            {
+                page: 'settings.html',
+                selector: '#timeZoneMode',
                 title: 'Set Preferences',
                 body: 'Open Settings to choose your timezone and dashboard defaults so due dates and day names stay accurate.'
             }
         ];
-
-        function renderOnboardingStep() {
-            const badge = document.getElementById('onboardingStepBadge');
-            const title = document.getElementById('onboardingTitle');
-            const body = document.getElementById('onboardingBody');
-            const prev = document.getElementById('onboardingPrevBtn');
-            const next = document.getElementById('onboardingNextBtn');
-            const step = onboardingSteps[onboardingStep];
-            if (!step) return;
-            badge.textContent = `Step ${onboardingStep + 1} of ${onboardingSteps.length}`;
-            title.textContent = step.title;
-            body.textContent = step.body;
-            prev.disabled = onboardingStep <= 0;
-            next.textContent = onboardingStep >= onboardingSteps.length - 1 ? 'Finish' : 'Next';
-        }
-
-        function showOnboarding() {
-            onboardingOpen = true;
-            onboardingStep = 0;
-            renderOnboardingStep();
-            const modal = document.getElementById('onboardingModal');
-            if (modal) modal.style.display = 'flex';
-        }
 
         async function completeOnboarding() {
             try {
@@ -1125,27 +1095,17 @@
                 user.hasSeenOnboarding = true;
                 sessionStorage.setItem('user', JSON.stringify(user));
             } catch (e) {}
-            const modal = document.getElementById('onboardingModal');
-            if (modal) modal.style.display = 'none';
-            onboardingOpen = false;
         }
 
-        async function skipOnboarding() {
-            await completeOnboarding();
+        function showOnboarding() {
+            if (window.startBlueprintTour) window.startBlueprintTour();
         }
 
-        function prevOnboardingStep() {
-            onboardingStep = Math.max(0, onboardingStep - 1);
-            renderOnboardingStep();
-        }
-
-        async function nextOnboardingStep() {
-            if (onboardingStep >= onboardingSteps.length - 1) {
-                await completeOnboarding();
-                return;
-            }
-            onboardingStep += 1;
-            renderOnboardingStep();
+        if (window.initBlueprintTour) {
+            window.initBlueprintTour({
+                steps: TOUR_STEPS,
+                onComplete: completeOnboarding
+            });
         }
 
         function clearStudyGuideFile() {
