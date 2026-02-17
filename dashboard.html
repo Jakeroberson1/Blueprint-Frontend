@@ -1487,7 +1487,21 @@
                 return;
             }
 
-            container.innerHTML = upcoming.map((i) => {
+            const valid = upcoming
+                .map((i) => {
+                    const title = String(i?.title || '').trim() || `${i?.tag || 'Task'}`;
+                    const whenText = formatWhen(i?.when);
+                    if (!whenText) return null;
+                    return { ...i, title, whenText };
+                })
+                .filter(Boolean);
+
+            if (!valid.length) {
+                container.innerHTML = '<div class="muted">No urgent items match your current filter.</div>';
+                return;
+            }
+
+            container.innerHTML = valid.map((i) => {
                 const hoursAway = Math.round((i.when.getTime() - now) / (1000 * 60 * 60));
                 const urgency = hoursAway <= 24 ? 'Do this first' : hoursAway <= 72 ? 'Do next' : 'Upcoming';
                 return `
@@ -1496,7 +1510,7 @@
                             <div class="focus-title">${esc(i.title)}</div>
                             <span class="focus-tag">${esc(i.tag)}</span>
                         </div>
-                        <div class="focus-meta">${esc(i.course)} • ${esc(formatWhen(i.when))} • ${esc(urgency)}</div>
+                        <div class="focus-meta">${esc(i.course || 'Course')} • ${esc(i.whenText)} • ${esc(urgency)}</div>
                     </div>
                 `;
             }).join('');
@@ -1552,15 +1566,22 @@
             }
 
             const filtered = actions.filter((r) => matchesSearch(r.title, r.meta)).slice(0, 8);
-            if (!filtered.length) {
+            const clean = filtered
+                .map((r) => ({
+                    title: String(r?.title || '').trim(),
+                    meta: String(r?.meta || '').trim()
+                }))
+                .filter((r) => r.title || r.meta);
+
+            if (!clean.length) {
                 container.innerHTML = '<div class="muted">No immediate actions. You look caught up for current filters.</div>';
                 return;
             }
 
-            container.innerHTML = filtered.map((r) => `
+            container.innerHTML = clean.map((r) => `
                 <div class="focus-item">
-                    <div class="focus-title">${esc(r.title)}</div>
-                    <div class="focus-meta">${esc(r.meta)}</div>
+                    <div class="focus-title">${esc(r.title || 'Suggested action')}</div>
+                    <div class="focus-meta">${esc(r.meta || 'Open chat for a tailored next-step plan.')}</div>
                 </div>
             `).join('');
         }
