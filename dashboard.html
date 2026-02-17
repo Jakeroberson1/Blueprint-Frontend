@@ -619,6 +619,7 @@
                         <button class="tab" type="button" id="tabGrades" data-tab="grades">Grades</button>
                         <button class="tab" type="button" id="tabPlanner" data-tab="planner">Planner</button>
                         <button class="tab" type="button" id="tabAnnouncements" data-tab="announcements">Announcements</button>
+                        <button class="tab" type="button" id="tabInbox" data-tab="inbox">Inbox</button>
                     </div>
 
                     <div class="dash-controls">
@@ -674,6 +675,11 @@
                     <div id="dashPanelAnnouncements" style="display:none;">
                         <div class="muted" style="margin-top: 10px;">Announcements</div>
                         <div id="announcementsList" class="list"></div>
+                    </div>
+
+                    <div id="dashPanelInbox" style="display:none;">
+                        <div class="muted" style="margin-top: 10px;">Instructor messages (announcements + discussion activity)</div>
+                        <div id="inboxList" class="list"></div>
                     </div>
 
                     <details style="margin-top: 12px;">
@@ -786,7 +792,7 @@
             quickFilter = String(prefs.defaultDashboardFilter || 'all');
             if (!['all', 'overdue', 'next48h', 'week'].includes(quickFilter)) quickFilter = 'all';
             defaultDashboardTab = String(prefs.defaultDashboardTab || 'overview');
-            if (!['overview', 'grades', 'planner', 'announcements'].includes(defaultDashboardTab)) defaultDashboardTab = 'overview';
+            if (!['overview', 'grades', 'planner', 'announcements', 'inbox'].includes(defaultDashboardTab)) defaultDashboardTab = 'overview';
         }
 
         async function logout() {
@@ -892,6 +898,7 @@
                 grades: { btn: 'tabGrades', panel: 'dashPanelGrades' },
                 planner: { btn: 'tabPlanner', panel: 'dashPanelPlanner' },
                 announcements: { btn: 'tabAnnouncements', panel: 'dashPanelAnnouncements' },
+                inbox: { btn: 'tabInbox', panel: 'dashPanelInbox' },
             };
             const keys = Object.keys(tabMap);
             const target = tabMap[tab] ? tab : 'overview';
@@ -1304,6 +1311,82 @@
                     <div class="item">
                         <div class="item-title">${esc(title)}</div>
                         <div class="item-meta">${esc(context)}${when ? ` • ${esc(when)}` : ''}</div>
+                        <div style="margin-top: 8px;">${linkHtml}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function looksInstructorAuthored(raw) {
+            const roleText = [
+                raw?.author_role,
+                raw?.author?.role,
+                raw?.author?.enrollment_type,
+                raw?.user?.role,
+                raw?.user?.enrollment_type,
+                raw?.author?.type
+            ].map((x) => String(x || '').toLowerCase()).join(' ');
+            if (/(teacher|instructor|ta|admin|professor|faculty)/i.test(roleText)) return true;
+
+            const titleText = [
+                raw?.title,
+                raw?.subject,
+                raw?.context_name,
+                raw?.course_name
+            ].map((x) => String(x || '').toLowerCase()).join(' ');
+            if (/announcement/i.test(titleText)) return true;
+            return false;
+        }
+
+        function renderInbox(announcements, discussions) {
+            const container = document.getElementById('inboxList');
+            if (!container) return;
+
+            const ann = (Array.isArray(announcements) ? announcements : [])
+                .map((a) => ({
+                    raw: a,
+                    type: 'Announcement',
+                    title: a?.title || 'Announcement',
+                    context: a?.context_name || a?.context_code || a?.course_name || a?.course_code || '',
+                    when: parseCanvasDate(a?.posted_at || a?.created_at || a?.updated_at),
+                    link: a?.html_url || a?.url || ''
+                }));
+
+            const disc = (Array.isArray(discussions) ? discussions : [])
+                .map((d) => ({
+                    raw: d,
+                    type: 'Discussion',
+                    title: d?.title || 'Discussion update',
+                    context: d?.course_name || d?.course_code || d?.context_code || '',
+                    when: parseCanvasDate(d?.posted_at || d?.last_reply_at || d?.created_at || d?.updated_at),
+                    link: d?.html_url || d?.url || ''
+                }));
+
+            const merged = ann.concat(disc)
+                .filter((m) => isCourseMatch(m.raw))
+                .filter((m) => matchesSearch(m.title, m.context, m.type))
+                .filter((m) => m.when)
+                .sort((a, b) => b.when - a.when);
+
+            const instructorOnly = merged.filter((m) => looksInstructorAuthored(m.raw));
+            const selected = (instructorOnly.length ? instructorOnly : merged).slice(0, 120);
+
+            if (!selected.length) {
+                container.innerHTML = '<div class="muted" style="padding: 10px;">No instructor messages found yet. Sync Canvas again after new announcements/discussion activity.</div>';
+                return;
+            }
+
+            container.innerHTML = selected.map((m) => {
+                const linkHtml = m.link
+                    ? `<a class="btn" style="padding: 6px 10px;" href="${esc(m.link)}" target="_blank" rel="noopener noreferrer">Open</a>`
+                    : '';
+                return `
+                    <div class="item">
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                            <div class="item-title">${esc(m.title)}</div>
+                            <span class="focus-tag">${esc(m.type)}</span>
+                        </div>
+                        <div class="item-meta">${esc(m.context || 'Canvas')} • ${esc(formatWhen(m.when))}</div>
                         <div style="margin-top: 8px;">${linkHtml}</div>
                     </div>
                 `;
@@ -1765,6 +1848,7 @@
             renderGrades(data.grades || []);
             renderPlanner([...(Array.isArray(planner) ? planner : []), ...(Array.isArray(calendar) ? calendar : [])]);
             renderAnnouncements(data.announcements || []);
+            renderInbox(data.announcements || [], discussions);
             renderModules(modules);
             renderSubmissions(submissions);
             renderDiscussions(discussions);
