@@ -975,6 +975,13 @@
         async function apiFetch(url, options = {}) {
             const headers = { ...(options.headers || {}) };
             if (sessionToken && !headers.Authorization) headers.Authorization = `Bearer ${sessionToken}`;
+            if (!headers['X-Client-Timezone']) {
+                try {
+                    headers['X-Client-Timezone'] = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+                } catch (e) {
+                    headers['X-Client-Timezone'] = 'UTC';
+                }
+            }
 
             const response = await fetch(url, { ...options, headers });
             if (response.status === 401) {
