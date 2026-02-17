@@ -57,6 +57,63 @@
             overflow-x: hidden;
         }
 
+        body.dark-mode {
+            --ink: rgba(226, 232, 240, 0.96);
+            --ink-2: rgba(203, 213, 225, 0.82);
+            --ink-3: rgba(148, 163, 184, 0.72);
+            --glass: rgba(15, 23, 42, 1);
+            --glass-2: rgba(30, 41, 59, 1);
+            --stroke: rgba(71, 85, 105, 0.7);
+            background: #020617;
+        }
+
+        body.dark-mode .topbar,
+        body.dark-mode .card,
+        body.dark-mode .listbox,
+        body.dark-mode .tool,
+        body.dark-mode .meta-box,
+        body.dark-mode .meta,
+        body.dark-mode .messages,
+        body.dark-mode .chat-header,
+        body.dark-mode .composer,
+        body.dark-mode .footer,
+        body.dark-mode .status,
+        body.dark-mode .filepick,
+        body.dark-mode .empty,
+        body.dark-mode .bubble,
+        body.dark-mode input,
+        body.dark-mode textarea,
+        body.dark-mode select {
+            background: rgba(15, 23, 42, 1) !important;
+            border-color: rgba(71, 85, 105, 0.7) !important;
+            color: rgba(226, 232, 240, 0.96) !important;
+        }
+
+        body.dark-mode .btn,
+        body.dark-mode .sbtn,
+        body.dark-mode .tiny,
+        body.dark-mode .icon,
+        body.dark-mode .pill {
+            background: rgba(30, 41, 59, 1) !important;
+            border-color: rgba(71, 85, 105, 0.75) !important;
+            color: rgba(226, 232, 240, 0.95) !important;
+        }
+
+        body.dark-mode .btn-primary,
+        body.dark-mode .sbtn.primary,
+        body.dark-mode .send {
+            background: rgba(37, 99, 235, 1) !important;
+            border-color: rgba(37, 99, 235, 1) !important;
+            color: rgba(248, 250, 252, 1) !important;
+        }
+
+        body.dark-mode .btn-danger,
+        body.dark-mode .sbtn.danger {
+            background: rgba(220, 38, 38, 1) !important;
+            border-color: rgba(220, 38, 38, 1) !important;
+            color: rgba(248, 250, 252, 1) !important;
+        }
+
         body::before {
             content: none;
         }
@@ -713,6 +770,7 @@
             </div>
             <div class="account">
                 <a class="btn" href="canvas.html">Canvas</a>
+                <button class="btn" id="themeToggleBtn" type="button" onclick="toggleTheme()">Dark</button>
                 <div class="pill" id="userPill">Signed in</div>
                 <button class="btn btn-danger" id="logoutBtn" onclick="logout()">Log Out</button>
             </div>
@@ -862,6 +920,27 @@
 
         const sessionToken = sessionStorage.getItem('sessionToken');
         const currentUser = JSON.parse(sessionStorage.getItem('user') || 'null');
+
+        const THEME_STORAGE_KEY = 'bpTheme';
+        function applyTheme(theme) {
+            const dark = theme === 'dark';
+            document.body.classList.toggle('dark-mode', dark);
+            const btn = document.getElementById('themeToggleBtn');
+            if (btn) btn.textContent = dark ? 'Light' : 'Dark';
+        }
+        function getPreferredTheme() {
+            const stored = localStorage.getItem(THEME_STORAGE_KEY);
+            if (stored === 'dark' || stored === 'light') return stored;
+            return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        function initializeTheme() {
+            applyTheme(getPreferredTheme());
+        }
+        function toggleTheme() {
+            const next = document.body.classList.contains('dark-mode') ? 'light' : 'dark';
+            localStorage.setItem(THEME_STORAGE_KEY, next);
+            applyTheme(next);
+        }
 
         // Harden markdown rendering defaults.
         try {
@@ -1706,6 +1785,7 @@
         }
 
         window.addEventListener('load', async () => {
+            initializeTheme();
             if (!sessionToken) {
                 redirectToLogin();
                 return;
