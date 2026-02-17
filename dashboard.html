@@ -678,7 +678,7 @@
                     </div>
 
                     <div id="dashPanelInbox" style="display:none;">
-                        <div class="muted" style="margin-top: 10px;">Instructor messages (announcements + discussion activity)</div>
+                        <div class="muted" style="margin-top: 10px;">Instructor messages (announcements + Canvas inbox)</div>
                         <div id="inboxList" class="list"></div>
                     </div>
 
@@ -1338,7 +1338,7 @@
             return false;
         }
 
-        function renderInbox(announcements, discussions) {
+        function renderInbox(announcements, inboxMessages) {
             const container = document.getElementById('inboxList');
             if (!container) return;
 
@@ -1352,17 +1352,17 @@
                     link: a?.html_url || a?.url || ''
                 }));
 
-            const disc = (Array.isArray(discussions) ? discussions : [])
-                .map((d) => ({
-                    raw: d,
-                    type: 'Discussion',
-                    title: d?.title || 'Discussion update',
-                    context: d?.course_name || d?.course_code || d?.context_code || '',
-                    when: parseCanvasDate(d?.posted_at || d?.last_reply_at || d?.created_at || d?.updated_at),
-                    link: d?.html_url || d?.url || ''
+            const inbox = (Array.isArray(inboxMessages) ? inboxMessages : [])
+                .map((m) => ({
+                    raw: m,
+                    type: 'Inbox',
+                    title: m?.subject || 'Inbox message',
+                    context: m?.context_name || m?.context_code || '',
+                    when: parseCanvasDate(m?.last_message_at || m?.updated_at),
+                    link: m?.url || ''
                 }));
 
-            const merged = ann.concat(disc)
+            const merged = ann.concat(inbox)
                 .filter((m) => isCourseMatch(m.raw))
                 .filter((m) => matchesSearch(m.title, m.context, m.type))
                 .filter((m) => m.when)
@@ -1372,7 +1372,7 @@
             const selected = (instructorOnly.length ? instructorOnly : merged).slice(0, 120);
 
             if (!selected.length) {
-                container.innerHTML = '<div class="muted" style="padding: 10px;">No instructor messages found yet. Sync Canvas again after new announcements/discussion activity.</div>';
+                container.innerHTML = '<div class="muted" style="padding: 10px;">No instructor messages found yet. Sync Canvas again after new inbox or announcement activity.</div>';
                 return;
             }
 
@@ -1834,6 +1834,7 @@
             const submissions = Array.isArray(data.submissions) ? data.submissions : [];
             const discussions = Array.isArray(data.discussion_topics) ? data.discussion_topics : [];
             const syllabi = Array.isArray(data.syllabi) ? data.syllabi : [];
+            const inboxMessages = Array.isArray(data.inbox_messages) ? data.inbox_messages : [];
 
             const byAssignmentId = new Map(assignments.map((a) => [String(a?.id), a?.name]).filter(([id, name]) => id && name));
             for (const s of submissions) {
@@ -1848,7 +1849,7 @@
             renderGrades(data.grades || []);
             renderPlanner([...(Array.isArray(planner) ? planner : []), ...(Array.isArray(calendar) ? calendar : [])]);
             renderAnnouncements(data.announcements || []);
-            renderInbox(data.announcements || [], discussions);
+            renderInbox(data.announcements || [], inboxMessages);
             renderModules(modules);
             renderSubmissions(submissions);
             renderDiscussions(discussions);
