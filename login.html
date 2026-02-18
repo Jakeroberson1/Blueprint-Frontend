@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: https:; font-src 'self' https://cdn.jsdelivr.net data:; connect-src 'self' https://blueprint-backend-154275778730.us-west1.run.app; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
     <title>Blueprint - Sign In</title>
     <style>
         * {
@@ -257,15 +259,15 @@
 
         <!-- Sign In Form -->
         <div class="form-section active" id="signinForm">
-            <form onsubmit="handleSignIn(event)">
+            <form onsubmit="handleSignIn(event)" method="post" autocomplete="on">
                 <div class="form-group">
                     <label for="signin-email">Email</label>
-                    <input type="email" id="signin-email" required placeholder="your.email@example.com">
+                    <input type="email" id="signin-email" name="email" required placeholder="your.email@example.com" autocomplete="username" inputmode="email" autocapitalize="off" spellcheck="false">
                 </div>
 
                 <div class="form-group">
                     <label for="signin-password">Password</label>
-                    <input type="password" id="signin-password" required placeholder="Enter your password">
+                    <input type="password" id="signin-password" name="password" required placeholder="Enter your password" autocomplete="current-password">
                 </div>
 
                 <button type="submit" class="submit-btn" id="signinBtn">Sign In</button>
@@ -274,26 +276,26 @@
 
         <!-- Sign Up Form -->
         <div class="form-section" id="signupForm">
-            <form onsubmit="handleSignUp(event)">
+            <form onsubmit="handleSignUp(event)" method="post" autocomplete="on">
                 <div class="form-group">
                     <label for="signup-name">Full Name</label>
-                    <input type="text" id="signup-name" required placeholder="John Doe">
+                    <input type="text" id="signup-name" name="fullName" required placeholder="John Doe" autocomplete="name">
                 </div>
 
                 <div class="form-group">
                     <label for="signup-email">Email</label>
-                    <input type="email" id="signup-email" required placeholder="your.email@example.com">
+                    <input type="email" id="signup-email" name="email" required placeholder="your.email@example.com" autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false">
                     <p class="help-text">Use your school email for Canvas integration</p>
                 </div>
 
                 <div class="form-group">
                     <label for="signup-password">Password</label>
-                    <input type="password" id="signup-password" required placeholder="At least 8 characters" minlength="8">
+                    <input type="password" id="signup-password" name="newPassword" required placeholder="At least 8 characters" minlength="8" autocomplete="new-password">
                 </div>
 
                 <div class="form-group">
                     <label for="signup-password-confirm">Confirm Password</label>
-                    <input type="password" id="signup-password-confirm" required placeholder="Re-enter your password">
+                    <input type="password" id="signup-password-confirm" name="confirmPassword" required placeholder="Re-enter your password" autocomplete="new-password">
                 </div>
 
                 <button type="submit" class="submit-btn" id="signupBtn">Create Account</button>
