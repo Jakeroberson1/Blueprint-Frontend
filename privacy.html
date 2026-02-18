@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <title>Blueprint Privacy Policy</title>
+  <style>
+    :root {
+      --bg: #f7f7f8;
+      --card: #ffffff;
+      --ink: #0f172a;
+      --ink2: #334155;
+      --stroke: #e5e7eb;
+      --primary: #1a73e8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.55;
+      padding: 28px 16px;
+    }
+    .wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: 16px;
+      padding: 26px;
+    }
+    h1, h2 { margin: 0 0 12px; }
+    h1 { font-size: 30px; }
+    h2 { font-size: 20px; margin-top: 20px; }
+    p, li { color: var(--ink2); }
+    a { color: var(--primary); }
+    .meta { font-size: 13px; color: #64748b; }
+    code { background: #eff6ff; border-radius: 6px; padding: 2px 6px; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>Blueprint Privacy Policy</h1>
+    <p class="meta">Last updated: February 18, 2026</p>
+
+    <p>
+      Blueprint provides AI study tools and optional Canvas sync. This policy explains what data is used by the
+      Blueprint Canvas Connector Chrome extension.
+    </p>
+
+    <h2>What the Extension Does</h2>
+    <p>
+      The extension runs on Canvas pages and, when you click Sync, collects your Canvas academic data
+      (courses, assignments, grades, planner items, calendar events, announcements, modules, submissions,
+      discussion topics, syllabi, and inbox conversations) and sends it to Blueprint.
+    </p>
+
+    <h2>Data Sent</h2>
+    <ul>
+      <li>Canvas course and academic data listed above</li>
+      <li>A Blueprint device token used to connect your browser to your Blueprint account</li>
+      <li>Sync timestamps and basic sync status metadata</li>
+    </ul>
+
+    <h2>Data Not Collected</h2>
+    <ul>
+      <li>The extension does not ask for or collect your Canvas password</li>
+      <li>The extension does not collect data from non-Canvas websites</li>
+      <li>The extension does not sell personal data</li>
+    </ul>
+
+    <h2>Where Data Is Sent</h2>
+    <p>
+      Synced data is transmitted over HTTPS to:
+      <code>https://blueprint-backend-154275778730.us-west1.run.app</code>
+    </p>
+
+    <h2>Storage</h2>
+    <p>
+      The extension stores only connector settings in Chrome extension storage (pairing token, UI preferences, and
+      sync metadata). Your synced academic data is stored in Blueprint backend infrastructure.
+    </p>
+
+    <h2>Contact</h2>
+    <p>
+      Questions: <a href="mailto:support@blueprint-labs.site">support@blueprint-labs.site</a>
+    </p>
+  </main>
+</body>
+</html>
