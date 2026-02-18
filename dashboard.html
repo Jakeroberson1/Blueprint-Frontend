@@ -474,6 +474,76 @@
             background: rgba(232,240,254,1);
             color: rgba(26,115,232,1);
         }
+        .timeline-row {
+            display: grid;
+            grid-template-columns: 84px 1fr auto;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(229,231,235,1);
+            background: rgba(255,255,255,1);
+            margin-bottom: 8px;
+        }
+        .timeline-time { font-size: 11px; font-weight: 900; color: var(--ink-2); }
+        .timeline-main { min-width: 0; }
+        .timeline-title {
+            font-size: 13px;
+            font-weight: 900;
+            color: var(--ink);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .timeline-sub { margin-top: 2px; font-size: 11px; font-weight: 750; color: var(--ink-2); }
+        .timeline-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+        .heatmap {
+            margin-top: 8px;
+            display: grid;
+            grid-template-columns: repeat(14, minmax(0, 1fr));
+            gap: 7px;
+        }
+        .heatcell {
+            border-radius: 12px;
+            border: 1px solid rgba(229,231,235,1);
+            background: rgba(249,250,251,1);
+            padding: 7px 6px;
+            min-height: 66px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .heatdate { font-size: 10px; font-weight: 800; color: var(--ink-2); }
+        .heatcount { font-size: 18px; font-weight: 1000; letter-spacing: -0.4px; color: var(--ink); }
+        .health-grid {
+            margin-top: 8px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+        .health-card {
+            padding: 12px;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(229,231,235,1);
+            background: rgba(255,255,255,1);
+        }
+        .health-title { font-size: 13px; font-weight: 900; color: var(--ink); }
+        .health-meta { margin-top: 4px; font-size: 11px; font-weight: 750; color: var(--ink-2); }
+        .health-badge {
+            margin-top: 8px;
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: 1px solid rgba(23,105,255,0.25);
+            background: rgba(23,105,255,0.10);
+            color: rgba(23,105,255,0.92);
+        }
+        .health-actions { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
 
         .tabs {
             display: flex;
@@ -541,6 +611,10 @@
             .kpis { grid-template-columns: 1fr; }
             .focus-grid { grid-template-columns: 1fr; }
             .dash-controls { grid-template-columns: 1fr; }
+            .health-grid { grid-template-columns: 1fr; }
+            .heatmap { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+            .timeline-row { grid-template-columns: 1fr; }
+            .timeline-actions { justify-content: flex-start; }
         }
     </style>
 </head>
@@ -602,8 +676,8 @@
 
                     <div class="viz" style="margin-top: 12px;">
                         <div class="viz-title">
-                            <h3>Workload Pulse</h3>
-                            <span>Next 14 days</span>
+                            <h3>Workload Heatmap</h3>
+                            <span>Next 14 days, action density</span>
                         </div>
                         <div id="pulseViz" style="margin-top: 10px;"></div>
                     </div>
@@ -646,17 +720,33 @@
                     <div class="focus-grid">
                         <div class="focus-card">
                             <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-                                <h4>Today’s Top 3</h4>
-                                <button class="btn" type="button" style="padding: 6px 10px;" onclick="focusToday()">What should I do today?</button>
+                                <h4>Today’s Plan Timeline</h4>
+                                <button class="btn" type="button" style="padding: 6px 10px;" onclick="focusToday()">Focus now</button>
                             </div>
-                            <div class="muted" style="margin-top: 4px;">Most urgent items right now.</div>
-                            <div id="priorityQueue" class="focus-list"></div>
+                            <div class="muted" style="margin-top: 4px;">Ordered by urgency with one-click actions.</div>
+                            <div id="todayTimeline" class="focus-list"></div>
                         </div>
                         <div class="focus-card">
-                            <h4>Quick Actions</h4>
-                            <div class="muted" style="margin-top: 4px;">Concrete next moves based on your current data.</div>
-                            <div id="quickActions" class="focus-list"></div>
+                            <h4>Messages Priority Queue</h4>
+                            <div class="muted" style="margin-top: 4px;">Latest instructor communication that may change your plan.</div>
+                            <div id="priorityQueue" class="focus-list"></div>
                         </div>
+                    </div>
+
+                    <div class="viz" style="margin-top: 12px;">
+                        <div class="viz-title">
+                            <h3>Course Health</h3>
+                            <span>Trend + risk + next action</span>
+                        </div>
+                        <div id="courseHealth" class="health-grid"></div>
+                    </div>
+
+                    <div class="viz" style="margin-top: 12px;">
+                        <div class="viz-title">
+                            <h3>Quick Actions</h3>
+                            <span>Concrete next moves</span>
+                        </div>
+                        <div id="quickActions" class="focus-list"></div>
                     </div>
 
                     <div id="dashPanelOverview">
@@ -948,9 +1038,9 @@
 
         function focusToday() {
             setDashTab('overview');
-            const el = document.getElementById('priorityQueue');
+            const el = document.getElementById('todayTimeline');
             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            setStatus('Focus mode: top 3 priorities are highlighted below.', 'success');
+            setStatus('Focus mode: today timeline is highlighted below.', 'success');
         }
 
         function esc(s) {
@@ -1097,6 +1187,22 @@
             }
 
             if (m?.id) return `/conversations/${encodeURIComponent(m.id)}`;
+            return '';
+        }
+
+        function getCanvasGenericLink(raw) {
+            if (!raw || typeof raw !== 'object') return '';
+            const direct = String(raw?.html_url || '').trim();
+            if (direct) return direct;
+            const rawUrl = String(raw?.url || '').trim();
+            if (rawUrl) {
+                try {
+                    const u = new URL(rawUrl);
+                    u.pathname = u.pathname.replace('/api/v1/', '/');
+                    u.search = '';
+                    return u.toString();
+                } catch {}
+            }
             return '';
         }
 
@@ -1565,84 +1671,194 @@
             }).join('');
         }
 
-        function renderPriorityQueue(assignments, planner, calendar) {
-            const container = document.getElementById('priorityQueue');
+        function renderTodayTimeline(assignments, planner, calendar) {
+            const container = document.getElementById('todayTimeline');
             if (!container) return;
-
             const now = Date.now();
             const items = [];
 
             for (const a of assignments) {
                 if (!a || !isCourseMatch(a) || !matchesSearch(a?.name, a?.course_name, a?.course_code)) continue;
                 const d = getItemDate(a);
-                if (!d) continue;
-                if (!passesQuickFilter(d)) continue;
+                if (!d || !passesQuickFilter(d)) continue;
                 items.push({
                     title: a?.name || 'Assignment',
                     course: a?.course_name || a?.course_code || '',
                     when: d,
-                    tag: 'Assignment'
+                    tag: 'Assignment',
+                    link: getCanvasAssignmentLink(a),
+                    doNowPrompt: `Help me complete ${a?.name || 'this assignment'} efficiently today.`,
+                    askPrompt: `What is the fastest high-quality plan for ${a?.name || 'this assignment'}?`
                 });
             }
             for (const p of planner) {
                 if (!p || !isCourseMatch(p) || !matchesSearch(p?.title, p?.plannable?.title, p?.context_name, p?.context_code)) continue;
                 const d = parseCanvasDate(pickDueDate(p));
-                if (!d) continue;
-                if (!passesQuickFilter(d)) continue;
+                if (!d || !passesQuickFilter(d)) continue;
+                const title = p?.plannable?.title || p?.plannable?.name || p?.title || 'Planner item';
                 items.push({
-                    title: p?.plannable?.title || p?.plannable?.name || p?.title || 'Planner item',
+                    title,
                     course: p?.context_name || p?.context_code || '',
                     when: d,
-                    tag: 'Planner'
+                    tag: 'Planner',
+                    link: getCanvasGenericLink(p),
+                    doNowPrompt: `Break down ${title} into the first 3 steps I should do now.`,
+                    askPrompt: `What should I do first for ${title}?`
                 });
             }
             for (const e of calendar) {
                 if (!e || !isCourseMatch(e) || !matchesSearch(e?.title, e?.summary, e?.context_name, e?.context_code)) continue;
                 const d = parseCanvasDate(pickDueDate(e));
-                if (!d) continue;
-                if (!passesQuickFilter(d)) continue;
+                if (!d || !passesQuickFilter(d)) continue;
+                const title = e?.title || e?.summary || 'Calendar event';
                 items.push({
-                    title: e?.title || e?.summary || 'Calendar event',
+                    title,
                     course: e?.context_name || e?.context_code || '',
                     when: d,
-                    tag: 'Calendar'
+                    tag: 'Calendar',
+                    link: getCanvasGenericLink(e),
+                    doNowPrompt: `Prepare me for ${title} with a short prep checklist.`,
+                    askPrompt: `How should I prepare for ${title}?`
                 });
             }
 
-            const upcoming = items
+            const next = items
                 .filter((i) => i.when.getTime() >= now - (24 * 60 * 60 * 1000))
                 .sort((a, b) => a.when - b.when)
-                .slice(0, 3);
+                .slice(0, 8);
 
-            if (!upcoming.length) {
-                container.innerHTML = '<div class="muted">No urgent items match your current filter.</div>';
+            if (!next.length) {
+                container.innerHTML = '<div class="muted">No urgent timeline items. You are caught up for now.</div>';
                 return;
             }
 
-            const valid = upcoming
-                .map((i) => {
-                    const title = String(i?.title || '').trim() || `${i?.tag || 'Task'}`;
-                    const whenText = formatWhen(i?.when);
-                    if (!whenText) return null;
-                    return { ...i, title, whenText };
-                })
-                .filter(Boolean);
-
-            if (!valid.length) {
-                container.innerHTML = '<div class="muted">No urgent items match your current filter.</div>';
-                return;
-            }
-
-            container.innerHTML = valid.map((i) => {
+            container.innerHTML = next.map((i) => {
                 const hoursAway = Math.round((i.when.getTime() - now) / (1000 * 60 * 60));
-                const urgency = hoursAway <= 24 ? 'Do this first' : hoursAway <= 72 ? 'Do next' : 'Upcoming';
+                const urgency = hoursAway <= 24 ? 'Do now' : hoursAway <= 72 ? 'Next up' : 'Upcoming';
+                const openBtn = i.link ? `<a class="btn" style="padding: 6px 10px;" href="${esc(i.link)}" target="_blank" rel="noopener noreferrer">Open in Canvas</a>` : '';
+                return `
+                    <div class="timeline-row">
+                        <div class="timeline-time">${esc(urgency)}</div>
+                        <div class="timeline-main">
+                            <div class="timeline-title">${esc(i.title)}</div>
+                            <div class="timeline-sub">${esc(i.course || 'Course')} • ${esc(formatWhen(i.when))} • ${esc(i.tag)}</div>
+                        </div>
+                        <div class="timeline-actions">
+                            <button class="btn" type="button" style="padding: 6px 10px;" onclick="askBlueprint(${JSON.stringify(i.doNowPrompt)})">Do now</button>
+                            ${openBtn}
+                            <button class="btn" type="button" style="padding: 6px 10px;" onclick="askBlueprint(${JSON.stringify(i.askPrompt)})">Ask Blueprint</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderPriorityQueue(announcements, inboxMessages) {
+            const container = document.getElementById('priorityQueue');
+            if (!container) return;
+
+            const ann = (Array.isArray(announcements) ? announcements : []).map((a) => ({
+                raw: a,
+                type: 'Announcement',
+                title: a?.title || 'Announcement',
+                context: a?.context_name || a?.context_code || a?.course_name || a?.course_code || '',
+                when: parseCanvasDate(a?.posted_at || a?.created_at || a?.updated_at),
+                link: getCanvasGenericLink(a)
+            }));
+            const inbox = (Array.isArray(inboxMessages) ? inboxMessages : []).map((m) => ({
+                raw: m,
+                type: 'Inbox',
+                title: m?.subject || 'Inbox message',
+                context: m?.context_name || m?.context_code || '',
+                when: parseCanvasDate(m?.last_message_at || m?.updated_at),
+                link: getCanvasInboxLink(m)
+            }));
+
+            const merged = ann.concat(inbox)
+                .filter((m) => isCourseMatch(m.raw))
+                .filter((m) => matchesSearch(m.title, m.context, m.type))
+                .filter((m) => m.when)
+                .sort((a, b) => b.when - a.when);
+            const selected = merged.filter((m) => looksInstructorAuthored(m.raw)).slice(0, 6);
+
+            if (!selected.length) {
+                container.innerHTML = '<div class="muted">No high-priority instructor messages right now.</div>';
+                return;
+            }
+
+            container.innerHTML = selected.map((m) => {
+                const openBtn = m.link ? `<a class="btn" style="padding: 6px 10px;" href="${esc(m.link)}" target="_blank" rel="noopener noreferrer">Open</a>` : '';
+                const askPrompt = `Summarize this ${m.type.toLowerCase()} and tell me what I should do next: ${m.title}`;
                 return `
                     <div class="focus-item">
                         <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-                            <div class="focus-title">${esc(i.title)}</div>
-                            <span class="focus-tag">${esc(i.tag)}</span>
+                            <div class="focus-title">${esc(m.title)}</div>
+                            <span class="focus-tag">${esc(m.type)}</span>
                         </div>
-                        <div class="focus-meta">${esc(i.course || 'Course')} • ${esc(i.whenText)} • ${esc(urgency)}</div>
+                        <div class="focus-meta">${esc(m.context || 'Canvas')} • ${esc(formatWhen(m.when))}</div>
+                        <div style="margin-top: 8px; display:flex; gap:8px; flex-wrap:wrap;">
+                            ${openBtn}
+                            <button class="btn" type="button" style="padding: 6px 10px;" onclick="askBlueprint(${JSON.stringify(askPrompt)})">Ask Blueprint</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderCourseHealth(grades, assignments, planner, calendar) {
+            const container = document.getElementById('courseHealth');
+            if (!container) return;
+
+            const byCourse = new Map();
+            const courseLabel = (raw) => raw?.course_name || raw?.course_code || raw?.context_name || raw?.context_code || 'Other';
+            const bumpWork = (raw, when) => {
+                const label = courseLabel(raw);
+                if (!label) return;
+                if (!byCourse.has(label)) byCourse.set(label, { label, grade: null, work7: 0, overdue: 0, nextDue: null });
+                const row = byCourse.get(label);
+                const dt = parseCanvasDate(when);
+                if (dt) {
+                    const delta = dt.getTime() - Date.now();
+                    if (delta < 0) row.overdue += 1;
+                    if (delta >= 0 && delta <= 7 * 24 * 60 * 60 * 1000) row.work7 += 1;
+                    if (!row.nextDue || dt < row.nextDue) row.nextDue = dt;
+                }
+            };
+
+            for (const g of Array.isArray(grades) ? grades : []) {
+                if (!isCourseMatch(g)) continue;
+                const label = g?.course_name || g?.course_code || 'Other';
+                if (!byCourse.has(label)) byCourse.set(label, { label, grade: null, work7: 0, overdue: 0, nextDue: null });
+                const row = byCourse.get(label);
+                const score = Number(g?.current_score);
+                if (Number.isFinite(score)) row.grade = score;
+            }
+            for (const a of Array.isArray(assignments) ? assignments : []) if (isCourseMatch(a)) bumpWork(a, getItemDate(a));
+            for (const p of Array.isArray(planner) ? planner : []) if (isCourseMatch(p)) bumpWork(p, pickDueDate(p));
+            for (const e of Array.isArray(calendar) ? calendar : []) if (isCourseMatch(e)) bumpWork(e, pickDueDate(e));
+
+            const rows = Array.from(byCourse.values())
+                .sort((a, b) => (b.overdue * 10 + b.work7) - (a.overdue * 10 + a.work7))
+                .slice(0, 6);
+            if (!rows.length) {
+                container.innerHTML = '<div class="muted">No course health data yet.</div>';
+                return;
+            }
+
+            container.innerHTML = rows.map((r) => {
+                const riskScore = (r.overdue * 30) + (r.work7 * 8) + ((r.grade !== null && r.grade < 75) ? 25 : 0);
+                const risk = riskScore >= 55 ? 'High risk' : riskScore >= 28 ? 'Watch' : 'Stable';
+                const prompt = `Give me a concrete 3-day recovery plan for ${r.label}. Grade: ${r.grade ?? 'N/A'}%. Overdue items: ${r.overdue}. Next 7 days workload: ${r.work7}.`;
+                return `
+                    <div class="health-card">
+                        <div class="health-title">${esc(r.label)}</div>
+                        <div class="health-meta">Grade: ${esc(r.grade !== null ? `${r.grade}%` : 'N/A')} • Overdue: ${esc(r.overdue)} • Next 7d: ${esc(r.work7)}</div>
+                        <span class="health-badge">${esc(risk)}</span>
+                        <div class="health-meta">${r.nextDue ? `Next due: ${esc(formatWhen(r.nextDue))}` : 'No due date found'}</div>
+                        <div class="health-actions">
+                            <button class="btn" type="button" style="padding: 6px 10px;" onclick="askBlueprint(${JSON.stringify(prompt)})">Do now</button>
+                            <button class="btn" type="button" style="padding: 6px 10px;" onclick="askBlueprint(${JSON.stringify(`How can I improve performance in ${r.label}?`)})">Ask Blueprint</button>
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -1719,47 +1935,18 @@
         }
 
         function buildPulseSvg(counts, labels) {
-            const w = 760;
-            const h = 140;
-            const pad = 18;
-            const n = counts.length;
             const max = Math.max(1, ...counts);
-            const barW = Math.floor((w - pad * 2) / n);
-
-            const bars = counts.map((c, i) => {
-                const bh = Math.round(((h - pad * 2) * c) / max);
-                const x = pad + i * barW + 3;
-                const y = h - pad - bh;
-                const r = 10;
-                const alpha = 0.22 + (c / max) * 0.35;
-                return `
-                    <g>
-                        <rect x="${x}" y="${y}" width="${Math.max(6, barW - 6)}" height="${bh}" rx="${r}" fill="rgba(23,105,255,${alpha.toFixed(2)})" stroke="rgba(23,105,255,0.25)" />
-                    </g>
-                `;
-            }).join('');
-
-            const ticks = labels.map((t, i) => {
-                if (i % 2 !== 0) return '';
-                const x = pad + i * barW + 6;
-                return `<text x="${x}" y="${h - 4}" font-size="10" fill="rgba(15,23,42,0.60)" font-family="${esc(getComputedStyle(document.documentElement).fontFamily)}">${esc(t)}</text>`;
-            }).join('');
-
-            return `
-                <svg width="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-                    <defs>
-                        <linearGradient id="bpPulse" x1="0" y1="0" x2="1" y2="0">
-                            <stop offset="0%" stop-color="rgba(23,105,255,0.55)" />
-                            <stop offset="55%" stop-color="rgba(74,163,255,0.40)" />
-                            <stop offset="100%" stop-color="rgba(43,228,167,0.30)" />
-                        </linearGradient>
-                    </defs>
-                    <rect x="0" y="0" width="${w}" height="${h}" rx="18" fill="rgba(249,250,251,1)" stroke="rgba(229,231,235,1)" />
-                    <rect x="0" y="0" width="${w}" height="${h}" rx="18" fill="url(#bpPulse)" opacity="0.18" />
-                    ${bars}
-                    ${ticks}
-                </svg>
-            `;
+            return `<div class="heatmap">${
+                counts.map((c, i) => {
+                    const intensity = 0.10 + ((c / max) * 0.55);
+                    return `
+                        <div class="heatcell" style="background: rgba(23,105,255,${intensity.toFixed(2)});">
+                            <div class="heatdate">${esc(labels[i] || '')}</div>
+                            <div class="heatcount">${esc(c)}</div>
+                        </div>
+                    `;
+                }).join('')
+            }</div>`;
         }
 
         function buildDonutSvg(parts) {
@@ -1903,7 +2090,9 @@
             renderSubmissions(submissions);
             renderDiscussions(discussions);
             renderSyllabi(syllabi);
-            renderPriorityQueue(assignments, planner, calendar);
+            renderTodayTimeline(assignments, planner, calendar);
+            renderPriorityQueue(data.announcements || [], inboxMessages);
+            renderCourseHealth(data.grades || [], assignments, planner, calendar);
             renderQuickActions(data.grades || [], assignments, planner, calendar, data.announcements || []);
 
             const filteredAssignments = assignments.filter((a) => isCourseMatch(a));
