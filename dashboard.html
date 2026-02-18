@@ -1079,6 +1079,25 @@
             return '';
         }
 
+        function getCanvasInboxLink(m) {
+            if (!m || typeof m !== 'object') return '';
+            const direct = String(m?.html_url || '').trim();
+            if (direct) return direct;
+
+            const raw = String(m?.url || '').trim();
+            if (raw) {
+                try {
+                    const u = new URL(raw);
+                    u.pathname = u.pathname.replace('/api/v1/', '/');
+                    u.search = '';
+                    return u.toString();
+                } catch {}
+            }
+
+            if (m?.id) return `/conversations/${encodeURIComponent(m.id)}`;
+            return '';
+        }
+
         function stripHtmlToText(html) {
             const raw = String(html || '').trim();
             if (!raw) return '';
@@ -1387,7 +1406,7 @@
                     title: m?.subject || 'Inbox message',
                     context: m?.context_name || m?.context_code || '',
                     when: parseCanvasDate(m?.last_message_at || m?.updated_at),
-                    link: m?.url || ''
+                    link: getCanvasInboxLink(m)
                 }));
 
             const merged = ann.concat(inbox)
