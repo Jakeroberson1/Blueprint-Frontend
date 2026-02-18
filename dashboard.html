@@ -1056,6 +1056,29 @@
             window.location.href = `index.html?prompt=${encodeURIComponent(q)}`;
         }
 
+        function getCanvasAssignmentLink(a) {
+            if (!a || typeof a !== 'object') return '';
+            const direct = String(a?.html_url || '').trim();
+            if (direct) return direct;
+
+            const apiUrl = String(a?.url || '').trim();
+            if (apiUrl) {
+                try {
+                    const u = new URL(apiUrl);
+                    u.pathname = u.pathname.replace('/api/v1/', '/');
+                    u.search = '';
+                    return u.toString();
+                } catch {}
+            }
+
+            const courseId = a?.course_id;
+            const assignmentId = a?.id;
+            if (courseId && assignmentId) {
+                return `/courses/${encodeURIComponent(courseId)}/assignments/${encodeURIComponent(assignmentId)}`;
+            }
+            return '';
+        }
+
         function stripHtmlToText(html) {
             const raw = String(html || '').trim();
             if (!raw) return '';
@@ -1173,12 +1196,17 @@
                 const badge = days <= 2 ? 'Soon' : days <= 7 ? 'This week' : 'Later';
                 const color = days <= 2 ? 'rgba(255,59,106,0.95)' : days <= 7 ? 'rgba(255,196,0,0.95)' : 'rgba(23,105,255,0.92)';
                 const askPrompt = encodeURIComponent(`Help me plan ${a.name || 'this assignment'} in ${a.course_name || 'my course'}.`);
+                const link = getCanvasAssignmentLink(a);
+                const openCanvasBtn = link
+                    ? `<a class="btn" style="padding: 6px 10px;" href="${esc(link)}" target="_blank" rel="noopener noreferrer">Open in Canvas</a>`
+                    : '';
                 return `
                     <div class="item">
                         <div class="item-title">${esc(a.name || 'Untitled')}</div>
                         <div class="item-meta">${esc(a.course_name || a.course_code || '')} • <span style="color:${color}; font-weight: 950;">${badge}</span></div>
                         <div class="item-when">Due: ${esc(formatWhen(due))}</div>
-                        <div style="margin-top: 8px;">
+                        <div style="margin-top: 8px; display:flex; gap:8px; flex-wrap:wrap;">
+                            ${openCanvasBtn}
                             <button class="btn" type="button" style="padding: 6px 10px;" onclick="askBlueprint(decodeURIComponent('${askPrompt}'))">Ask Blueprint</button>
                         </div>
                     </div>
