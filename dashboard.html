@@ -481,6 +481,30 @@
             gap: 10px;
             margin-top: 12px;
         }
+        .workspace {
+            margin-top: 12px;
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 12px;
+            align-items: start;
+        }
+        .rail {
+            position: sticky;
+            top: 94px;
+        }
+        .rail .tabs {
+            margin-top: 0;
+            flex-direction: column;
+            align-items: stretch;
+            background: rgba(255,255,255,1);
+            border: 1px solid rgba(229,231,235,1);
+            border-radius: var(--radius-lg);
+            padding: 10px;
+            box-shadow: var(--shadow-sm);
+        }
+        .workspace-main {
+            min-width: 0;
+        }
 
         .tab {
             padding: 8px 10px;
@@ -495,6 +519,56 @@
         .tab.active {
             background: rgba(232, 240, 254, 1);
             border-color: rgba(26,115,232,0.35);
+        }
+        .panel {
+            animation: fadeSlide 160ms ease;
+        }
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .snapshot {
+            margin-top: 10px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .snap-chip {
+            border: 1px solid rgba(229,231,235,1);
+            border-radius: 999px;
+            padding: 6px 10px;
+            background: rgba(249,250,251,1);
+            font-size: 12px;
+            font-weight: 900;
+            color: var(--ink-2);
+            cursor: pointer;
+        }
+        .snap-chip:hover { border-color: rgba(26,115,232,0.38); }
+        .snap-chip strong { color: var(--ink); }
+        .mini-toast {
+            position: fixed;
+            right: 16px;
+            bottom: 16px;
+            z-index: 80;
+            border: 1px solid rgba(229,231,235,1);
+            border-radius: 12px;
+            padding: 10px 12px;
+            background: rgba(255,255,255,0.96);
+            color: var(--ink);
+            font-size: 12px;
+            font-weight: 800;
+            box-shadow: var(--shadow-sm);
+            opacity: 0;
+            transform: translateY(8px);
+            pointer-events: none;
+            transition: opacity 0.18s ease, transform 0.18s ease;
+        }
+        .mini-toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .mobile-nav {
+            display: none;
         }
 
         .list {
@@ -634,6 +708,39 @@
             .dash-controls { grid-template-columns: 1fr; }
             .heatmap { grid-template-columns: repeat(7, minmax(0, 1fr)); }
             .command-grid { grid-template-columns: 1fr; }
+            .workspace { grid-template-columns: 1fr; }
+            .rail { position: static; }
+            .rail .tabs {
+                flex-direction: row;
+                overflow-x: auto;
+            }
+            .mobile-nav {
+                position: fixed;
+                left: 10px;
+                right: 10px;
+                bottom: 10px;
+                z-index: 60;
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+                border: 1px solid rgba(229,231,235,1);
+                border-radius: 14px;
+                padding: 8px;
+                background: rgba(255,255,255,0.97);
+                box-shadow: var(--shadow-sm);
+            }
+            .mobile-nav a {
+                text-align: center;
+                font-size: 12px;
+                font-weight: 900;
+                color: var(--ink);
+                text-decoration: none;
+                padding: 8px 6px;
+                border-radius: 10px;
+                border: 1px solid rgba(229,231,235,1);
+                background: rgba(249,250,251,1);
+            }
+            .container { padding-bottom: 90px; }
         }
     </style>
 </head>
@@ -696,6 +803,12 @@
                         </div>
                     </div>
 
+                    <div class="snapshot" id="todaySnapshot">
+                        <button class="snap-chip" type="button" onclick="setQuickFilter('overdue')">Overdue: <strong id="snapOverdue">0</strong></button>
+                        <button class="snap-chip" type="button" onclick="setQuickFilter('next48h')">Next 48h: <strong id="snap48h">0</strong></button>
+                        <button class="snap-chip" type="button" onclick="setDashTab('inbox')">Inbox New: <strong id="snapInbox">0</strong></button>
+                    </div>
+
                     <div class="viz" style="margin-top: 12px;">
                         <div class="viz-title">
                             <h3>Workload Heatmap</h3>
@@ -712,16 +825,19 @@
                         <div id="courseViz" style="margin-top: 10px;"></div>
                     </div>
 
-                    <div class="tabs" id="dashTabs">
-                        <button class="tab" type="button" id="tabCommand" data-tab="command">Command Center</button>
-                        <button class="tab" type="button" id="tabWeekly" data-tab="weekly">Weekly Plan</button>
-                        <button class="tab" type="button" id="tabOverview" data-tab="overview">Overview</button>
-                        <button class="tab" type="button" id="tabGrades" data-tab="grades">Grades</button>
-                        <button class="tab" type="button" id="tabPlanner" data-tab="planner">Planner</button>
-                        <button class="tab" type="button" id="tabAnnouncements" data-tab="announcements">Announcements</button>
-                        <button class="tab" type="button" id="tabInbox" data-tab="inbox">Inbox</button>
-                    </div>
-
+                    <div class="workspace">
+                        <div class="rail">
+                            <div class="tabs" id="dashTabs">
+                                <button class="tab" type="button" id="tabCommand" data-tab="command">Command Center</button>
+                                <button class="tab" type="button" id="tabWeekly" data-tab="weekly">Weekly Plan</button>
+                                <button class="tab" type="button" id="tabOverview" data-tab="overview">Overview</button>
+                                <button class="tab" type="button" id="tabGrades" data-tab="grades">Grades</button>
+                                <button class="tab" type="button" id="tabPlanner" data-tab="planner">Planner</button>
+                                <button class="tab" type="button" id="tabAnnouncements" data-tab="announcements">Announcements</button>
+                                <button class="tab" type="button" id="tabInbox" data-tab="inbox">Inbox</button>
+                            </div>
+                        </div>
+                        <div class="workspace-main">
                     <div class="dash-controls">
                         <div class="control">
                             <label for="courseFilter" style="margin: 0; font-size: 12px; font-weight: 900;">Filter by course</label>
@@ -757,7 +873,7 @@
                         </div>
                     </div>
 
-                    <div id="dashPanelCommand" style="display:none;">
+                    <div id="dashPanelCommand" class="panel" style="display:none;">
                         <div class="command-grid">
                             <div class="command-card">
                                 <div class="mini-title">Do Now Queue</div>
@@ -774,7 +890,7 @@
                         </div>
                     </div>
 
-                    <div id="dashPanelWeekly" style="display:none;">
+                    <div id="dashPanelWeekly" class="panel" style="display:none;">
                         <div class="row" style="margin-top: 10px; gap: 8px;">
                             <button class="btn btn-primary" type="button" onclick="generateWeeklyPlan()">Generate 7-day plan</button>
                             <button class="btn" type="button" onclick="copyWeeklyPlan()">Copy plan</button>
@@ -783,27 +899,27 @@
                         <div id="weeklyPlanList" class="list"></div>
                     </div>
 
-                    <div id="dashPanelOverview">
+                    <div id="dashPanelOverview" class="panel">
                         <div class="muted" style="margin-top: 10px;">Upcoming assignments (top 20)</div>
                         <div id="upcomingAssignments" class="list"></div>
                     </div>
 
-                    <div id="dashPanelGrades" style="display:none;">
+                    <div id="dashPanelGrades" class="panel" style="display:none;">
                         <div class="muted" style="margin-top: 10px;">Grade summary</div>
                         <div id="gradesList" class="list"></div>
                     </div>
 
-                    <div id="dashPanelPlanner" style="display:none;">
+                    <div id="dashPanelPlanner" class="panel" style="display:none;">
                         <div class="muted" style="margin-top: 10px;">Planner + Calendar timeline (next 90 days)</div>
                         <div id="plannerList" class="list"></div>
                     </div>
 
-                    <div id="dashPanelAnnouncements" style="display:none;">
+                    <div id="dashPanelAnnouncements" class="panel" style="display:none;">
                         <div class="muted" style="margin-top: 10px;">Announcements</div>
                         <div id="announcementsList" class="list"></div>
                     </div>
 
-                    <div id="dashPanelInbox" style="display:none;">
+                    <div id="dashPanelInbox" class="panel" style="display:none;">
                         <div class="muted" style="margin-top: 10px;">Instructor messages (announcements + Canvas inbox)</div>
                         <div id="inboxList" class="list"></div>
                     </div>
@@ -819,10 +935,19 @@
                         <div class="muted" style="margin-top: 10px;">Syllabi</div>
                         <div id="syllabiList" class="list"></div>
                     </details>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <nav class="mobile-nav" aria-label="Quick navigation">
+        <a href="index.html">Chat</a>
+        <a href="dashboard.html">Dashboard</a>
+        <a href="canvas.html">Connect</a>
+    </nav>
+    <div id="miniToast" class="mini-toast" aria-live="polite"></div>
 
     <script src="tour.js"></script>
     <script>
@@ -855,6 +980,11 @@
         let quickFilter = 'all';
         let defaultDashboardTab = 'overview';
         let weeklyPlanText = '';
+        let upcomingExpanded = false;
+        let inboxExpanded = false;
+        let quickActionsExpanded = false;
+        let lastShortcutKey = '';
+        let lastShortcutTs = 0;
 
         function applyTheme(theme) {
             const dark = theme === 'dark';
@@ -959,6 +1089,15 @@
             if (retryBtn) retryBtn.style.display = kind === 'error' ? 'inline-flex' : 'none';
         }
 
+        function showToast(message) {
+            const toast = document.getElementById('miniToast');
+            if (!toast) return;
+            toast.textContent = String(message || '');
+            toast.classList.add('show');
+            clearTimeout(showToast._t);
+            showToast._t = setTimeout(() => toast.classList.remove('show'), 1800);
+        }
+
         function normalizeUrl(input) {
             const v = (input || '').trim();
             if (!v) return '';
@@ -1005,6 +1144,7 @@
             try {
                 await navigator.clipboard.writeText(code);
                 setStatus('Copied Link Code to clipboard.', 'success');
+                showToast('Link code copied');
             } catch {
                 setStatus('Copy failed. Select and copy manually.', 'warning');
             }
@@ -1326,6 +1466,19 @@
             renderDashboard(currentCanvasData);
         }
 
+        function toggleUpcomingExpanded() {
+            upcomingExpanded = !upcomingExpanded;
+            if (currentCanvasData) renderDashboard(currentCanvasData);
+        }
+        function toggleInboxExpanded() {
+            inboxExpanded = !inboxExpanded;
+            if (currentCanvasData) renderDashboard(currentCanvasData);
+        }
+        function toggleQuickActionsExpanded() {
+            quickActionsExpanded = !quickActionsExpanded;
+            if (currentCanvasData) renderDashboard(currentCanvasData);
+        }
+
         function matchesSearch(...vals) {
             if (!dashboardSearch) return true;
             const text = vals.map((v) => String(v || '').toLowerCase()).join(' ');
@@ -1355,7 +1508,8 @@
                 return;
             }
 
-            container.innerHTML = upcoming.map(a => {
+            const visible = upcomingExpanded ? upcoming : upcoming.slice(0, 3);
+            const rows = visible.map(a => {
                 const due = getItemDate(a);
                 if (!due) return '';
                 const days = Math.ceil((due - new Date()) / (1000 * 60 * 60 * 24));
@@ -1378,6 +1532,10 @@
                     </div>
                 `;
             }).join('');
+            const more = upcoming.length > 3
+                ? `<button class="btn" type="button" style="padding:6px 10px;" onclick="toggleUpcomingExpanded()">${upcomingExpanded ? 'Show less' : `Show more (${upcoming.length - 3})`}</button>`
+                : '';
+            container.innerHTML = `${rows}${more ? `<div style="margin-top:8px;">${more}</div>` : ''}`;
         }
 
         function renderGrades(grades) {
@@ -1570,7 +1728,8 @@
                 return;
             }
 
-            container.innerHTML = selected.map((m) => {
+            const visible = inboxExpanded ? selected : selected.slice(0, 6);
+            const rows = visible.map((m) => {
                 const linkHtml = m.link
                     ? `<a class="btn" style="padding: 6px 10px;" href="${esc(m.link)}" target="_blank" rel="noopener noreferrer">Open</a>`
                     : '';
@@ -1585,6 +1744,10 @@
                     </div>
                 `;
             }).join('');
+            const more = selected.length > 6
+                ? `<button class="btn" type="button" style="padding:6px 10px;" onclick="toggleInboxExpanded()">${inboxExpanded ? 'Show less' : `Show more (${selected.length - 6})`}</button>`
+                : '';
+            container.innerHTML = `${rows}${more ? `<div style="margin-top:8px;">${more}</div>` : ''}`;
         }
 
         function renderModules(items) {
@@ -1855,12 +2018,17 @@
                 return;
             }
 
-            container.innerHTML = clean.map((r) => `
+            const visible = quickActionsExpanded ? clean : clean.slice(0, 4);
+            const rows = visible.map((r) => `
                 <div class="focus-item">
                     <div class="focus-title">${esc(r.title || 'Suggested action')}</div>
                     <div class="focus-meta">${esc(r.meta || 'Open chat for a tailored next-step plan.')}</div>
                 </div>
             `).join('');
+            const more = clean.length > 4
+                ? `<button class="btn" type="button" style="padding:6px 10px;" onclick="toggleQuickActionsExpanded()">${quickActionsExpanded ? 'Show less' : `Show more (${clean.length - 4})`}</button>`
+                : '';
+            container.innerHTML = `${rows}${more ? `<div style="margin-top:8px;">${more}</div>` : ''}`;
         }
 
         function renderCommandQueue(assignments, planner, calendar) {
@@ -2125,9 +2293,33 @@
             try {
                 await navigator.clipboard.writeText(weeklyPlanText.trim());
                 setStatus('Weekly plan copied.', 'success');
+                showToast('Weekly plan copied');
             } catch {
                 setStatus('Unable to copy plan. You can still read it below.', 'warning');
             }
+        }
+
+        function updateTodaySnapshot(data) {
+            const assignments = Array.isArray(data.assignments) ? data.assignments.filter((a) => isCourseMatch(a)) : [];
+            const inbox = Array.isArray(data.inbox_messages) ? data.inbox_messages.filter((m) => isCourseMatch(m)) : [];
+            let overdue = 0;
+            let next48 = 0;
+            const now = Date.now();
+            for (const a of assignments) {
+                const d = getItemDate(a);
+                if (!d) continue;
+                const delta = d.getTime() - now;
+                if (delta < 0) overdue += 1;
+                if (delta >= 0 && delta <= 48 * 60 * 60 * 1000) next48 += 1;
+            }
+            const inboxNew = inbox.filter((m) => !!m?.unread).length;
+            const set = (id, v) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = String(v);
+            };
+            set('snapOverdue', overdue);
+            set('snap48h', next48);
+            set('snapInbox', inboxNew);
         }
         function buildPulseSvg(counts, labels) {
             const max = Math.max(1, ...counts);
@@ -2290,6 +2482,7 @@
             renderCommandQueue(assignments, planner, calendar);
             renderGradeWatch(data.grades || [], assignments);
             renderMessageActions(data.announcements || [], inboxMessages);
+            updateTodaySnapshot(data);
 
             const filteredAssignments = assignments.filter((a) => isCourseMatch(a));
             const filteredPlanner = planner.filter((p) => isCourseMatch(p));
@@ -2370,6 +2563,27 @@
                 const response = await apiFetch(`${BASE_API_URL}/auth/me`);
                 if (!response.ok) redirectToLogin();
             } catch (e) {}
+
+            window.addEventListener('keydown', (ev) => {
+                const tag = (ev.target && ev.target.tagName) ? ev.target.tagName.toLowerCase() : '';
+                const typing = tag === 'input' || tag === 'textarea' || ev.target?.isContentEditable;
+                if (!typing && ev.key === '/') {
+                    ev.preventDefault();
+                    document.getElementById('dashboardSearch')?.focus();
+                    return;
+                }
+                const key = String(ev.key || '').toLowerCase();
+                const now = Date.now();
+                if (!typing && lastShortcutKey === 'g' && (now - lastShortcutTs) < 1200) {
+                    if (key === 'c') window.location.href = 'index.html';
+                    if (key === 'd') window.location.href = 'dashboard.html';
+                    if (key === 's') window.location.href = 'settings.html';
+                    lastShortcutKey = '';
+                    return;
+                }
+                lastShortcutKey = key === 'g' ? 'g' : '';
+                lastShortcutTs = now;
+            });
 
             await loadCanvasDashboard();
         });
