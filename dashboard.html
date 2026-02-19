@@ -2094,6 +2094,7 @@
                 const risk = hours < 0 ? 'Overdue' : hours <= 24 ? 'Now' : hours <= 72 ? 'Soon' : 'Later';
                 const riskClass = risk === 'Overdue' || risk === 'Now' ? 'high' : (risk === 'Soon' ? 'medium' : 'low');
                 const openBtn = r.link ? `<a class="btn" style="padding:6px 10px;" href="${esc(r.link)}" target="_blank" rel="noopener noreferrer">Open in Canvas</a>` : '';
+                const encodedPrompt = encodeURIComponent(r.prompt || '');
                 return `
                     <div class="focus-item">
                         <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
@@ -2102,7 +2103,7 @@
                         </div>
                         <div class="focus-meta">${esc(r.course || 'Course')} • ${esc(formatWhen(r.when))} • ${esc(r.type)}</div>
                         <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
-                            <button class="btn" type="button" style="padding:6px 10px;" onclick="askBlueprint(${JSON.stringify(r.prompt)})">Do now</button>
+                            <button class="btn" type="button" style="padding:6px 10px;" onclick="askBlueprint(decodeURIComponent('${encodedPrompt}'))">Do now</button>
                             ${openBtn}
                         </div>
                     </div>
@@ -2147,6 +2148,7 @@
             container.innerHTML = rows.map((r) => {
                 const riskClass = r.risk === 'High' ? 'high' : (r.risk === 'Watch' ? 'medium' : 'low');
                 const prompt = `Create a 7-day improvement plan for ${r.course}. Current score: ${Number.isFinite(r.score) ? r.score + '%' : 'unknown'}. Overdue: ${r.work.overdue}, due soon: ${r.work.upcoming}.`;
+                const encodedPrompt = encodeURIComponent(prompt);
                 return `
                     <div class="focus-item">
                         <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
@@ -2155,7 +2157,7 @@
                         </div>
                         <div class="focus-meta">Score: ${esc(Number.isFinite(r.score) ? `${r.score}%` : 'N/A')} • Overdue: ${esc(r.work.overdue)} • Due soon: ${esc(r.work.upcoming)}</div>
                         <div style="margin-top:8px;">
-                            <button class="btn" type="button" style="padding:6px 10px;" onclick="askBlueprint(${JSON.stringify(prompt)})">Recovery Plan</button>
+                            <button class="btn" type="button" style="padding:6px 10px;" onclick="askBlueprint(decodeURIComponent('${encodedPrompt}'))">Recovery Plan</button>
                         </div>
                     </div>
                 `;
@@ -2201,6 +2203,7 @@
             container.innerHTML = selected.map((m) => {
                 const openBtn = m.link ? `<a class="btn" style="padding:6px 10px;" href="${esc(m.link)}" target="_blank" rel="noopener noreferrer">Open</a>` : '';
                 const prompt = `Summarize this ${m.type.toLowerCase()} and turn it into an actionable checklist: ${m.title}`;
+                const encodedPrompt = encodeURIComponent(prompt);
                 return `
                     <div class="focus-item">
                         <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
@@ -2210,7 +2213,7 @@
                         <div class="focus-meta">${esc(m.context || 'Canvas')} • ${esc(formatWhen(m.when))}</div>
                         <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
                             ${openBtn}
-                            <button class="btn" type="button" style="padding:6px 10px;" onclick="askBlueprint(${JSON.stringify(prompt)})">Create Action List</button>
+                            <button class="btn" type="button" style="padding:6px 10px;" onclick="askBlueprint(decodeURIComponent('${encodedPrompt}'))">Create Action List</button>
                         </div>
                     </div>
                 `;
