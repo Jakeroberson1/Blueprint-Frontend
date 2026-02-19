@@ -225,7 +225,7 @@
 
       <div class="steps">
         <div class="step"><div class="step-num">1</div><div>Generate a Link Code below.</div></div>
-        <div class="step"><div class="step-num">2</div><div>Install the extension and open Canvas.</div></div>
+        <div class="step"><div class="step-num">2</div><div>Install the extension from the Chrome Web Store, then open Canvas.</div></div>
         <div class="step"><div class="step-num">3</div><div>In the Blueprint Sync panel on Canvas, paste code, pair once, then click <strong>Sync now</strong>.</div></div>
       </div>
 
@@ -234,7 +234,7 @@
 
       <div class="row">
         <button class="btn btn-primary" id="linkBtn" onclick="generateLinkCode()">Generate Link Code</button>
-        <a class="btn" href="blueprint-canvas-extension.zip" download>Download Extension ZIP</a>
+        <a class="btn" id="webStoreBtn" href="#" target="_blank" rel="noopener noreferrer">Install from Chrome Web Store</a>
         <a class="btn" href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
         <button class="btn" onclick="openCanvas()">Open Canvas</button>
         <a class="btn" href="dashboard.html">Go To Dashboard</a>
@@ -254,18 +254,19 @@
       <details id="install">
         <summary>Install Instructions (Chrome)</summary>
         <div class="muted" style="margin-top:10px; line-height:1.55;">
-          1) Download <code>blueprint-canvas-extension.zip</code> and unzip it.<br>
-          2) Open <code>chrome://extensions</code><br>
-          3) Enable <strong>Developer mode</strong><br>
-          4) Click <strong>Load unpacked</strong> and select the unzipped <code>blueprint-canvas-extension</code> folder.<br>
-          5) Go to Canvas and use the bottom-right Blueprint Sync panel.<br>
-          6) Web Store release: once approved, this manual install will be replaced with one-click install.
+          1) Click <strong>Install from Chrome Web Store</strong> above.<br>
+          2) Click <strong>Add to Chrome</strong> on the store page.<br>
+          3) Open your Canvas site and sign in as normal.<br>
+          4) Use the bottom-right Blueprint Sync panel on Canvas.<br>
+          5) Paste your Link Code once, click Pair, then click Sync now.<br>
+          6) Return to Dashboard and click Refresh Dashboard.
         </div>
       </details>
     </div>
   </div>
 
   <script src="tour.js"></script>
+  <script src="app-config.js"></script>
   <script>
     try {
       localStorage.removeItem('sessionToken');
@@ -280,7 +281,7 @@
     const TOUR_STEPS = [
       { page: 'index.html', selector: '.chat-header', title: 'Ask Questions Fast', body: 'Use this chat area for your course questions. The composer at the bottom sends prompts, and Blueprint can give direct answers when needed.' },
       { page: 'index.html', selector: '#studyGuidePicker', title: 'Upload Files', body: 'Attach PDF, DOCX, TXT, or image files in chat for analysis. Use Study Guides in the left panel to build reusable guides from class content.' },
-      { page: 'canvas.html', selector: '#linkBtn', title: 'Connect Canvas', body: 'Step 1: click Generate Link Code here. Step 2: download/install the extension ZIP (chrome://extensions -> Developer mode -> Load unpacked). Step 3: open your Canvas site and open the Blueprint Sync panel. Step 4: paste the Link Code and click Pair. Step 5: click Sync now, then return to Dashboard and press Refresh Dashboard.' },
+      { page: 'canvas.html', selector: '#linkBtn', title: 'Connect Canvas', body: 'Step 1: click Generate Link Code here. Step 2: click Install from Chrome Web Store and add the extension. Step 3: open your Canvas site and use the Blueprint Sync panel. Step 4: paste the Link Code and click Pair. Step 5: click Sync now, then return to Dashboard and press Refresh Dashboard.' },
       { page: 'dashboard.html', selector: '#priorityQueue', title: 'Use The Dashboard', body: 'This section highlights your highest-priority work from assignments, planner items, and calendar events.' },
       { page: 'settings.html', selector: '#timeZoneMode', title: 'Set Preferences', body: 'Open Settings to choose your timezone and dashboard defaults so due dates and day names stay accurate.' }
     ];
@@ -377,6 +378,19 @@
       return `https://${v.replace(/\/$/, '')}`;
     }
 
+    function wireExtensionInstallCta() {
+      const link = document.getElementById('webStoreBtn');
+      if (!link) return;
+      if (/REPLACE_WITH_EXTENSION_ID/i.test(CHROME_WEB_STORE_URL) || !CHROME_WEB_STORE_URL) {
+        link.textContent = 'Set Web Store URL in app-config.js';
+        link.setAttribute('aria-disabled', 'true');
+        link.style.opacity = '0.6';
+        link.style.pointerEvents = 'none';
+        return;
+      }
+      link.href = CHROME_WEB_STORE_URL;
+    }
+
     async function generateLinkCode() {
       const btn = document.getElementById('linkBtn');
       btn.disabled = true;
@@ -433,6 +447,7 @@
 
     window.addEventListener('load', async () => {
       initializeTheme();
+      wireExtensionInstallCta();
       if (!sessionToken) {
         redirectToLogin();
         return;
@@ -450,3 +465,4 @@
   </script>
 </body>
 </html>
+    const CHROME_WEB_STORE_URL = String(window.BP_CONFIG?.chromeWebStoreUrl || '').trim();
