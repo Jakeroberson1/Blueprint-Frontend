@@ -974,6 +974,7 @@
         const sessionToken = sessionStorage.getItem('sessionToken');
         const currentUser = JSON.parse(sessionStorage.getItem('user') || 'null');
         let currentCanvasData = null;
+        let currentCanvasOrigin = '';
         let userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
         let selectedCourse = '__all__';
         let dashboardSearch = '';
@@ -1334,25 +1335,52 @@
             }
         }
 
+        function getCanvasOrigin() {
+            if (currentCanvasOrigin) return currentCanvasOrigin;
+            const candidates = [
+                currentCanvasData?.canvas_url,
+                currentCanvasData?.canvasUrl,
+                sessionStorage.getItem('lastCanvasUrl')
+            ];
+            for (const candidate of candidates) {
+                try {
+                    const value = String(candidate || '').trim();
+                    if (!value) continue;
+                    const u = new URL(value.startsWith('http') ? value : `https://${value}`);
+                    currentCanvasOrigin = `${u.protocol}//${u.host}`;
+                    return currentCanvasOrigin;
+                } catch {}
+            }
+            return '';
+        }
+
+        function resolveCanvasLink(raw) {
+            const value = String(raw || '').trim();
+            if (!value) return '';
+            try {
+                const u = new URL(value, getCanvasOrigin() || window.location.origin);
+                u.pathname = u.pathname.replace('/api/v1/', '/');
+                u.search = '';
+                return u.toString();
+            } catch {
+                return '';
+            }
+        }
+
         function getCanvasAssignmentLink(a) {
             if (!a || typeof a !== 'object') return '';
             const direct = String(a?.html_url || '').trim();
-            if (direct) return direct;
+            if (direct) return resolveCanvasLink(direct);
 
             const apiUrl = String(a?.url || '').trim();
-            if (apiUrl) {
-                try {
-                    const u = new URL(apiUrl);
-                    u.pathname = u.pathname.replace('/api/v1/', '/');
-                    u.search = '';
-                    return u.toString();
-                } catch {}
-            }
+            if (apiUrl) return resolveCanvasLink(apiUrl);
 
             const courseId = a?.course_id;
             const assignmentId = a?.id;
             if (courseId && assignmentId) {
-                return `/courses/${encodeURIComponent(courseId)}/assignments/${encodeURIComponent(assignmentId)}`;
+                const base = getCanvasOrigin();
+                const path = `/courses/${encodeURIComponent(courseId)}/assignments/${encodeURIComponent(assignmentId)}`;
+                return base ? `${base}${path}` : path;
             }
             return '';
         }
@@ -1360,36 +1388,25 @@
         function getCanvasInboxLink(m) {
             if (!m || typeof m !== 'object') return '';
             const direct = String(m?.html_url || '').trim();
-            if (direct) return direct;
+            if (direct) return resolveCanvasLink(direct);
 
             const raw = String(m?.url || '').trim();
-            if (raw) {
-                try {
-                    const u = new URL(raw);
-                    u.pathname = u.pathname.replace('/api/v1/', '/');
-                    u.search = '';
-                    return u.toString();
-                } catch {}
-            }
+            if (raw) return resolveCanvasLink(raw);
 
-            if (m?.id) return `/conversations/${encodeURIComponent(m.id)}`;
+            if (m?.id) {
+                const base = getCanvasOrigin();
+                const path = `/conversations/${encodeURIComponent(m.id)}`;
+                return base ? `${base}${path}` : path;
+            }
             return '';
         }
 
         function getCanvasGenericLink(item) {
             if (!item || typeof item !== 'object') return '';
             const direct = String(item?.html_url || '').trim();
-            if (direct) return direct;
+            if (direct) return resolveCanvasLink(direct);
             const raw = String(item?.url || '').trim();
-            if (!raw) return '';
-            try {
-                const u = new URL(raw);
-                u.pathname = u.pathname.replace('/api/v1/', '/');
-                u.search = '';
-                return u.toString();
-            } catch {
-                return '';
-            }
+            return resolveCanvasLink(raw);
         }
 
         function stripHtmlToText(html) {
@@ -1492,10 +1509,40 @@
             return text.includes(dashboardSearch);
         }
 
-        function normalizeUpcoming(assignments) {
+        function isSubmissionComplete(submission) {
+            if (!submission || typeof submission !== 'object') return false;
+            if (submission.bp_completed === true) return true;
+            const score = submission?.score;
+            if (score !== null && score !== undefined && Number.isFinite(Number(score))) return true;
+            if (String(submission?.grade || '').trim()) return true;
+            if (submission?.submitted_at || submission?.graded_at) return true;
+            const state = String(submission?.workflow_state || submission?.state || '').toLowerCase();
+            return ['graded', 'submitted', 'complete', 'completed'].includes(state);
+        }
+
+        function buildCompletedAssignmentSet(submissions) {
+            const set = new Set();
+            for (const s of Array.isArray(submissions) ? submissions : []) {
+                if (!isSubmissionComplete(s)) continue;
+                const assignmentId = s?.assignment_id ?? s?.id;
+                if (assignmentId === null || assignmentId === undefined || assignmentId === '') continue;
+                set.add(String(assignmentId));
+            }
+            return set;
+        }
+
+        function isAssignmentComplete(assignment, completedSet) {
+            if (!assignment || !completedSet || completedSet.size === 0) return false;
+            const assignmentId = assignment?.id;
+            if (assignmentId === null || assignmentId === undefined || assignmentId === '') return false;
+            return completedSet.has(String(assignmentId));
+        }
+
+        function normalizeUpcoming(assignments, completedSet = new Set()) {
             const list = Array.isArray(assignments) ? assignments : [];
             const upcoming = list
                 .filter(a => a && isCourseMatch(a))
+                .filter(a => !isAssignmentComplete(a, completedSet))
                 .filter(a => matchesSearch(a?.name, a?.course_name, a?.course_code))
                 .map((a) => ({ raw: a, due: getItemDate(a) }))
                 .filter((x) => x.due && (quickFilter === 'overdue' ? x.due.getTime() < Date.now() : x.due.getTime() > Date.now()))
@@ -1506,9 +1553,9 @@
             return upcoming.map((x) => x.raw);
         }
 
-        function renderUpcoming(assignments) {
+        function renderUpcoming(assignments, completedSet = new Set()) {
             const container = document.getElementById('upcomingAssignments');
-            const upcoming = normalizeUpcoming(assignments);
+            const upcoming = normalizeUpcoming(assignments, completedSet);
 
             if (!upcoming.length) {
                 container.innerHTML = '<div class="muted" style="padding: 10px;">No upcoming assignments found.</div>';
@@ -1880,7 +1927,7 @@
             }).join('');
         }
 
-        function renderPriorityQueue(assignments, planner, calendar) {
+        function renderPriorityQueue(assignments, planner, calendar, completedSet = new Set()) {
             const container = document.getElementById('priorityQueue');
             if (!container) return;
 
@@ -1889,6 +1936,7 @@
 
             for (const a of assignments) {
                 if (!a || !isCourseMatch(a) || !matchesSearch(a?.name, a?.course_name, a?.course_code)) continue;
+                if (isAssignmentComplete(a, completedSet)) continue;
                 const d = getItemDate(a);
                 if (!d) continue;
                 if (!passesQuickFilter(d)) continue;
@@ -1896,7 +1944,8 @@
                     title: a?.name || 'Assignment',
                     course: a?.course_name || a?.course_code || '',
                     when: d,
-                    tag: 'Assignment'
+                    tag: 'Assignment',
+                    link: getCanvasAssignmentLink(a)
                 });
             }
             for (const p of planner) {
@@ -1951,6 +2000,7 @@
             container.innerHTML = valid.map((i) => {
                 const hoursAway = Math.round((i.when.getTime() - now) / (1000 * 60 * 60));
                 const urgency = hoursAway <= 24 ? 'Do this first' : hoursAway <= 72 ? 'Do next' : 'Upcoming';
+                const openBtn = i.link ? `<a class="btn" style="padding:6px 10px;" href="${esc(i.link)}" target="_blank" rel="noopener noreferrer">Open in Canvas</a>` : '';
                 return `
                     <div class="focus-item">
                         <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
@@ -1958,19 +2008,22 @@
                             <span class="focus-tag">${esc(i.tag)}</span>
                         </div>
                         <div class="focus-meta">${esc(i.course || 'Course')} • ${esc(i.whenText)} • ${esc(urgency)}</div>
+                        <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">${openBtn}</div>
                     </div>
                 `;
             }).join('');
         }
 
-        function renderQuickActions(grades, assignments, planner, calendar, announcements) {
+        function renderQuickActions(grades, assignments, planner, calendar, announcements, completedSet = new Set()) {
             const container = document.getElementById('quickActions');
             if (!container) return;
 
             const actions = [];
             const now = Date.now();
             const gradeList = (Array.isArray(grades) ? grades : []).filter((g) => isCourseMatch(g));
-            const assignmentList = (Array.isArray(assignments) ? assignments : []).filter((a) => isCourseMatch(a));
+            const assignmentList = (Array.isArray(assignments) ? assignments : [])
+                .filter((a) => isCourseMatch(a))
+                .filter((a) => !isAssignmentComplete(a, completedSet));
             const plannerList = (Array.isArray(planner) ? planner : []).filter((p) => isCourseMatch(p));
             const calendarList = (Array.isArray(calendar) ? calendar : []).filter((e) => isCourseMatch(e));
             const annList = (Array.isArray(announcements) ? announcements : []).filter((a) => isCourseMatch(a));
@@ -1980,9 +2033,11 @@
                 return Number.isFinite(score) && score < 75;
             });
             for (const g of lowGrades.slice(0, 3)) {
+                const prompt = `Create a 7-day recovery plan for ${g.course_name || 'this course'} using concrete tasks tied to upcoming deadlines. Current score: ${g.current_score}%${g.current_grade ? ` (${g.current_grade})` : ''}.`;
                 actions.push({
                     title: `Recover ${g.course_name || 'course'} this week`,
                     meta: `Current score ${g.current_score}%${g.current_grade ? ` (${g.current_grade})` : ''}. Ask Blueprint Chat for a 7-day catch-up plan.`,
+                    prompt
                 });
             }
 
@@ -1995,9 +2050,12 @@
                 .filter((x) => x.when && (x.when.getTime() - now) <= (48 * 60 * 60 * 1000) && (x.when.getTime() - now) >= -(24 * 60 * 60 * 1000))
                 .sort((a, b) => a.when - b.when);
             if (urgentWork.length) {
+                const first = urgentWork[0];
+                const prompt = `Give me a do-now action list for ${first.title} in ${first.course || 'this course'} due ${formatWhen(first.when)}. Include exact next steps for the next 30 minutes.`;
                 actions.push({
                     title: `Handle ${urgentWork.length} urgent item${urgentWork.length > 1 ? 's' : ''} in next 48h`,
-                    meta: `${urgentWork[0].title} (${urgentWork[0].type}) is first. Open ${urgentWork[0].course || 'that course'} now.`,
+                    meta: `${first.title} (${first.type}) is first. Open ${first.course || 'that course'} now.`,
+                    prompt
                 });
             }
 
@@ -2006,9 +2064,11 @@
                 return d && (Date.now() - d.getTime()) <= 7 * 24 * 60 * 60 * 1000;
             });
             if (recentAnnouncements.length) {
+                const latest = recentAnnouncements[0];
                 actions.push({
                     title: `Review ${recentAnnouncements.length} recent announcement${recentAnnouncements.length > 1 ? 's' : ''}`,
                     meta: 'Check for due-date changes or exam logistics and update your study plan.',
+                    prompt: `Summarize this announcement and create an action list: ${latest?.title || 'Recent announcement'}.`
                 });
             }
 
@@ -2026,19 +2086,25 @@
             }
 
             const visible = quickActionsExpanded ? clean : clean.slice(0, 4);
-            const rows = visible.map((r) => `
+            const rows = visible.map((r) => {
+                const encodedPrompt = encodeURIComponent(String(r.prompt || `Turn this into a concrete action list: ${r.title}. ${r.meta || ''}`));
+                return `
                 <div class="focus-item">
                     <div class="focus-title">${esc(r.title || 'Suggested action')}</div>
                     <div class="focus-meta">${esc(r.meta || 'Open chat for a tailored next-step plan.')}</div>
+                    <div style="margin-top:8px;">
+                        <button class="btn" type="button" style="padding:6px 10px;" onclick="askBlueprintEncoded('${encodedPrompt}')">Create Action List</button>
+                    </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
             const more = clean.length > 4
                 ? `<button class="btn" type="button" style="padding:6px 10px;" onclick="toggleQuickActionsExpanded()">${quickActionsExpanded ? 'Show less' : `Show more (${clean.length - 4})`}</button>`
                 : '';
             container.innerHTML = `${rows}${more ? `<div style="margin-top:8px;">${more}</div>` : ''}`;
         }
 
-        function renderCommandQueue(assignments, planner, calendar) {
+        function renderCommandQueue(assignments, planner, calendar, completedSet = new Set()) {
             const container = document.getElementById('commandQueue');
             if (!container) return;
             const now = Date.now();
@@ -2046,6 +2112,7 @@
 
             for (const a of assignments || []) {
                 if (!a || !isCourseMatch(a) || !matchesSearch(a?.name, a?.course_name, a?.course_code)) continue;
+                if (isAssignmentComplete(a, completedSet)) continue;
                 const when = getItemDate(a);
                 if (!when || !passesQuickFilter(when)) continue;
                 rows.push({
@@ -2054,7 +2121,7 @@
                     course: a?.course_name || a?.course_code || '',
                     when,
                     link: getCanvasAssignmentLink(a),
-                    prompt: `Give me a concrete step-by-step plan for ${a?.name || 'this assignment'} in ${a?.course_name || 'my course'}.`
+                    prompt: `Give me a concrete do-now checklist for ${a?.name || 'this assignment'} in ${a?.course_name || 'my course'}. Due: ${formatWhen(when)}. If possible, include exact submission requirements and a 30-minute first sprint.`
                 });
             }
             for (const p of planner || []) {
@@ -2068,7 +2135,7 @@
                     course: p?.context_name || p?.context_code || '',
                     when,
                     link: getCanvasGenericLink(p),
-                    prompt: `Break ${title} into the first 3 actions I should do.`
+                    prompt: `Break ${title} (${p?.context_name || p?.context_code || 'course'}) into a precise do-now sequence with timestamps for the next 60 minutes.`
                 });
             }
             for (const e of calendar || []) {
@@ -2082,7 +2149,7 @@
                     course: e?.context_name || e?.context_code || '',
                     when,
                     link: getCanvasGenericLink(e),
-                    prompt: `How should I prepare for ${title}?`
+                    prompt: `How should I prepare for ${title} by ${formatWhen(when)}? Give concrete actions and what to open first in Canvas.`
                 });
             }
 
@@ -2118,12 +2185,13 @@
             }).join('');
         }
 
-        function renderGradeWatch(grades, assignments) {
+        function renderGradeWatch(grades, assignments, completedSet = new Set()) {
             const container = document.getElementById('gradeWatchList');
             if (!container) return;
             const byCourseWork = new Map();
             for (const a of assignments || []) {
                 if (!isCourseMatch(a)) continue;
+                if (isAssignmentComplete(a, completedSet)) continue;
                 const c = a?.course_name || a?.course_code || 'Other';
                 const due = getItemDate(a);
                 const row = byCourseWork.get(c) || { upcoming: 0, overdue: 0 };
@@ -2154,7 +2222,8 @@
 
             container.innerHTML = rows.map((r) => {
                 const riskClass = r.risk === 'High' ? 'high' : (r.risk === 'Watch' ? 'medium' : 'low');
-                const prompt = `Create a 7-day improvement plan for ${r.course}. Current score: ${Number.isFinite(r.score) ? r.score + '%' : 'unknown'}. Overdue: ${r.work.overdue}, due soon: ${r.work.upcoming}.`;
+                const focus = Number.isFinite(r.score) && r.score >= 90 ? 'maintenance and smart pacing' : 'grade recovery and backlog reduction';
+                const prompt = `Create a 7-day ${focus} plan for ${r.course}. Current score: ${Number.isFinite(r.score) ? r.score + '%' : 'unknown'}. Overdue: ${r.work.overdue}, due soon: ${r.work.upcoming}. Give day-by-day tasks with due-date priority.`;
                 const encodedPrompt = encodeURIComponent(prompt);
                 return `
                     <div class="focus-item">
@@ -2209,7 +2278,7 @@
 
             container.innerHTML = selected.map((m) => {
                 const openBtn = m.link ? `<a class="btn" style="padding:6px 10px;" href="${esc(m.link)}" target="_blank" rel="noopener noreferrer">Open</a>` : '';
-                const prompt = `Summarize this ${m.type.toLowerCase()} and turn it into an actionable checklist: ${m.title}`;
+                const prompt = `Summarize this ${m.type.toLowerCase()} and turn it into a concrete checklist with next actions, due dates, and what to open first in Canvas. Title: ${m.title}. Context: ${m.context || 'Canvas'}. Link: ${m.link || 'not available'}.`;
                 const encodedPrompt = encodeURIComponent(prompt);
                 return `
                     <div class="focus-item">
@@ -2227,8 +2296,10 @@
             }).join('');
         }
 
-        function buildWeeklyPlanData(data) {
-            const assignments = Array.isArray(data.assignments) ? data.assignments.filter((a) => isCourseMatch(a)) : [];
+        function buildWeeklyPlanData(data, completedSet = new Set()) {
+            const assignments = Array.isArray(data.assignments)
+                ? data.assignments.filter((a) => isCourseMatch(a)).filter((a) => !isAssignmentComplete(a, completedSet))
+                : [];
             const planner = Array.isArray(data.planner_items) ? data.planner_items.filter((p) => isCourseMatch(p)) : [];
             const calendar = Array.isArray(data.calendar_events) ? data.calendar_events.filter((e) => isCourseMatch(e)) : [];
             const grades = Array.isArray(data.grades) ? data.grades.filter((g) => isCourseMatch(g)) : [];
@@ -2284,7 +2355,8 @@
                 }
 
                 container.innerHTML = '<div class="muted" style="padding:10px;">Generating weekly plan...</div>';
-                const days = buildWeeklyPlanData(currentCanvasData);
+                const completedSet = buildCompletedAssignmentSet(currentCanvasData?.submissions);
+                const days = buildWeeklyPlanData(currentCanvasData, completedSet);
                 weeklyPlanText = '';
                 container.innerHTML = days.map((d) => {
                     const heading = d.date.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
@@ -2295,6 +2367,7 @@
                     weeklyPlanText += `${heading}: ${line}\n`;
                     return `<div class="planner-day"><h5>${esc(heading)}</h5><p>${esc(line)}</p></div>`;
                 }).join('');
+                setDashTab('weekly');
                 setStatus('Weekly plan generated.', 'success');
                 showToast('7-day plan ready');
             } catch (e) {
@@ -2317,13 +2390,14 @@
             }
         }
 
-        function updateTodaySnapshot(data) {
+        function updateTodaySnapshot(data, completedSet = new Set()) {
             const assignments = Array.isArray(data.assignments) ? data.assignments.filter((a) => isCourseMatch(a)) : [];
             const inbox = Array.isArray(data.inbox_messages) ? data.inbox_messages.filter((m) => isCourseMatch(m)) : [];
             let overdue = 0;
             let next48 = 0;
             const now = Date.now();
             for (const a of assignments) {
+                if (isAssignmentComplete(a, completedSet)) continue;
                 const d = getItemDate(a);
                 if (!d) continue;
                 const delta = d.getTime() - now;
@@ -2483,10 +2557,12 @@
                 const name = byAssignmentId.get(String(s.assignment_id));
                 if (name) s.cached_assignment_name = name;
             }
+            const completedSet = buildCompletedAssignmentSet(submissions);
+            currentCanvasOrigin = '';
 
             const { busiestLabel } = buildVisuals(data);
 
-            renderUpcoming(assignments);
+            renderUpcoming(assignments, completedSet);
             renderGrades(data.grades || []);
             renderPlanner([...(Array.isArray(planner) ? planner : []), ...(Array.isArray(calendar) ? calendar : [])]);
             renderAnnouncements(data.announcements || []);
@@ -2495,12 +2571,12 @@
             renderSubmissions(submissions);
             renderDiscussions(discussions);
             renderSyllabi(syllabi);
-            renderPriorityQueue(assignments, planner, calendar);
-            renderQuickActions(data.grades || [], assignments, planner, calendar, data.announcements || []);
-            renderCommandQueue(assignments, planner, calendar);
-            renderGradeWatch(data.grades || [], assignments);
+            renderPriorityQueue(assignments, planner, calendar, completedSet);
+            renderQuickActions(data.grades || [], assignments, planner, calendar, data.announcements || [], completedSet);
+            renderCommandQueue(assignments, planner, calendar, completedSet);
+            renderGradeWatch(data.grades || [], assignments, completedSet);
             renderMessageActions(data.announcements || [], inboxMessages);
-            updateTodaySnapshot(data);
+            updateTodaySnapshot(data, completedSet);
 
             const filteredAssignments = assignments.filter((a) => isCourseMatch(a));
             const filteredPlanner = planner.filter((p) => isCourseMatch(p));
@@ -2508,10 +2584,10 @@
             document.getElementById('kpiCourses').textContent = selectedCourse === '__all__'
                 ? courses.length
                 : new Set(filteredAssignments.map((a) => getCourseKey(a)).filter(Boolean)).size || 1;
-            document.getElementById('kpiAssignments').textContent = filteredAssignments.length;
+            document.getElementById('kpiAssignments').textContent = filteredAssignments.filter((a) => !isAssignmentComplete(a, completedSet)).length;
             document.getElementById('kpiEvents').textContent = filteredPlanner.length + filteredCalendar.length;
 
-            const upcoming = normalizeUpcoming(assignments);
+            const upcoming = normalizeUpcoming(assignments, completedSet);
             const nextDue = getItemDate(upcoming[0]);
             document.getElementById('kpiNextDue').textContent = nextDue ? `Next due: ${formatWhen(nextDue)}` : 'Next due: -';
             document.getElementById('kpiBusiest').textContent = busiestLabel ? `Busiest day: ${busiestLabel}` : 'Busiest day: -';
