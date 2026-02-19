@@ -56,7 +56,7 @@
             margin: 0;
             font-family: var(--font);
             color: var(--ink);
-            background: #f7f7f8;
+            background: #f4f5f7;
             overflow-x: hidden;
         }
 
@@ -121,11 +121,7 @@
             content: none;
         }
 
-        .container {
-            max-width: 1220px;
-            margin: 0 auto;
-            padding: 18px;
-        }
+        .container { width: 100%; margin: 0 auto; padding: 10px 12px; }
 
         .topbar {
             display: flex;
@@ -221,16 +217,9 @@
             border: 1px solid rgba(239, 68, 68, 1);
         }
 
-        .hero {
-            padding: 14px 8px 14px;
-            text-align: center;
-        }
+        .hero { padding: 12px 6px 10px; text-align: center; }
 
-        .hero h1 {
-            margin: 12px 0 6px;
-            font-size: 42px;
-            letter-spacing: -0.6px;
-        }
+        .hero h1 { margin: 12px 0 6px; font-size: 48px; letter-spacing: -1px; font-weight: 620; }
 
         .hero p {
             margin: 0;
@@ -238,18 +227,13 @@
             font-weight: 800;
         }
 
-        .layout {
-            display: grid;
-            grid-template-columns: 360px 1fr;
-            gap: 14px;
-            align-items: start;
-        }
+        .layout { display: grid; grid-template-columns: 320px 1fr; gap: 12px; align-items: start; }
 
         .card {
             border-radius: var(--radius-lg);
             background: rgba(255,255,255,1);
             border: 1px solid rgba(229,231,235,1);
-            box-shadow: var(--shadow-md);
+            box-shadow: 0 6px 22px rgba(15,23,42,0.06);
             backdrop-filter: none;
             -webkit-backdrop-filter: none;
             padding: 18px;
@@ -557,21 +541,15 @@
         }
 
         .messages {
-            height: 560px;
+            height: 600px;
             overflow: auto;
             padding: 18px;
             background: rgba(255,255,255,1);
         }
 
-        .empty {
-            text-align: left;
-            padding: 18px;
-            border-radius: var(--radius-lg);
-            border: 1px solid rgba(229,231,235,1);
-            background: rgba(249,250,251,1);
-        }
+        .empty { text-align: center; padding: 28px 18px; border-radius: var(--radius-lg); border: 1px solid rgba(229,231,235,1); background: rgba(249,250,251,1); }
 
-        .empty h3 { margin: 0 0 6px; font-size: 16px; }
+        .empty h3 { margin: 0 0 8px; font-size: 36px; font-weight: 620; letter-spacing: -0.7px; }
         .empty p { margin: 0; color: var(--ink-2); font-weight: 750; }
 
         .message {
@@ -660,6 +638,24 @@
             background: rgba(255,255,255,1);
             backdrop-filter: none;
             -webkit-backdrop-filter: none;
+        }
+
+        .composer-quick {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .quick-chip {
+            border: 1px solid rgba(229,231,235,1);
+            border-radius: 999px;
+            background: rgba(249,250,251,1);
+            color: rgba(15,23,42,0.78);
+            padding: 8px 12px;
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
         }
 
         .file-preview {
@@ -761,6 +757,7 @@
         @media (max-width: 980px) {
             .layout { grid-template-columns: 1fr; }
             .messages { height: 520px; }
+            .hero h1 { font-size: 40px; }
         }
     </style>
 </head>
@@ -862,8 +859,8 @@
 
                 <div class="messages" id="messagesArea">
                     <div class="empty" id="emptyState">
-                        <h3>Start anywhere.</h3>
-                        <p>Ask a question, or upload a file if you want the tutor to work from your material.</p>
+                        <h3>What can I help with?</h3>
+                        <p>Ask anything or attach a file to ground the response in your class material.</p>
                     </div>
                 </div>
 
@@ -888,6 +885,12 @@
 
                         <button class="icon" id="fileUploadBtn" onclick="document.getElementById('fileInput').click()" title="Attach file">+</button>
                         <button class="icon send" id="sendButton" onclick="sendMessage()" title="Send">→</button>
+                    </div>
+
+                    <div class="composer-quick">
+                        <button class="quick-chip" type="button" onclick="insertPrompt('Help me plan my week based on upcoming assignments.')">Plan week</button>
+                        <button class="quick-chip" type="button" onclick="insertPrompt('Quiz me on this topic with short-answer questions.')">Quiz me</button>
+                        <button class="quick-chip" type="button" onclick="insertPrompt('Create a concise study guide from my uploaded material.')">Study guide</button>
                     </div>
 
                     <div id="composerStatus" class="status-line"></div>
@@ -1012,6 +1015,14 @@
             el.textContent = message;
             el.classList.add('show');
             el.classList.toggle('error', !!isError);
+        }
+
+        function insertPrompt(text) {
+            const next = String(text || '').trim();
+            if (!next) return;
+            messageInput.value = next;
+            messageInput.dispatchEvent(new Event('input'));
+            messageInput.focus();
         }
 
         function setToolStatus(message = '', kind = 'info') {
