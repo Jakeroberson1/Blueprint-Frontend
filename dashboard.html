@@ -1326,6 +1326,13 @@
             if (!q) return;
             window.location.href = `index.html?prompt=${encodeURIComponent(q)}`;
         }
+        function askBlueprintEncoded(encoded) {
+            try {
+                askBlueprint(decodeURIComponent(String(encoded || '')));
+            } catch (e) {
+                setStatus('Unable to open Chat action. Please try again.', 'error');
+            }
+        }
 
         function getCanvasAssignmentLink(a) {
             if (!a || typeof a !== 'object') return '';
@@ -1527,7 +1534,7 @@
                         <div class="item-when">Due: ${esc(formatWhen(due))}</div>
                         <div style="margin-top: 8px; display:flex; gap:8px; flex-wrap:wrap;">
                             ${openCanvasBtn}
-                            <button class="btn" type="button" style="padding: 6px 10px;" onclick="askBlueprint(decodeURIComponent('${askPrompt}'))">Ask Blueprint</button>
+                            <button class="btn" type="button" style="padding: 6px 10px;" onclick="askBlueprintEncoded('${askPrompt}')">Ask Blueprint</button>
                         </div>
                     </div>
                 `;
@@ -1593,7 +1600,7 @@
                         <div class="item-meta">${esc(course)}</div>
                         <div class="item-when">${esc(when)}</div>
                         <div style="margin-top: 8px;">
-                            <button class="btn" type="button" style="padding: 6px 10px;" onclick="askBlueprint(decodeURIComponent('${askPrompt}'))">Ask Blueprint</button>
+                            <button class="btn" type="button" style="padding: 6px 10px;" onclick="askBlueprintEncoded('${askPrompt}')">Ask Blueprint</button>
                         </div>
                     </div>
                 `;
@@ -2103,7 +2110,7 @@
                         </div>
                         <div class="focus-meta">${esc(r.course || 'Course')} • ${esc(formatWhen(r.when))} • ${esc(r.type)}</div>
                         <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
-                            <button class="btn" type="button" style="padding:6px 10px;" onclick="askBlueprint(decodeURIComponent('${encodedPrompt}'))">Do now</button>
+                            <button class="btn" type="button" style="padding:6px 10px;" onclick="askBlueprintEncoded('${encodedPrompt}')">Do now</button>
                             ${openBtn}
                         </div>
                     </div>
@@ -2157,7 +2164,7 @@
                         </div>
                         <div class="focus-meta">Score: ${esc(Number.isFinite(r.score) ? `${r.score}%` : 'N/A')} • Overdue: ${esc(r.work.overdue)} • Due soon: ${esc(r.work.upcoming)}</div>
                         <div style="margin-top:8px;">
-                            <button class="btn" type="button" style="padding:6px 10px;" onclick="askBlueprint(decodeURIComponent('${encodedPrompt}'))">Recovery Plan</button>
+                            <button class="btn" type="button" style="padding:6px 10px;" onclick="askBlueprintEncoded('${encodedPrompt}')">Recovery Plan</button>
                         </div>
                     </div>
                 `;
@@ -2213,7 +2220,7 @@
                         <div class="focus-meta">${esc(m.context || 'Canvas')} • ${esc(formatWhen(m.when))}</div>
                         <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
                             ${openBtn}
-                            <button class="btn" type="button" style="padding:6px 10px;" onclick="askBlueprint(decodeURIComponent('${encodedPrompt}'))">Create Action List</button>
+                            <button class="btn" type="button" style="padding:6px 10px;" onclick="askBlueprintEncoded('${encodedPrompt}')">Create Action List</button>
                         </div>
                     </div>
                 `;
@@ -2269,23 +2276,31 @@
         function generateWeeklyPlan() {
             const container = document.getElementById('weeklyPlanList');
             if (!container) return;
-            if (!currentCanvasData) {
-                container.innerHTML = '<div class="muted" style="padding:10px;">Sync Canvas data first.</div>';
-                return;
-            }
+            try {
+                if (!currentCanvasData) {
+                    container.innerHTML = '<div class="muted" style="padding:10px;">Sync Canvas data first.</div>';
+                    setStatus('Sync Canvas data before generating a weekly plan.', 'warning');
+                    return;
+                }
 
-            const days = buildWeeklyPlanData(currentCanvasData);
-            weeklyPlanText = '';
-            container.innerHTML = days.map((d) => {
-                const heading = d.date.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
-                const top = d.items.slice(0, 4);
-                const line = top.length
-                    ? top.map((i) => `${i.type}: ${i.title}${i.course ? ` (${i.course})` : ''}`).join(' | ')
-                    : 'Light day. Use for review, revision, and planning.';
-                weeklyPlanText += `${heading}: ${line}\n`;
-                return `<div class="planner-day"><h5>${esc(heading)}</h5><p>${esc(line)}</p></div>`;
-            }).join('');
-            setStatus('Weekly plan generated.', 'success');
+                container.innerHTML = '<div class="muted" style="padding:10px;">Generating weekly plan...</div>';
+                const days = buildWeeklyPlanData(currentCanvasData);
+                weeklyPlanText = '';
+                container.innerHTML = days.map((d) => {
+                    const heading = d.date.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
+                    const top = d.items.slice(0, 4);
+                    const line = top.length
+                        ? top.map((i) => `${i.type}: ${i.title}${i.course ? ` (${i.course})` : ''}`).join(' | ')
+                        : 'Light day. Use for review, revision, and planning.';
+                    weeklyPlanText += `${heading}: ${line}\n`;
+                    return `<div class="planner-day"><h5>${esc(heading)}</h5><p>${esc(line)}</p></div>`;
+                }).join('');
+                setStatus('Weekly plan generated.', 'success');
+                showToast('7-day plan ready');
+            } catch (e) {
+                container.innerHTML = '<div class="muted" style="padding:10px;">Could not generate plan. Try refreshing dashboard.</div>';
+                setStatus(`Weekly plan error: ${e?.message || e}`, 'error');
+            }
         }
 
         async function copyWeeklyPlan() {
