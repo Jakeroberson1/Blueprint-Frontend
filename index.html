@@ -768,60 +768,6 @@
         body.guest .hero p { display: none; }
 
         body.guest .layout { grid-template-columns: 300px 1fr; }
-        body.guest .topbar { box-shadow: none; }
-        body.guest .chat-header,
-        body.guest .footer,
-        body.guest #canvasMetaBox { display: none; }
-        body.guest .messages {
-            height: 420px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        body.guest .messages .empty {
-            text-align: center;
-            border: none;
-            background: transparent;
-            padding: 0;
-        }
-        body.guest .composer {
-            border-top: none;
-            padding-top: 0;
-        }
-
-        .guest-nav { display: none; }
-        body.guest .guest-nav {
-            display: block;
-            border: 1px solid rgba(229,231,235,1);
-            border-radius: var(--radius-md);
-            background: rgba(249,250,251,1);
-            padding: 10px;
-        }
-        body.guest .guest-nav h3 {
-            margin: 0 0 8px;
-            font-size: 13px;
-            font-weight: 950;
-            color: rgba(15,23,42,0.72);
-            letter-spacing: 0.3px;
-            text-transform: uppercase;
-        }
-        body.guest .guest-nav ul {
-            margin: 0;
-            padding: 0;
-            list-style: none;
-            display: grid;
-            gap: 6px;
-        }
-        body.guest .guest-nav li {
-            padding: 10px 12px;
-            border-radius: 10px;
-            border: 1px solid rgba(229,231,235,1);
-            background: rgba(255,255,255,1);
-            font-weight: 800;
-            color: rgba(15,23,42,0.82);
-            font-size: 14px;
-        }
-        body.guest .section { display: none; }
 
         .auth-overlay {
             position: fixed;
@@ -934,24 +880,6 @@
             min-height: 18px;
         }
 
-        .auth-provider-list {
-            margin-top: 12px;
-            display: grid;
-            gap: 8px;
-        }
-
-        .auth-provider {
-            border: 1px solid rgba(209, 213, 219, 1);
-            background: rgba(255,255,255,1);
-            border-radius: 999px;
-            padding: 10px 12px;
-            font-size: 18px;
-            font-weight: 500;
-            text-align: center;
-            color: rgba(15,23,42,0.92);
-            cursor: pointer;
-        }
-
         @media (max-width: 980px) {
             .layout { grid-template-columns: 1fr; }
             .messages { height: 520px; }
@@ -966,7 +894,7 @@
                 <div class="brand-sub">AI chat</div>
             </div>
             <div class="account">
-                <a class="btn" id="navConnectBtn" href="canvas.html">Connect</a>
+                <a class="btn" href="canvas.html">Connect</a>
                 <a class="btn" id="navDashboardBtn" href="dashboard.html">Dashboard</a>
                 <a class="btn" id="navSettingsBtn" href="settings.html">Settings</a>
                 <button class="btn" id="tourBtn" type="button" onclick="showOnboarding()">Tour</button>
@@ -985,16 +913,6 @@
 
         <div class="layout">
             <div class="card">
-                <div class="guest-nav">
-                    <h3>Blueprint</h3>
-                    <ul>
-                        <li>New chat</li>
-                        <li>Search chats</li>
-                        <li>Assignments</li>
-                        <li>Canvas dashboard</li>
-                        <li>Study guides</li>
-                    </ul>
-                </div>
                 <div class="section">
                     <div class="row-between">
                         <h2 style="margin:0;">Conversations</h2>
@@ -1113,11 +1031,6 @@
                 <button class="auth-close" type="button" onclick="closeAuthOverlay()">×</button>
             </div>
             <div class="muted">You’ll get smarter responses and Canvas-powered help.</div>
-            <div class="auth-provider-list">
-                <button class="auth-provider" type="button" onclick="showProviderHint()">Continue with Google</button>
-                <button class="auth-provider" type="button" onclick="showProviderHint()">Continue with Apple</button>
-                <button class="auth-provider" type="button" onclick="showProviderHint()">Continue with Microsoft</button>
-            </div>
             <div class="auth-tabs">
                 <button type="button" id="authTabLogin" class="auth-tab active" onclick="setAuthMode('login')">Log in</button>
                 <button type="button" id="authTabSignup" class="auth-tab" onclick="setAuthMode('signup')">Sign up</button>
@@ -1209,19 +1122,14 @@
                 sessionStorage.removeItem('sessionToken');
                 sessionStorage.removeItem('user');
             } catch (e) {}
-            if (window.location.pathname.endsWith('/index.html') || window.location.pathname === '/' || window.location.pathname.endsWith('/')) {
-                setGuestMode(true);
-                openAuthOverlay('login');
-                return;
-            }
-            window.location.href = 'index.html';
+            window.location.href = 'login.html';
         }
 
         function setGuestMode(enabled) {
             document.body.classList.toggle('guest', !!enabled);
             const heroTitle = document.querySelector('.hero h1');
             if (heroTitle) heroTitle.textContent = enabled ? 'What can I help with?' : 'Study, but sharper.';
-            const authOnlyIds = ['navConnectBtn', 'navDashboardBtn', 'navSettingsBtn', 'tourBtn', 'themeToggleBtn', 'userPill', 'logoutBtn'];
+            const authOnlyIds = ['navDashboardBtn', 'navSettingsBtn', 'tourBtn', 'userPill', 'logoutBtn'];
             authOnlyIds.forEach((id) => {
                 const el = document.getElementById(id);
                 if (el) el.style.display = enabled ? 'none' : '';
@@ -1299,11 +1207,6 @@
                 btn.disabled = false;
                 btn.textContent = authMode === 'signup' ? 'Create account' : 'Continue';
             }
-        }
-
-        function showProviderHint() {
-            const status = document.getElementById('authStatus');
-            if (status) status.textContent = 'SSO is coming soon. Use email + password below for now.';
         }
 
         function requireAuthOrPrompt() {
