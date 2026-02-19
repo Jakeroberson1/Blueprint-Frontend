@@ -234,7 +234,7 @@
 
       <div class="row">
         <button class="btn btn-primary" id="linkBtn" onclick="generateLinkCode()">Generate Link Code</button>
-        <a class="btn" id="webStoreBtn" href="#" target="_blank" rel="noopener noreferrer">Install from Chrome Web Store</a>
+        <a class="btn" id="webStoreBtn" href="https://chromewebstore.google.com/detail/hefdkhjkngoinknppgnpfojacbcgdmmh" target="_blank" rel="noopener noreferrer">Install from Chrome Web Store</a>
         <a class="btn" href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
         <button class="btn" onclick="openCanvas()">Open Canvas</button>
         <a class="btn" href="dashboard.html">Go To Dashboard</a>
@@ -288,6 +288,10 @@
 
     const sessionToken = sessionStorage.getItem('sessionToken');
     const currentUser = JSON.parse(sessionStorage.getItem('user') || 'null');
+    const CHROME_WEB_STORE_URL = String(
+      (window.BP_CONFIG && window.BP_CONFIG.chromeWebStoreUrl) ||
+      'https://chromewebstore.google.com/detail/hefdkhjkngoinknppgnpfojacbcgdmmh'
+    ).trim();
 
     function applyTheme(theme) {
       const dark = theme === 'dark';
@@ -382,10 +386,7 @@
       const link = document.getElementById('webStoreBtn');
       if (!link) return;
       if (/REPLACE_WITH_EXTENSION_ID/i.test(CHROME_WEB_STORE_URL) || !CHROME_WEB_STORE_URL) {
-        link.textContent = 'Set Web Store URL in app-config.js';
-        link.setAttribute('aria-disabled', 'true');
-        link.style.opacity = '0.6';
-        link.style.pointerEvents = 'none';
+        link.href = 'https://chromewebstore.google.com/detail/hefdkhjkngoinknppgnpfojacbcgdmmh';
         return;
       }
       link.href = CHROME_WEB_STORE_URL;
@@ -465,4 +466,3 @@
   </script>
 </body>
 </html>
-    const CHROME_WEB_STORE_URL = String(window.BP_CONFIG?.chromeWebStoreUrl || '').trim();
