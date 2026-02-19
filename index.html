@@ -758,128 +758,6 @@
             background: rgba(255,255,255,1);
         }
 
-        body.guest .hero h1 {
-            font-size: 54px;
-            font-weight: 650;
-            letter-spacing: -1px;
-            margin-top: 40px;
-        }
-
-        body.guest .hero p { display: none; }
-
-        body.guest .layout { grid-template-columns: 300px 1fr; }
-
-        .auth-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.32);
-            backdrop-filter: blur(3px);
-            -webkit-backdrop-filter: blur(3px);
-            z-index: 1000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .auth-overlay.show { display: flex; }
-
-        .auth-modal {
-            width: 100%;
-            max-width: 520px;
-            background: rgba(255, 255, 255, 1);
-            border: 1px solid rgba(209, 213, 219, 1);
-            border-radius: 24px;
-            padding: 22px;
-            box-shadow: 0 28px 64px rgba(2, 6, 23, 0.22);
-        }
-
-        .auth-head {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 8px;
-        }
-
-        .auth-title {
-            font-size: 44px;
-            line-height: 1.05;
-            letter-spacing: -1.2px;
-            margin: 0;
-        }
-
-        .auth-close {
-            border: none;
-            background: transparent;
-            font-size: 28px;
-            line-height: 1;
-            cursor: pointer;
-            color: rgba(15, 23, 42, 0.72);
-        }
-
-        .auth-tabs {
-            margin-top: 14px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-
-        .auth-tab {
-            border: 1px solid rgba(209, 213, 219, 1);
-            border-radius: 999px;
-            background: rgba(249, 250, 251, 1);
-            padding: 10px 12px;
-            font-size: 14px;
-            font-weight: 900;
-            cursor: pointer;
-        }
-
-        .auth-tab.active {
-            background: rgba(15, 23, 42, 1);
-            color: rgba(255, 255, 255, 0.96);
-            border-color: rgba(15, 23, 42, 1);
-        }
-
-        .auth-row { margin-top: 10px; }
-
-        .auth-input {
-            width: 100%;
-            padding: 14px;
-            border-radius: 999px;
-            border: 1px solid rgba(209, 213, 219, 1);
-            background: rgba(255, 255, 255, 1);
-            font-size: 16px;
-            color: rgba(15, 23, 42, 0.92);
-            outline: none;
-        }
-
-        .auth-input:focus {
-            border-color: rgba(15, 23, 42, 0.52);
-            box-shadow: 0 0 0 4px rgba(15, 23, 42, 0.08);
-        }
-
-        .auth-cta {
-            width: 100%;
-            margin-top: 12px;
-            padding: 14px;
-            border: none;
-            border-radius: 999px;
-            background: rgba(15, 23, 42, 1);
-            color: rgba(255, 255, 255, 0.96);
-            font-size: 22px;
-            font-weight: 700;
-            letter-spacing: -0.3px;
-            cursor: pointer;
-        }
-
-        .auth-note {
-            margin-top: 10px;
-            font-size: 13px;
-            color: rgba(15, 23, 42, 0.62);
-            min-height: 18px;
-        }
-
         @media (max-width: 980px) {
             .layout { grid-template-columns: 1fr; }
             .messages { height: 520px; }
@@ -895,14 +773,12 @@
             </div>
             <div class="account">
                 <a class="btn" href="canvas.html">Connect</a>
-                <a class="btn" id="navDashboardBtn" href="dashboard.html">Dashboard</a>
-                <a class="btn" id="navSettingsBtn" href="settings.html">Settings</a>
-                <button class="btn" id="tourBtn" type="button" onclick="showOnboarding()">Tour</button>
+                <a class="btn" href="dashboard.html">Dashboard</a>
+                <a class="btn" href="settings.html">Settings</a>
+                <button class="btn" type="button" onclick="showOnboarding()">Tour</button>
                 <button class="btn" id="themeToggleBtn" type="button" onclick="toggleTheme()">Dark</button>
                 <div class="pill" id="userPill">Signed in</div>
                 <button class="btn btn-danger" id="logoutBtn" onclick="logout()">Log Out</button>
-                <button class="btn" id="guestLoginBtn" type="button" style="display:none;" onclick="openAuthOverlay('login')">Log in</button>
-                <button class="btn" id="guestSignupBtn" type="button" style="display:none;" onclick="openAuthOverlay('signup')">Sign up for free</button>
             </div>
         </div>
 
@@ -1024,30 +900,6 @@
             </div>
         </div>
     </div>
-    <div id="authOverlay" class="auth-overlay" aria-hidden="true">
-        <div class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
-            <div class="auth-head">
-                <h2 id="authTitle" class="auth-title">Log in or sign up</h2>
-                <button class="auth-close" type="button" onclick="closeAuthOverlay()">×</button>
-            </div>
-            <div class="muted">You’ll get smarter responses and Canvas-powered help.</div>
-            <div class="auth-tabs">
-                <button type="button" id="authTabLogin" class="auth-tab active" onclick="setAuthMode('login')">Log in</button>
-                <button type="button" id="authTabSignup" class="auth-tab" onclick="setAuthMode('signup')">Sign up</button>
-            </div>
-            <div id="authNameRow" class="auth-row" style="display:none;">
-                <input id="authName" class="auth-input" type="text" placeholder="Full name" />
-            </div>
-            <div class="auth-row">
-                <input id="authEmail" class="auth-input" type="email" placeholder="Email address" />
-            </div>
-            <div class="auth-row">
-                <input id="authPassword" class="auth-input" type="password" placeholder="Password" />
-            </div>
-            <button id="authSubmitBtn" class="auth-cta" type="button" onclick="submitAuthForm()">Continue</button>
-            <div id="authStatus" class="auth-note"></div>
-        </div>
-    </div>
     <script src="tour.js"></script>
     <script>
         // Auth is session-scoped (clears when the tab/window closes).
@@ -1068,8 +920,6 @@
         const CHAT_REGENERATE_URL = `${BASE_API_URL}/chat/regenerate`;
         const CHAT_CONTINUE_URL = `${BASE_API_URL}/chat/continue`;
         const LOGOUT_URL = `${BASE_API_URL}/auth/logout`;
-        const LOGIN_URL = `${BASE_API_URL}/auth/login`;
-        const SIGNUP_URL = `${BASE_API_URL}/auth/signup`;
         const CANVAS_STATUS_URL = `${BASE_API_URL}/api/canvas/status`;
         const CANVAS_DISCONNECT_URL = `${BASE_API_URL}/api/canvas/disconnect`;
         const ONBOARDING_COMPLETE_URL = `${BASE_API_URL}/auth/onboarding-complete`;
@@ -1124,103 +974,6 @@
             } catch (e) {}
             window.location.href = 'login.html';
         }
-
-        function setGuestMode(enabled) {
-            document.body.classList.toggle('guest', !!enabled);
-            const heroTitle = document.querySelector('.hero h1');
-            if (heroTitle) heroTitle.textContent = enabled ? 'What can I help with?' : 'Study, but sharper.';
-            const authOnlyIds = ['navDashboardBtn', 'navSettingsBtn', 'tourBtn', 'userPill', 'logoutBtn'];
-            authOnlyIds.forEach((id) => {
-                const el = document.getElementById(id);
-                if (el) el.style.display = enabled ? 'none' : '';
-            });
-            const guestOnlyIds = ['guestLoginBtn', 'guestSignupBtn'];
-            guestOnlyIds.forEach((id) => {
-                const el = document.getElementById(id);
-                if (el) el.style.display = enabled ? '' : 'none';
-            });
-        }
-
-        let authMode = 'login';
-        function setAuthMode(mode) {
-            authMode = mode === 'signup' ? 'signup' : 'login';
-            const loginTab = document.getElementById('authTabLogin');
-            const signupTab = document.getElementById('authTabSignup');
-            const nameRow = document.getElementById('authNameRow');
-            const status = document.getElementById('authStatus');
-            const submitBtn = document.getElementById('authSubmitBtn');
-            if (loginTab) loginTab.classList.toggle('active', authMode === 'login');
-            if (signupTab) signupTab.classList.toggle('active', authMode === 'signup');
-            if (nameRow) nameRow.style.display = authMode === 'signup' ? '' : 'none';
-            if (submitBtn) submitBtn.textContent = authMode === 'signup' ? 'Create account' : 'Continue';
-            if (status) status.textContent = '';
-        }
-
-        function openAuthOverlay(mode = 'login') {
-            setAuthMode(mode);
-            const overlay = document.getElementById('authOverlay');
-            if (!overlay) return;
-            overlay.classList.add('show');
-            overlay.setAttribute('aria-hidden', 'false');
-            setTimeout(() => document.getElementById('authEmail')?.focus(), 0);
-        }
-
-        function closeAuthOverlay() {
-            const overlay = document.getElementById('authOverlay');
-            if (!overlay) return;
-            overlay.classList.remove('show');
-            overlay.setAttribute('aria-hidden', 'true');
-        }
-
-        async function submitAuthForm() {
-            const name = (document.getElementById('authName')?.value || '').trim();
-            const email = (document.getElementById('authEmail')?.value || '').trim();
-            const password = (document.getElementById('authPassword')?.value || '').trim();
-            const status = document.getElementById('authStatus');
-            const btn = document.getElementById('authSubmitBtn');
-            if (!email || !password || (authMode === 'signup' && !name)) {
-                if (status) status.textContent = 'Fill all required fields.';
-                return;
-            }
-            try {
-                btn.disabled = true;
-                btn.textContent = authMode === 'signup' ? 'Creating...' : 'Signing in...';
-                const url = authMode === 'signup' ? SIGNUP_URL : LOGIN_URL;
-                const payload = authMode === 'signup'
-                    ? { fullName: name, email, password }
-                    : { email, password };
-                const resp = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await safeReadJson(resp);
-                if (!resp.ok || data.error) throw new Error(data.error || 'Authentication failed');
-                if (!data.token) throw new Error('No session token returned');
-                sessionStorage.setItem('sessionToken', data.token);
-                if (data.user) sessionStorage.setItem('user', JSON.stringify(data.user));
-                closeAuthOverlay();
-                window.location.reload();
-            } catch (e) {
-                if (status) status.textContent = e.message || 'Authentication failed';
-            } finally {
-                btn.disabled = false;
-                btn.textContent = authMode === 'signup' ? 'Create account' : 'Continue';
-            }
-        }
-
-        function requireAuthOrPrompt() {
-            if (sessionStorage.getItem('sessionToken')) return true;
-            openAuthOverlay('login');
-            return false;
-        }
-
-        document.getElementById('authOverlay')?.addEventListener('click', (e) => {
-            if (e.target?.id === 'authOverlay') closeAuthOverlay();
-        });
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeAuthOverlay();
-        });
 
         async function apiFetch(url, options = {}) {
             const headers = { ...(options.headers || {}) };
@@ -1540,7 +1293,6 @@
         }
 
         async function sendMessage() {
-            if (!requireAuthOrPrompt()) return;
             const message = messageInput.value.trim();
             if (!message && !currentFile) return;
             setComposerStatus();
@@ -1821,7 +1573,6 @@
         }
 
         async function createNewConversation() {
-            if (!requireAuthOrPrompt()) return;
             const resp = await apiFetch(CONVERSATIONS_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -2015,7 +1766,6 @@
         }
 
         async function generateStudyGuide() {
-            if (!requireAuthOrPrompt()) return;
             const file = studyGuideFile.files[0];
             if (!file) {
                 setToolStatus('Pick a file first.', 'warning');
@@ -2110,12 +1860,10 @@
         window.addEventListener('load', async () => {
             initializeTheme();
             if (!sessionToken) {
-                setGuestMode(true);
-                openAuthOverlay('login');
+                redirectToLogin();
                 return;
             }
 
-            setGuestMode(false);
             setUserUI();
             let shouldShowOnboarding = !currentUser?.hasSeenOnboarding;
 
