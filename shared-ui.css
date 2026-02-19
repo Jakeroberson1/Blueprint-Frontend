@@ -1,0 +1,108 @@
+:root {
+  --bp-font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --bp-ink: rgba(15, 23, 42, 0.94);
+  --bp-ink-2: rgba(15, 23, 42, 0.68);
+  --bp-stroke: rgba(229, 231, 235, 1);
+  --bp-surface: rgba(255, 255, 255, 1);
+  --bp-primary: #1a73e8;
+  --bp-danger: rgba(239, 68, 68, 1);
+  --bp-radius-lg: 22px;
+  --bp-radius-md: 16px;
+  --bp-shadow: 0 18px 50px rgba(2, 6, 23, 0.10);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--bp-font) !important;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  letter-spacing: -0.02em;
+}
+
+p,
+label,
+input,
+select,
+textarea,
+button,
+a {
+  font-family: var(--bp-font);
+}
+
+.topbar {
+  border-radius: var(--bp-radius-lg) !important;
+  border: 1px solid var(--bp-stroke) !important;
+  box-shadow: var(--bp-shadow);
+}
+
+.brand-title {
+  font-weight: 950 !important;
+  letter-spacing: -0.01em;
+}
+
+.brand-sub {
+  font-weight: 750 !important;
+}
+
+.account {
+  gap: 10px !important;
+}
+
+.pill {
+  border-radius: 999px !important;
+  padding: 8px 12px !important;
+  border: 1px solid var(--bp-stroke) !important;
+  font-size: 13px !important;
+  font-weight: 900 !important;
+}
+
+.btn {
+  border-radius: 999px !important;
+  border: 1px solid var(--bp-stroke) !important;
+  font-weight: 900 !important;
+  font-size: 13px !important;
+  padding: 10px 12px !important;
+}
+
+.btn-primary {
+  background: var(--bp-primary) !important;
+  border-color: var(--bp-primary) !important;
+  color: rgba(255, 255, 255, 0.96) !important;
+}
+
+.btn-danger {
+  background: var(--bp-danger) !important;
+  border-color: var(--bp-danger) !important;
+  color: rgba(255, 255, 255, 0.96) !important;
+}
+
+input,
+select,
+textarea {
+  border-radius: 12px;
+  border: 1px solid var(--bp-stroke);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--bp-primary);
+  box-shadow: 0 0 0 4px rgba(26, 115, 232, 0.12);
+}
+
+.submit-btn {
+  border-radius: 12px !important;
+  font-weight: 800 !important;
+}
