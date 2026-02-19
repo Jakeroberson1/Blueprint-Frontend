@@ -523,6 +523,75 @@
         .item-title { font-weight: 1000; font-size: 14px; margin-bottom: 4px; }
         .item-meta { font-size: 12px; color: var(--ink-2); font-weight: 750; }
         .item-when { margin-top: 8px; font-size: 12px; font-weight: 950; color: rgba(23,105,255,0.92); }
+        .mini-title {
+            margin: 10px 0 6px;
+            font-size: 12px;
+            font-weight: 1000;
+            color: var(--ink);
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+        .command-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 1fr;
+            gap: 12px;
+            margin-top: 10px;
+        }
+        .command-card {
+            border: 1px solid rgba(229,231,235,1);
+            border-radius: var(--radius-lg);
+            background: rgba(255,255,255,1);
+            padding: 12px;
+        }
+        .risk-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 1000;
+            text-transform: uppercase;
+            border: 1px solid rgba(229,231,235,1);
+        }
+        .risk-chip.high { color: rgba(220,38,38,1); background: rgba(254,242,242,1); border-color: rgba(252,165,165,1); }
+        .risk-chip.medium { color: rgba(161,98,7,1); background: rgba(254,249,195,1); border-color: rgba(253,224,71,1); }
+        .risk-chip.low { color: rgba(22,101,52,1); background: rgba(240,253,244,1); border-color: rgba(134,239,172,1); }
+        .planner-day {
+            border: 1px solid rgba(229,231,235,1);
+            border-radius: 12px;
+            background: rgba(249,250,251,1);
+            padding: 10px;
+            margin-bottom: 8px;
+        }
+        .planner-day h5 {
+            margin: 0 0 4px;
+            font-size: 12px;
+            font-weight: 1000;
+            color: var(--ink);
+            letter-spacing: 0.2px;
+        }
+        .planner-day p {
+            margin: 0;
+            font-size: 12px;
+            color: var(--ink-2);
+            font-weight: 700;
+        }
+        .loading {
+            position: relative;
+            overflow: hidden;
+        }
+        .loading::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+            animation: shimmer 1.2s infinite;
+        }
+        @keyframes shimmer {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(100%); }
+        }
 
 
         .heatmap {
@@ -564,6 +633,7 @@
             .focus-grid { grid-template-columns: 1fr; }
             .dash-controls { grid-template-columns: 1fr; }
             .heatmap { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+            .command-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -595,10 +665,13 @@
                 <h2>Your Canvas Data</h2>
                 <div class="muted">Daily view of what to do next.</div>
                 <div class="row" style="margin-top:10px;">
-                    <button class="btn btn-primary" type="button" onclick="loadCanvasDashboard()">Refresh Dashboard</button>
+                    <button class="btn btn-primary" id="refreshBtn" type="button" onclick="loadCanvasDashboard()">Refresh Dashboard</button>
                     <a class="btn" href="canvas.html">Open Connect Page</a>
                 </div>
                 <div id="dashboardStatus" class="status" aria-live="polite" style="margin-top:10px;">Ready.</div>
+                <div class="row" style="margin-top:8px;">
+                    <button class="btn" id="retryBtn" type="button" onclick="loadCanvasDashboard()" style="display:none;">Retry Load</button>
+                </div>
 
                 <div id="emptyState" class="empty" style="display:none;">
                     No Canvas data yet. Open the Connect page, pair your account, sync once, then refresh.
@@ -640,6 +713,8 @@
                     </div>
 
                     <div class="tabs" id="dashTabs">
+                        <button class="tab" type="button" id="tabCommand" data-tab="command">Command Center</button>
+                        <button class="tab" type="button" id="tabWeekly" data-tab="weekly">Weekly Plan</button>
                         <button class="tab" type="button" id="tabOverview" data-tab="overview">Overview</button>
                         <button class="tab" type="button" id="tabGrades" data-tab="grades">Grades</button>
                         <button class="tab" type="button" id="tabPlanner" data-tab="planner">Planner</button>
@@ -680,6 +755,32 @@
                             <div class="muted" style="margin-top: 4px;">Concrete next moves based on your current data.</div>
                             <div id="quickActions" class="focus-list"></div>
                         </div>
+                    </div>
+
+                    <div id="dashPanelCommand" style="display:none;">
+                        <div class="command-grid">
+                            <div class="command-card">
+                                <div class="mini-title">Do Now Queue</div>
+                                <div id="commandQueue" class="focus-list"></div>
+                            </div>
+                            <div class="command-card">
+                                <div class="mini-title">Grade Watch</div>
+                                <div id="gradeWatchList" class="focus-list"></div>
+                            </div>
+                        </div>
+                        <div class="command-card" style="margin-top:12px;">
+                            <div class="mini-title">Inbox to Action</div>
+                            <div id="messageActions" class="focus-list"></div>
+                        </div>
+                    </div>
+
+                    <div id="dashPanelWeekly" style="display:none;">
+                        <div class="row" style="margin-top: 10px; gap: 8px;">
+                            <button class="btn btn-primary" type="button" onclick="generateWeeklyPlan()">Generate 7-day plan</button>
+                            <button class="btn" type="button" onclick="copyWeeklyPlan()">Copy plan</button>
+                        </div>
+                        <div class="muted" style="margin-top: 8px;">Builds a practical weekly study sequence from due dates, inbox updates, and grade risk.</div>
+                        <div id="weeklyPlanList" class="list"></div>
                     </div>
 
                     <div id="dashPanelOverview">
@@ -753,6 +854,7 @@
         let dashboardSearch = '';
         let quickFilter = 'all';
         let defaultDashboardTab = 'overview';
+        let weeklyPlanText = '';
 
         function applyTheme(theme) {
             const dark = theme === 'dark';
@@ -817,7 +919,7 @@
             quickFilter = String(prefs.defaultDashboardFilter || 'all');
             if (!['all', 'overdue', 'next48h', 'week'].includes(quickFilter)) quickFilter = 'all';
             defaultDashboardTab = String(prefs.defaultDashboardTab || 'overview');
-            if (!['overview', 'grades', 'planner', 'announcements', 'inbox'].includes(defaultDashboardTab)) defaultDashboardTab = 'overview';
+            if (!['command', 'weekly', 'overview', 'grades', 'planner', 'announcements', 'inbox'].includes(defaultDashboardTab)) defaultDashboardTab = 'overview';
         }
 
         async function logout() {
@@ -847,12 +949,14 @@
 
         function setStatus(message, kind = 'info') {
             const box = document.getElementById('dashboardStatus');
+            const retryBtn = document.getElementById('retryBtn');
             if (!box) return;
             box.textContent = message;
             if (kind === 'error') box.style.borderColor = 'rgba(255, 59, 106, 0.55)';
             else if (kind === 'success') box.style.borderColor = 'rgba(43, 228, 167, 0.55)';
             else if (kind === 'warning') box.style.borderColor = 'rgba(255, 196, 0, 0.55)';
             else box.style.borderColor = 'rgba(229,231,235,1)';
+            if (retryBtn) retryBtn.style.display = kind === 'error' ? 'inline-flex' : 'none';
         }
 
         function normalizeUrl(input) {
@@ -919,6 +1023,8 @@
 
         function setDashTab(tab) {
             const tabMap = {
+                command: { btn: 'tabCommand', panel: 'dashPanelCommand' },
+                weekly: { btn: 'tabWeekly', panel: 'dashPanelWeekly' },
                 overview: { btn: 'tabOverview', panel: 'dashPanelOverview' },
                 grades: { btn: 'tabGrades', panel: 'dashPanelGrades' },
                 planner: { btn: 'tabPlanner', panel: 'dashPanelPlanner' },
@@ -1121,6 +1227,22 @@
 
             if (m?.id) return `/conversations/${encodeURIComponent(m.id)}`;
             return '';
+        }
+
+        function getCanvasGenericLink(item) {
+            if (!item || typeof item !== 'object') return '';
+            const direct = String(item?.html_url || '').trim();
+            if (direct) return direct;
+            const raw = String(item?.url || '').trim();
+            if (!raw) return '';
+            try {
+                const u = new URL(raw);
+                u.pathname = u.pathname.replace('/api/v1/', '/');
+                u.search = '';
+                return u.toString();
+            } catch {
+                return '';
+            }
         }
 
         function stripHtmlToText(html) {
@@ -1740,6 +1862,273 @@
                 </div>
             `).join('');
         }
+
+        function renderCommandQueue(assignments, planner, calendar) {
+            const container = document.getElementById('commandQueue');
+            if (!container) return;
+            const now = Date.now();
+            const rows = [];
+
+            for (const a of assignments || []) {
+                if (!a || !isCourseMatch(a) || !matchesSearch(a?.name, a?.course_name, a?.course_code)) continue;
+                const when = getItemDate(a);
+                if (!when || !passesQuickFilter(when)) continue;
+                rows.push({
+                    type: 'Assignment',
+                    title: a?.name || 'Assignment',
+                    course: a?.course_name || a?.course_code || '',
+                    when,
+                    link: getCanvasAssignmentLink(a),
+                    prompt: `Give me a concrete step-by-step plan for ${a?.name || 'this assignment'} in ${a?.course_name || 'my course'}.`
+                });
+            }
+            for (const p of planner || []) {
+                if (!p || !isCourseMatch(p) || !matchesSearch(p?.title, p?.plannable?.title, p?.context_name)) continue;
+                const when = parseCanvasDate(pickDueDate(p));
+                if (!when || !passesQuickFilter(when)) continue;
+                const title = p?.plannable?.title || p?.plannable?.name || p?.title || 'Planner item';
+                rows.push({
+                    type: 'Planner',
+                    title,
+                    course: p?.context_name || p?.context_code || '',
+                    when,
+                    link: getCanvasGenericLink(p),
+                    prompt: `Break ${title} into the first 3 actions I should do.`
+                });
+            }
+            for (const e of calendar || []) {
+                if (!e || !isCourseMatch(e) || !matchesSearch(e?.title, e?.summary, e?.context_name)) continue;
+                const when = parseCanvasDate(pickDueDate(e));
+                if (!when || !passesQuickFilter(when)) continue;
+                const title = e?.title || e?.summary || 'Calendar event';
+                rows.push({
+                    type: 'Calendar',
+                    title,
+                    course: e?.context_name || e?.context_code || '',
+                    when,
+                    link: getCanvasGenericLink(e),
+                    prompt: `How should I prepare for ${title}?`
+                });
+            }
+
+            const selected = rows
+                .filter((r) => r.when.getTime() >= now - (24 * 60 * 60 * 1000))
+                .sort((a, b) => a.when - b.when)
+                .slice(0, 10);
+
+            if (!selected.length) {
+                container.innerHTML = '<div class="muted">No immediate tasks for current filters.</div>';
+                return;
+            }
+
+            container.innerHTML = selected.map((r) => {
+                const hours = Math.round((r.when.getTime() - now) / (1000 * 60 * 60));
+                const risk = hours < 0 ? 'Overdue' : hours <= 24 ? 'Now' : hours <= 72 ? 'Soon' : 'Later';
+                const riskClass = risk === 'Overdue' || risk === 'Now' ? 'high' : (risk === 'Soon' ? 'medium' : 'low');
+                const openBtn = r.link ? `<a class="btn" style="padding:6px 10px;" href="${esc(r.link)}" target="_blank" rel="noopener noreferrer">Open in Canvas</a>` : '';
+                return `
+                    <div class="focus-item">
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                            <div class="focus-title">${esc(r.title)}</div>
+                            <span class="risk-chip ${riskClass}">${esc(risk)}</span>
+                        </div>
+                        <div class="focus-meta">${esc(r.course || 'Course')} • ${esc(formatWhen(r.when))} • ${esc(r.type)}</div>
+                        <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+                            <button class="btn" type="button" style="padding:6px 10px;" onclick="askBlueprint(${JSON.stringify(r.prompt)})">Do now</button>
+                            ${openBtn}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderGradeWatch(grades, assignments) {
+            const container = document.getElementById('gradeWatchList');
+            if (!container) return;
+            const byCourseWork = new Map();
+            for (const a of assignments || []) {
+                if (!isCourseMatch(a)) continue;
+                const c = a?.course_name || a?.course_code || 'Other';
+                const due = getItemDate(a);
+                const row = byCourseWork.get(c) || { upcoming: 0, overdue: 0 };
+                if (due) {
+                    if (due.getTime() < Date.now()) row.overdue += 1;
+                    else if (due.getTime() < Date.now() + (7 * 24 * 60 * 60 * 1000)) row.upcoming += 1;
+                }
+                byCourseWork.set(c, row);
+            }
+
+            const rows = (grades || [])
+                .filter((g) => isCourseMatch(g))
+                .map((g) => {
+                    const c = g?.course_name || g?.course_code || 'Course';
+                    const score = Number(g?.current_score);
+                    const work = byCourseWork.get(c) || { upcoming: 0, overdue: 0 };
+                    const riskScore = (Number.isFinite(score) ? (score < 75 ? 35 : score < 85 ? 15 : 0) : 10) + (work.overdue * 25) + (work.upcoming * 5);
+                    const risk = riskScore >= 45 ? 'High' : riskScore >= 20 ? 'Watch' : 'Stable';
+                    return { course: c, score, work, risk, riskScore };
+                })
+                .sort((a, b) => b.riskScore - a.riskScore)
+                .slice(0, 8);
+
+            if (!rows.length) {
+                container.innerHTML = '<div class="muted">No grade data available.</div>';
+                return;
+            }
+
+            container.innerHTML = rows.map((r) => {
+                const riskClass = r.risk === 'High' ? 'high' : (r.risk === 'Watch' ? 'medium' : 'low');
+                const prompt = `Create a 7-day improvement plan for ${r.course}. Current score: ${Number.isFinite(r.score) ? r.score + '%' : 'unknown'}. Overdue: ${r.work.overdue}, due soon: ${r.work.upcoming}.`;
+                return `
+                    <div class="focus-item">
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                            <div class="focus-title">${esc(r.course)}</div>
+                            <span class="risk-chip ${riskClass}">${esc(r.risk)}</span>
+                        </div>
+                        <div class="focus-meta">Score: ${esc(Number.isFinite(r.score) ? `${r.score}%` : 'N/A')} • Overdue: ${esc(r.work.overdue)} • Due soon: ${esc(r.work.upcoming)}</div>
+                        <div style="margin-top:8px;">
+                            <button class="btn" type="button" style="padding:6px 10px;" onclick="askBlueprint(${JSON.stringify(prompt)})">Recovery Plan</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderMessageActions(announcements, inboxMessages) {
+            const container = document.getElementById('messageActions');
+            if (!container) return;
+            const messages = [];
+
+            for (const a of announcements || []) {
+                if (!isCourseMatch(a)) continue;
+                messages.push({
+                    type: 'Announcement',
+                    title: a?.title || 'Announcement',
+                    context: a?.context_name || a?.context_code || '',
+                    when: parseCanvasDate(a?.posted_at || a?.created_at || a?.updated_at),
+                    link: getCanvasGenericLink(a)
+                });
+            }
+            for (const m of inboxMessages || []) {
+                if (!isCourseMatch(m)) continue;
+                messages.push({
+                    type: 'Inbox',
+                    title: m?.subject || 'Inbox message',
+                    context: m?.context_name || m?.context_code || '',
+                    when: parseCanvasDate(m?.last_message_at || m?.updated_at),
+                    link: getCanvasInboxLink(m)
+                });
+            }
+
+            const selected = messages
+                .filter((m) => m.when && matchesSearch(m.title, m.context, m.type))
+                .sort((a, b) => b.when - a.when)
+                .slice(0, 8);
+
+            if (!selected.length) {
+                container.innerHTML = '<div class="muted">No recent inbox/announcement actions right now.</div>';
+                return;
+            }
+
+            container.innerHTML = selected.map((m) => {
+                const openBtn = m.link ? `<a class="btn" style="padding:6px 10px;" href="${esc(m.link)}" target="_blank" rel="noopener noreferrer">Open</a>` : '';
+                const prompt = `Summarize this ${m.type.toLowerCase()} and turn it into an actionable checklist: ${m.title}`;
+                return `
+                    <div class="focus-item">
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                            <div class="focus-title">${esc(m.title)}</div>
+                            <span class="focus-tag">${esc(m.type)}</span>
+                        </div>
+                        <div class="focus-meta">${esc(m.context || 'Canvas')} • ${esc(formatWhen(m.when))}</div>
+                        <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+                            ${openBtn}
+                            <button class="btn" type="button" style="padding:6px 10px;" onclick="askBlueprint(${JSON.stringify(prompt)})">Create Action List</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function buildWeeklyPlanData(data) {
+            const assignments = Array.isArray(data.assignments) ? data.assignments.filter((a) => isCourseMatch(a)) : [];
+            const planner = Array.isArray(data.planner_items) ? data.planner_items.filter((p) => isCourseMatch(p)) : [];
+            const calendar = Array.isArray(data.calendar_events) ? data.calendar_events.filter((e) => isCourseMatch(e)) : [];
+            const grades = Array.isArray(data.grades) ? data.grades.filter((g) => isCourseMatch(g)) : [];
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const days = Array.from({ length: 7 }, (_, i) => {
+                const d = new Date(today.getTime() + i * 24 * 60 * 60 * 1000);
+                return { date: d, key: d.toDateString(), items: [] };
+            });
+
+            const addItem = (title, when, course, type) => {
+                const dt = parseCanvasDate(when);
+                if (!dt) return;
+                const key = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate()).toDateString();
+                const day = days.find((x) => x.key === key);
+                if (!day) return;
+                day.items.push({ title: title || 'Task', course: course || '', type: type || 'Task', when: dt });
+            };
+
+            assignments.forEach((a) => addItem(a?.name, getItemDate(a), a?.course_name || a?.course_code, 'Assignment'));
+            planner.forEach((p) => addItem(p?.plannable?.title || p?.title, pickDueDate(p), p?.context_name || p?.context_code, 'Planner'));
+            calendar.forEach((e) => addItem(e?.title || e?.summary, pickDueDate(e), e?.context_name || e?.context_code, 'Calendar'));
+
+            const lowGradeCourses = grades
+                .filter((g) => Number.isFinite(Number(g?.current_score)) && Number(g.current_score) < 80)
+                .map((g) => g?.course_name || g?.course_code)
+                .filter(Boolean);
+
+            for (const d of days) {
+                d.items.sort((a, b) => a.when - b.when);
+                if (lowGradeCourses.length && d.items.length < 2) {
+                    d.items.push({
+                        title: `Recovery block: ${lowGradeCourses[0]}`,
+                        course: lowGradeCourses[0],
+                        type: 'Grade Watch',
+                        when: new Date(d.date.getTime() + 18 * 60 * 60 * 1000)
+                    });
+                }
+            }
+
+            return days;
+        }
+
+        function generateWeeklyPlan() {
+            const container = document.getElementById('weeklyPlanList');
+            if (!container) return;
+            if (!currentCanvasData) {
+                container.innerHTML = '<div class="muted" style="padding:10px;">Sync Canvas data first.</div>';
+                return;
+            }
+
+            const days = buildWeeklyPlanData(currentCanvasData);
+            weeklyPlanText = '';
+            container.innerHTML = days.map((d) => {
+                const heading = d.date.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
+                const top = d.items.slice(0, 4);
+                const line = top.length
+                    ? top.map((i) => `${i.type}: ${i.title}${i.course ? ` (${i.course})` : ''}`).join(' | ')
+                    : 'Light day. Use for review, revision, and planning.';
+                weeklyPlanText += `${heading}: ${line}\n`;
+                return `<div class="planner-day"><h5>${esc(heading)}</h5><p>${esc(line)}</p></div>`;
+            }).join('');
+            setStatus('Weekly plan generated.', 'success');
+        }
+
+        async function copyWeeklyPlan() {
+            if (!weeklyPlanText) {
+                generateWeeklyPlan();
+            }
+            if (!weeklyPlanText) return;
+            try {
+                await navigator.clipboard.writeText(weeklyPlanText.trim());
+                setStatus('Weekly plan copied.', 'success');
+            } catch {
+                setStatus('Unable to copy plan. You can still read it below.', 'warning');
+            }
+        }
         function buildPulseSvg(counts, labels) {
             const max = Math.max(1, ...counts);
             return `<div class="heatmap">${
@@ -1898,6 +2287,9 @@
             renderSyllabi(syllabi);
             renderPriorityQueue(assignments, planner, calendar);
             renderQuickActions(data.grades || [], assignments, planner, calendar, data.announcements || []);
+            renderCommandQueue(assignments, planner, calendar);
+            renderGradeWatch(data.grades || [], assignments);
+            renderMessageActions(data.announcements || [], inboxMessages);
 
             const filteredAssignments = assignments.filter((a) => isCourseMatch(a));
             const filteredPlanner = planner.filter((p) => isCourseMatch(p));
@@ -1920,8 +2312,14 @@
         async function loadCanvasDashboard() {
             const empty = document.getElementById('emptyState');
             const dash = document.getElementById('dashboard');
+            const refreshBtn = document.getElementById('refreshBtn');
 
             try {
+                if (refreshBtn) {
+                    refreshBtn.disabled = true;
+                    refreshBtn.textContent = 'Refreshing...';
+                }
+                if (dash) dash.classList.add('loading');
                 setStatus('Checking for synced Canvas data...', 'warning');
                 const resp = await apiFetch(`${CANVAS_API_URL}/data`);
 
@@ -1940,12 +2338,19 @@
                 currentCanvasData = data;
                 buildCourseFilter(data);
                 renderDashboard(data);
+                generateWeeklyPlan();
 
                 refreshQuickFilterButtons();
                 setDashTab(defaultDashboardTab);
                 setStatus('Dashboard updated.', 'success');
             } catch (e) {
                 setStatus(`Dashboard error: ${e.message}`, 'error');
+            } finally {
+                if (dash) dash.classList.remove('loading');
+                if (refreshBtn) {
+                    refreshBtn.disabled = false;
+                    refreshBtn.textContent = 'Refresh Dashboard';
+                }
             }
         }
 
