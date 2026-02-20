@@ -543,14 +543,6 @@
             cursor: pointer;
         }
 
-        .mode-strip {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            padding: 12px 16px 0;
-            background: rgba(255,255,255,1);
-        }
-
         .mode-chip {
             border: 1px solid rgba(229,231,235,1);
             border-radius: 999px;
@@ -571,16 +563,14 @@
             color: rgba(18,79,182,1);
         }
 
-        .command-strip,
-        .context-strip {
+        .command-strip {
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
             margin-top: 10px;
         }
 
-        .command-chip,
-        .context-chip {
+        .command-chip {
             border: 1px solid rgba(229,231,235,1);
             border-radius: 999px;
             background: rgba(249,250,251,1);
@@ -591,17 +581,82 @@
             cursor: pointer;
         }
 
-        .context-chip.active {
-            border-color: rgba(26,115,232,0.65);
-            background: rgba(26,115,232,0.11);
-            color: rgba(18,79,182,1);
-        }
-
         .mode-help {
             margin-top: 8px;
             font-size: 12px;
             font-weight: 780;
             color: var(--ink-2);
+        }
+
+        .agent-dock {
+            border: 1px solid rgba(229,231,235,1);
+            border-radius: var(--radius-md);
+            background: rgba(255,255,255,1);
+            overflow: hidden;
+        }
+
+        .agent-dock summary {
+            list-style: none;
+            cursor: pointer;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 900;
+            font-size: 13px;
+            color: rgba(15,23,42,0.88);
+        }
+
+        .agent-dock summary::-webkit-details-marker { display: none; }
+
+        .agent-dock-body {
+            border-top: 1px solid rgba(229,231,235,1);
+            padding: 12px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .agent-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+
+        .mode-chip { display: inline-flex; align-items: center; gap: 8px; }
+
+        .mode-logo {
+            width: 22px;
+            height: 22px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 900;
+            color: #fff;
+            box-shadow: inset 0 -2px 4px rgba(0,0,0,0.18);
+            position: relative;
+        }
+        .mode-logo-scout { background: linear-gradient(135deg, #2d6cdf, #1a73e8); }
+        .mode-logo-scout::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 4px;
+            bottom: 2px;
+            left: 7px;
+            border-radius: 0 0 6px 6px;
+            background: rgba(255,255,255,0.9);
+        }
+        .mode-logo-ace { background: linear-gradient(135deg, #06b6d4, #2563eb); }
+        .mode-logo-coach { background: linear-gradient(135deg, #f59e0b, #ef4444); }
+        .mode-logo-forge { background: linear-gradient(135deg, #8b5cf6, #ec4899); }
+
+        .mode-desc {
+            font-size: 12px;
+            color: var(--ink-2);
+            font-weight: 760;
+            line-height: 1.35;
         }
 
         .messages {
@@ -851,6 +906,24 @@
         <div class="layout">
             <div class="card">
                 <div class="section">
+                    <details class="agent-dock" id="agentDock" open>
+                        <summary>
+                            <span>Agents + Shortcuts</span>
+                            <span style="color: var(--ink-3); font-size: 12px;">Toggle</span>
+                        </summary>
+                        <div class="agent-dock-body">
+                            <div class="muted">Choose how Blueprint responds. Socrates is best for guided learning.</div>
+                            <div class="agent-grid" id="agentModeList"></div>
+                            <div class="mode-desc" id="modeHelpText"></div>
+                            <div style="border-top:1px solid rgba(229,231,235,1); margin-top:2px; padding-top:10px;">
+                                <div class="muted" style="margin-bottom:8px;">Quick commands</div>
+                                <div class="command-strip" id="agentCommandList"></div>
+                            </div>
+                        </div>
+                    </details>
+                </div>
+
+                <div class="section">
                     <div class="row-between">
                         <h2 style="margin:0;">Conversations</h2>
                         <button class="sbtn primary" id="newChatBtn" onclick="createNewConversation()">New</button>
@@ -921,7 +994,6 @@
                         <button class="tiny" onclick="exportChat()">Export</button>
                     </div>
                 </div>
-                <div class="mode-strip" id="modeStrip"></div>
 
                 <div class="messages" id="messagesArea">
                     <div class="empty" id="emptyState">
@@ -952,15 +1024,6 @@
                         <button class="icon" id="fileUploadBtn" onclick="document.getElementById('fileInput').click()" title="Attach file">+</button>
                         <button class="icon send" id="sendButton" onclick="sendMessage()" title="Send">→</button>
                     </div>
-
-                    <div class="composer-quick">
-                        <button class="quick-chip" type="button" onclick="insertPrompt('Help me plan my week based on upcoming assignments.')">Plan week</button>
-                        <button class="quick-chip" type="button" onclick="insertPrompt('Quiz me on this topic with short-answer questions.')">Quiz me</button>
-                        <button class="quick-chip" type="button" onclick="insertPrompt('Create a concise study guide from my uploaded material.')">Study guide</button>
-                    </div>
-                    <div class="command-strip" id="commandStrip"></div>
-                    <div class="context-strip" id="contextStrip"></div>
-                    <div class="mode-help" id="modeHelpText"></div>
 
                     <div id="composerStatus" class="status-line"></div>
                 </div>
@@ -1106,7 +1169,7 @@
         function setChatBusy(isBusy) {
             sendButton.disabled = isBusy;
             fileUploadBtn.disabled = isBusy;
-            document.querySelectorAll('.mode-chip,.context-chip,.command-chip').forEach((el) => { el.disabled = isBusy; });
+            document.querySelectorAll('.mode-chip,.command-chip').forEach((el) => { el.disabled = isBusy; });
             sendButton.textContent = isBusy ? '…' : '→';
         }
 
@@ -1157,17 +1220,8 @@
             { label: 'Quiz me', command: '/quiz' },
             { label: 'Email prof', command: '/email-prof' }
         ];
-        const CONTEXT_HINTS = [
-            { id: 'assignments', label: 'Assignments' },
-            { id: 'grades', label: 'Grades' },
-            { id: 'planner', label: 'Planner' },
-            { id: 'calendar', label: 'Calendar' },
-            { id: 'announcements', label: 'Announcements' },
-            { id: 'modules', label: 'Modules' },
-            { id: 'inbox', label: 'Inbox' }
-        ];
+        const FULL_CONTEXT_HINTS = ['assignments', 'grades', 'planner', 'calendar', 'announcements', 'modules', 'inbox'];
         let currentChatMode = 'scout';
-        const selectedContextHints = new Set(['assignments', 'grades']);
         const TOUR_STEPS = [
             {
                 page: 'index.html',
@@ -1249,48 +1303,36 @@
             const resolved = CHAT_MODES.some((m) => m.id === modeId) ? modeId : 'scout';
             currentChatMode = resolved;
             try { localStorage.setItem('bpChatMode', resolved); } catch (e) {}
-            renderModeStrip();
+            renderModeButtons();
             updateModeUI();
         }
 
-        function renderModeStrip() {
-            const wrap = document.getElementById('modeStrip');
+        function getModeLogoGlyph(modeId) {
+            if (modeId === 'scout') return 'Σ';
+            if (modeId === 'ace') return 'A';
+            if (modeId === 'coach') return 'H';
+            if (modeId === 'forge') return 'P';
+            return 'B';
+        }
+
+        function renderModeButtons() {
+            const wrap = document.getElementById('agentModeList');
             if (!wrap) return;
             wrap.innerHTML = '';
             CHAT_MODES.forEach((mode) => {
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = `mode-chip${mode.id === currentChatMode ? ' active' : ''}`;
-                btn.textContent = `${mode.icon} ${mode.name}`;
+                const logo = `<span class="mode-logo mode-logo-${mode.id}">${getModeLogoGlyph(mode.id)}</span>`;
+                btn.innerHTML = `${logo}<span>${mode.name}</span>`;
+                btn.title = mode.help;
                 btn.addEventListener('click', () => setChatMode(mode.id));
                 wrap.appendChild(btn);
             });
         }
 
-        function toggleContextHint(hintId) {
-            if (!hintId) return;
-            if (selectedContextHints.has(hintId)) selectedContextHints.delete(hintId);
-            else selectedContextHints.add(hintId);
-            renderContextStrip();
-        }
-
-        function renderContextStrip() {
-            const wrap = document.getElementById('contextStrip');
-            if (!wrap) return;
-            wrap.innerHTML = '';
-            CONTEXT_HINTS.forEach((hint) => {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = `context-chip${selectedContextHints.has(hint.id) ? ' active' : ''}`;
-                btn.textContent = hint.label;
-                btn.title = `Use ${hint.label.toLowerCase()} in this response`;
-                btn.addEventListener('click', () => toggleContextHint(hint.id));
-                wrap.appendChild(btn);
-            });
-        }
-
         function renderCommandStrip() {
-            const wrap = document.getElementById('commandStrip');
+            const wrap = document.getElementById('agentCommandList');
             if (!wrap) return;
             wrap.innerHTML = '';
             CHAT_COMMANDS.forEach((item) => {
@@ -1532,7 +1574,7 @@
                     formData.append('file', currentFile);
                     formData.append('message', message || '');
                     formData.append('mode', currentChatMode);
-                    formData.append('contextHints', JSON.stringify(Array.from(selectedContextHints)));
+                    formData.append('contextHints', JSON.stringify(FULL_CONTEXT_HINTS));
                     if (currentConversationId) formData.append('conversationId', String(currentConversationId));
 
                     response = await apiFetch(UPLOAD_URL, {
@@ -1547,7 +1589,7 @@
                             message,
                             subject: '',
                             mode: currentChatMode,
-                            contextHints: Array.from(selectedContextHints),
+                            contextHints: FULL_CONTEXT_HINTS,
                             conversationId: currentConversationId
                         })
                     });
@@ -2036,7 +2078,7 @@
                     body: JSON.stringify({
                         conversationId: currentConversationId,
                         mode: currentChatMode,
-                        contextHints: Array.from(selectedContextHints)
+                        contextHints: FULL_CONTEXT_HINTS
                     })
                 });
                 const data = await safeReadJson(resp);
@@ -2064,7 +2106,7 @@
                     body: JSON.stringify({
                         conversationId: currentConversationId,
                         mode: currentChatMode,
-                        contextHints: Array.from(selectedContextHints)
+                        contextHints: FULL_CONTEXT_HINTS
                     })
                 });
                 const data = await safeReadJson(resp);
@@ -2087,9 +2129,8 @@
                 const storedMode = localStorage.getItem('bpChatMode');
                 if (storedMode && CHAT_MODES.some((m) => m.id === storedMode)) currentChatMode = storedMode;
             } catch (e) {}
-            renderModeStrip();
+            renderModeButtons();
             renderCommandStrip();
-            renderContextStrip();
             updateModeUI();
             if (!sessionToken) {
                 redirectToLogin();
