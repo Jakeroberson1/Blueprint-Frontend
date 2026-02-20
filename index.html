@@ -738,6 +738,25 @@
 
         .empty h3 { margin: 0 0 8px; font-size: 36px; font-weight: 620; letter-spacing: -0.7px; }
         .empty p { margin: 0; color: var(--ink-2); font-weight: 750; }
+        .empty-mode {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(229,231,235,1);
+            background: rgba(255,255,255,0.92);
+            font-size: 13px;
+            font-weight: 900;
+            color: rgba(15,23,42,0.86);
+            margin-bottom: 10px;
+        }
+
+        body.dark-mode .empty-mode {
+            border-color: rgba(71, 85, 105, 0.7);
+            background: rgba(30, 41, 59, 0.95);
+            color: rgba(226, 232, 240, 0.95);
+        }
 
         .message {
             display: flex;
@@ -1365,6 +1384,32 @@
             const help = document.getElementById('modeHelpText');
             if (label) label.innerHTML = `Mode: ${getModeLogoHtml(mode)} <strong style="font-weight:900;">${escapeHtml(mode.name)}</strong>`;
             if (help) help.textContent = mode.help;
+            syncEmptyStateWithMode();
+        }
+
+        function getModeEmptySubtitle(mode) {
+            if (mode?.id === 'scout') return 'Guided Socratic tutoring with step-by-step reasoning.';
+            if (mode?.id === 'ace') return 'Direct, concise answers when speed matters.';
+            if (mode?.id === 'coach') return 'Execution-first planning and momentum coaching.';
+            if (mode?.id === 'forge') return 'Exam drills, quizzes, and adaptive practice.';
+            return 'Ask a question, or upload a file if you want the tutor to work from your material.';
+        }
+
+        function getEmptyStateHtml() {
+            const mode = getCurrentModeConfig();
+            return `
+                <div class="empty" id="emptyState">
+                    <div class="empty-mode">${getModeLogoHtml(mode)} <span>${escapeHtml(mode.name)}</span></div>
+                    <h3>Start with ${escapeHtml(mode.name)}.</h3>
+                    <p>${escapeHtml(getModeEmptySubtitle(mode))}</p>
+                </div>
+            `;
+        }
+
+        function syncEmptyStateWithMode() {
+            const emptyState = document.getElementById('emptyState');
+            if (!emptyState) return;
+            messagesArea.innerHTML = getEmptyStateHtml();
         }
 
         function setChatMode(modeId) {
@@ -1378,13 +1423,13 @@
         function getModeAvatarDataUri(modeId) {
             const avatars = {
                 // Socrates: stronger beard + laurel-style crown cue
-                scout: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><circle cx='48' cy='48' r='46' fill='#fcfcfc' stroke='#1f2937' stroke-width='2'/><path d='M19 88c5-17 16-28 29-28s24 11 29 28' fill='#7a5133'/><ellipse cx='48' cy='49' rx='18' ry='20' fill='#f2d3b0' stroke='#1f2937' stroke-width='1.6'/><path d='M28 45c2-13 10-23 20-23 9 0 17 8 20 22-6-4-12-7-20-7-8 0-14 2-20 8z' fill='#d5c3a3' stroke='#1f2937' stroke-width='1.6'/><path d='M33 29c3-5 8-8 15-8s12 3 15 8' fill='none' stroke='#2f3a4a' stroke-width='2'/><path d='M36 26l3-2M42 23l2-2M54 23l2 2M60 26l3 2' stroke='#2f3a4a' stroke-width='1.5' stroke-linecap='round'/><circle cx='41' cy='49' r='1.8' fill='#111827'/><circle cx='55' cy='49' r='1.8' fill='#111827'/><path d='M42 58c2 2 8 2 10 0' fill='none' stroke='#111827' stroke-width='1.5' stroke-linecap='round'/><path d='M32 63c4 8 10 12 16 12s12-4 16-12' fill='none' stroke='#1f2937' stroke-width='2.6' stroke-linecap='round'/></svg>`,
+                scout: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><circle cx='48' cy='48' r='46' fill='#fcfcfc' stroke='#1f2937' stroke-width='2'/><path d='M19 88c5-17 16-28 29-28s24 11 29 28' fill='#7a5133'/><ellipse cx='48' cy='49' rx='18' ry='20' fill='#f2d3b0' stroke='#1f2937' stroke-width='1.6'/><path d='M28 45c2-13 10-23 20-23 9 0 17 8 20 22-6-4-12-7-20-7-8 0-14 2-20 8z' fill='#d5c3a3' stroke='#1f2937' stroke-width='1.6'/><path d='M33 29c3-5 8-8 15-8s12 3 15 8' fill='none' stroke='#2f3a4a' stroke-width='2'/><path d='M36 26l3-2M42 23l2-2M54 23l2 2M60 26l3 2' stroke='#2f3a4a' stroke-width='1.5' stroke-linecap='round'/><path d='M36 45c2-1 4-2 6-2M54 43c2 0 4 1 6 2' fill='none' stroke='#1f2937' stroke-width='1.2' stroke-linecap='round'/><path d='M48 47v8' stroke='#1f2937' stroke-width='1.2' stroke-linecap='round'/><circle cx='41' cy='49' r='1.8' fill='#111827'/><circle cx='55' cy='49' r='1.8' fill='#111827'/><path d='M42 58c2 2 8 2 10 0' fill='none' stroke='#111827' stroke-width='1.5' stroke-linecap='round'/><path d='M32 63c4 8 10 12 16 12s12-4 16-12' fill='none' stroke='#1f2937' stroke-width='2.6' stroke-linecap='round'/></svg>`,
                 // Einstein: iconic wild hair silhouette
-                ace: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><circle cx='48' cy='48' r='46' fill='#fcfcfc' stroke='#1f2937' stroke-width='2'/><path d='M20 88c5-16 16-25 28-25s23 9 28 25' fill='#4a6da7'/><ellipse cx='48' cy='49' rx='18' ry='20' fill='#f2d2ae' stroke='#1f2937' stroke-width='1.6'/><path d='M24 44c5-16 13-24 24-24 10 0 18 7 24 22-7-3-10-2-14 0-3-4-7-6-10-6s-7 2-10 6c-4-2-7-3-14 2z' fill='#e5e7eb' stroke='#1f2937' stroke-width='1.6'/><path d='M30 31l-6 3M34 27l-5-2M66 27l5-2M72 31l6 3' stroke='#1f2937' stroke-width='1.8' stroke-linecap='round'/><circle cx='41' cy='49' r='1.8' fill='#111827'/><circle cx='55' cy='49' r='1.8' fill='#111827'/><path d='M42 58c2 2 8 2 10 0' fill='none' stroke='#111827' stroke-width='1.5' stroke-linecap='round'/></svg>`,
+                ace: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><circle cx='48' cy='48' r='46' fill='#fcfcfc' stroke='#1f2937' stroke-width='2'/><path d='M20 88c5-16 16-25 28-25s23 9 28 25' fill='#4a6da7'/><ellipse cx='48' cy='49' rx='18' ry='20' fill='#f2d2ae' stroke='#1f2937' stroke-width='1.6'/><path d='M24 44c5-16 13-24 24-24 10 0 18 7 24 22-7-3-10-2-14 0-3-4-7-6-10-6s-7 2-10 6c-4-2-7-3-14 2z' fill='#e5e7eb' stroke='#1f2937' stroke-width='1.6'/><path d='M30 31l-6 3M34 27l-5-2M66 27l5-2M72 31l6 3' stroke='#1f2937' stroke-width='1.8' stroke-linecap='round'/><path d='M36 45c2-1 4-2 6-2M54 43c2 0 4 1 6 2' fill='none' stroke='#1f2937' stroke-width='1.2' stroke-linecap='round'/><path d='M48 47v8' stroke='#1f2937' stroke-width='1.2' stroke-linecap='round'/><circle cx='41' cy='49' r='1.8' fill='#111827'/><circle cx='55' cy='49' r='1.8' fill='#111827'/><path d='M42 58c2 2 8 2 10 0' fill='none' stroke='#111827' stroke-width='1.5' stroke-linecap='round'/></svg>`,
                 // Newton: 17th-century wig profile cue
-                coach: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><circle cx='48' cy='48' r='46' fill='#fcfcfc' stroke='#1f2937' stroke-width='2'/><path d='M19 88c5-17 16-27 29-27s24 10 29 27' fill='#5b4637'/><ellipse cx='48' cy='49' rx='18' ry='20' fill='#f3d4b1' stroke='#1f2937' stroke-width='1.6'/><path d='M29 42c2-13 10-21 19-21s17 8 19 21c-5-5-11-8-19-8s-14 3-19 8z' fill='#f3f4f6' stroke='#1f2937' stroke-width='1.6'/><path d='M29 42c-2 10 0 19 6 26M67 42c2 10 0 19-6 26' fill='none' stroke='#1f2937' stroke-width='1.8' stroke-linecap='round'/><circle cx='41' cy='49' r='1.8' fill='#111827'/><circle cx='55' cy='49' r='1.8' fill='#111827'/><path d='M41 58c2.4 2 9.2 2 11.6 0' fill='none' stroke='#111827' stroke-width='1.5' stroke-linecap='round'/></svg>`,
+                coach: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><circle cx='48' cy='48' r='46' fill='#fcfcfc' stroke='#1f2937' stroke-width='2'/><path d='M19 88c5-17 16-27 29-27s24 10 29 27' fill='#5b4637'/><ellipse cx='48' cy='49' rx='18' ry='20' fill='#f3d4b1' stroke='#1f2937' stroke-width='1.6'/><path d='M29 42c2-13 10-21 19-21s17 8 19 21c-5-5-11-8-19-8s-14 3-19 8z' fill='#f3f4f6' stroke='#1f2937' stroke-width='1.6'/><path d='M29 42c-2 10 0 19 6 26M67 42c2 10 0 19-6 26' fill='none' stroke='#1f2937' stroke-width='1.8' stroke-linecap='round'/><path d='M36 45c2-1 4-2 6-2M54 43c2 0 4 1 6 2' fill='none' stroke='#1f2937' stroke-width='1.2' stroke-linecap='round'/><path d='M48 47v8' stroke='#1f2937' stroke-width='1.2' stroke-linecap='round'/><circle cx='41' cy='49' r='1.8' fill='#111827'/><circle cx='55' cy='49' r='1.8' fill='#111827'/><path d='M41 58c2.4 2 9.2 2 11.6 0' fill='none' stroke='#111827' stroke-width='1.5' stroke-linecap='round'/></svg>`,
                 // Galileo: older scholar beard + telescope accent
-                forge: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><circle cx='48' cy='48' r='46' fill='#fcfcfc' stroke='#1f2937' stroke-width='2'/><path d='M20 88c5-16 16-26 28-26s23 10 28 26' fill='#604c39'/><ellipse cx='48' cy='49' rx='18' ry='20' fill='#f0d0ad' stroke='#1f2937' stroke-width='1.6'/><path d='M30 43c2-12 10-21 18-21 9 0 16 6 19 19-6-4-11-6-19-6-7 0-12 2-18 8z' fill='#d8c5a6' stroke='#1f2937' stroke-width='1.6'/><path d='M35 62c4 8 8 11 13 11s9-3 13-11' fill='none' stroke='#1f2937' stroke-width='2.3' stroke-linecap='round'/><circle cx='41' cy='49' r='1.8' fill='#111827'/><circle cx='55' cy='49' r='1.8' fill='#111827'/><path d='M42 58c2 2 8 2 10 0' fill='none' stroke='#111827' stroke-width='1.5' stroke-linecap='round'/><path d='M64 24l12-6M66 28l12-6' stroke='#2f3a4a' stroke-width='2' stroke-linecap='round'/></svg>`
+                forge: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><circle cx='48' cy='48' r='46' fill='#fcfcfc' stroke='#1f2937' stroke-width='2'/><path d='M20 88c5-16 16-26 28-26s23 10 28 26' fill='#604c39'/><ellipse cx='48' cy='49' rx='18' ry='20' fill='#f0d0ad' stroke='#1f2937' stroke-width='1.6'/><path d='M30 43c2-12 10-21 18-21 9 0 16 6 19 19-6-4-11-6-19-6-7 0-12 2-18 8z' fill='#d8c5a6' stroke='#1f2937' stroke-width='1.6'/><path d='M35 62c4 8 8 11 13 11s9-3 13-11' fill='none' stroke='#1f2937' stroke-width='2.3' stroke-linecap='round'/><path d='M36 45c2-1 4-2 6-2M54 43c2 0 4 1 6 2' fill='none' stroke='#1f2937' stroke-width='1.2' stroke-linecap='round'/><path d='M48 47v8' stroke='#1f2937' stroke-width='1.2' stroke-linecap='round'/><circle cx='41' cy='49' r='1.8' fill='#111827'/><circle cx='55' cy='49' r='1.8' fill='#111827'/><path d='M42 58c2 2 8 2 10 0' fill='none' stroke='#111827' stroke-width='1.5' stroke-linecap='round'/><path d='M64 24l12-6M66 28l12-6' stroke='#2f3a4a' stroke-width='2' stroke-linecap='round'/></svg>`
             };
             const svg = avatars[modeId] || avatars.scout;
             return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
@@ -1778,12 +1823,7 @@
                 apiFetch(CHAT_HISTORY_URL, { method: 'DELETE' }).catch(() => {});
             }
 
-            messagesArea.innerHTML = `
-                <div class="empty" id="emptyState">
-                    <h3>Start anywhere.</h3>
-                    <p>Ask a question, or upload a file if you want the tutor to work from your material.</p>
-                </div>
-            `;
+            messagesArea.innerHTML = getEmptyStateHtml();
         }
 
         function exportChat() {
@@ -1965,12 +2005,7 @@
 
             messagesArea.innerHTML = '';
             if (!chatHistory.length) {
-                messagesArea.innerHTML = `
-                    <div class="empty" id="emptyState">
-                        <h3>Start anywhere.</h3>
-                        <p>Ask a question, or upload a file if you want the tutor to work from your material.</p>
-                    </div>
-                `;
+                messagesArea.innerHTML = getEmptyStateHtml();
                 return;
             }
 
