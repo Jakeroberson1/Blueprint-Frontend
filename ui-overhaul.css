@@ -1,0 +1,265 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Sora:wght@600;700;800&display=swap');
+
+:root {
+  --ov-bg: radial-gradient(1400px 720px at -8% -12%, rgba(95, 162, 255, 0.30), transparent 55%),
+           radial-gradient(1200px 680px at 104% 8%, rgba(34, 211, 238, 0.20), transparent 52%),
+           linear-gradient(180deg, #f8fbff 0%, #eef5ff 48%, #f7fbff 100%);
+  --ov-ink: #0f172a;
+  --ov-ink-2: #334155;
+  --ov-stroke: rgba(148, 163, 184, 0.28);
+  --ov-card: rgba(255, 255, 255, 0.80);
+  --ov-card-2: rgba(255, 255, 255, 0.64);
+  --ov-primary: #2563eb;
+  --ov-primary-2: #1d4ed8;
+  --ov-danger: #ef4444;
+  --ov-shadow-lg: 0 28px 80px rgba(15, 23, 42, 0.12);
+  --ov-shadow-md: 0 14px 38px rgba(15, 23, 42, 0.10);
+  --ov-radius-xl: 26px;
+  --ov-radius-lg: 18px;
+  --ov-radius-md: 14px;
+}
+
+body {
+  font-family: "Manrope", "Inter", system-ui, sans-serif !important;
+  color: var(--ov-ink) !important;
+  background: var(--ov-bg) !important;
+}
+
+body.dark-mode {
+  --ov-bg: radial-gradient(1100px 620px at -5% -10%, rgba(37, 99, 235, 0.22), transparent 56%),
+           radial-gradient(980px 560px at 103% 6%, rgba(20, 184, 166, 0.14), transparent 52%),
+           linear-gradient(180deg, #060c1a 0%, #060f20 45%, #040a16 100%);
+  --ov-ink: #e2e8f0;
+  --ov-ink-2: #a5b4c7;
+  --ov-stroke: rgba(71, 85, 105, 0.56);
+  --ov-card: rgba(7, 14, 30, 0.72);
+  --ov-card-2: rgba(15, 23, 42, 0.66);
+  --ov-primary: #60a5fa;
+  --ov-primary-2: #3b82f6;
+  --ov-shadow-lg: 0 30px 90px rgba(2, 6, 23, 0.52);
+  --ov-shadow-md: 0 14px 40px rgba(2, 6, 23, 0.42);
+}
+
+.topbar,
+.card,
+.auth-container,
+.messages,
+.chat-header,
+.composer,
+.footer,
+.listbox,
+.tool,
+.meta,
+.meta-box,
+.stat,
+.panel,
+.kpi,
+.quick-card {
+  background: var(--ov-card) !important;
+  border: 1px solid var(--ov-stroke) !important;
+  border-radius: var(--ov-radius-lg) !important;
+  box-shadow: var(--ov-shadow-md) !important;
+  backdrop-filter: blur(16px) saturate(130%);
+  -webkit-backdrop-filter: blur(16px) saturate(130%);
+}
+
+.topbar {
+  position: sticky;
+  top: 12px;
+  z-index: 20;
+  border-radius: 999px !important;
+  padding: 12px 16px !important;
+  background: var(--ov-card-2) !important;
+}
+
+.brand-title,
+.hero h1,
+h1,
+h2,
+h3,
+.chat-title strong {
+  font-family: "Sora", "Manrope", sans-serif !important;
+  letter-spacing: -0.02em;
+  color: var(--ov-ink) !important;
+}
+
+.hero {
+  margin: 18px auto 16px;
+}
+
+.hero h1 {
+  font-size: clamp(2rem, 4vw, 3.3rem) !important;
+  font-weight: 800 !important;
+}
+
+.hero p,
+.muted,
+.brand-sub,
+.item-sub,
+.chat-title span,
+.mode-desc,
+.status-line,
+label {
+  color: var(--ov-ink-2) !important;
+}
+
+.btn,
+.sbtn,
+.tiny,
+.a-btn,
+.quick-chip,
+.command-chip,
+.mode-chip,
+.icon,
+.pill {
+  border-radius: 999px !important;
+  border: 1px solid var(--ov-stroke) !important;
+  background: rgba(255, 255, 255, 0.62) !important;
+  color: var(--ov-ink) !important;
+  font-weight: 800 !important;
+  transition: transform .18s ease, box-shadow .22s ease, background .22s ease, border-color .22s ease !important;
+}
+
+body.dark-mode .btn,
+body.dark-mode .sbtn,
+body.dark-mode .tiny,
+body.dark-mode .a-btn,
+body.dark-mode .quick-chip,
+body.dark-mode .command-chip,
+body.dark-mode .mode-chip,
+body.dark-mode .icon,
+body.dark-mode .pill {
+  background: rgba(15, 23, 42, 0.74) !important;
+}
+
+.btn:hover,
+.sbtn:hover,
+.tiny:hover,
+.a-btn:hover,
+.quick-chip:hover,
+.command-chip:hover,
+.mode-chip:hover,
+.icon:hover {
+  transform: translateY(-2px);
+  border-color: rgba(37, 99, 235, 0.45) !important;
+  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.18);
+}
+
+.btn-primary,
+.sbtn.primary,
+.send {
+  background: linear-gradient(135deg, var(--ov-primary), var(--ov-primary-2)) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 12px 26px rgba(37, 99, 235, 0.34) !important;
+}
+
+.btn-danger,
+.sbtn.danger {
+  background: linear-gradient(135deg, #fb7185, var(--ov-danger)) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+}
+
+.input,
+.input-sm,
+textarea,
+select,
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  border-radius: var(--ov-radius-md) !important;
+  border: 1px solid var(--ov-stroke) !important;
+  background: rgba(255, 255, 255, 0.78) !important;
+  color: var(--ov-ink) !important;
+}
+
+body.dark-mode .input,
+body.dark-mode .input-sm,
+body.dark-mode textarea,
+body.dark-mode select,
+body.dark-mode input[type="text"],
+body.dark-mode input[type="email"],
+body.dark-mode input[type="password"] {
+  background: rgba(15, 23, 42, 0.76) !important;
+}
+
+.input:focus,
+.input-sm:focus,
+textarea:focus,
+select:focus,
+input:focus {
+  border-color: rgba(37, 99, 235, 0.72) !important;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.16) !important;
+  outline: none !important;
+}
+
+.bubble,
+.message.user .bubble {
+  border-radius: 20px !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+  border: 1px solid var(--ov-stroke) !important;
+}
+
+body.dark-mode .bubble,
+body.dark-mode .message.user .bubble {
+  background: rgba(15, 23, 42, 0.74) !important;
+}
+
+.empty,
+.status {
+  background: rgba(255, 255, 255, 0.66) !important;
+  border: 1px solid var(--ov-stroke) !important;
+  border-radius: var(--ov-radius-lg) !important;
+}
+
+.layout {
+  gap: 14px !important;
+}
+
+.auth-container {
+  max-width: 520px !important;
+  padding: 44px !important;
+  border-radius: var(--ov-radius-xl) !important;
+  background: var(--ov-card-2) !important;
+  box-shadow: var(--ov-shadow-lg) !important;
+}
+
+.auth-tabs,
+.tab-btn,
+.auth-btn,
+.oauth-btn {
+  border-radius: 999px !important;
+}
+
+.card,
+.auth-container,
+.topbar,
+.messages,
+.listbox,
+.tool,
+.meta,
+.meta-box,
+.status,
+.empty {
+  animation: ovFade .45s ease both;
+}
+
+@keyframes ovFade {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 980px) {
+  .topbar {
+    border-radius: 18px !important;
+  }
+
+  .layout {
+    gap: 10px !important;
+  }
+
+  .auth-container {
+    padding: 28px !important;
+  }
+}
