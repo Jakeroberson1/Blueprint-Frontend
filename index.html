@@ -120,6 +120,77 @@
             color: rgba(248, 250, 252, 1) !important;
         }
 
+        body.dark-mode .brand-title,
+        body.dark-mode .chat-title strong,
+        body.dark-mode .item-title,
+        body.dark-mode .filepick-name,
+        body.dark-mode .mode-desc,
+        body.dark-mode .status-line,
+        body.dark-mode .a-btn,
+        body.dark-mode label {
+            color: rgba(226, 232, 240, 0.95) !important;
+        }
+
+        body.dark-mode .brand-sub,
+        body.dark-mode .chat-title span,
+        body.dark-mode .item-sub,
+        body.dark-mode .muted {
+            color: rgba(148, 163, 184, 0.9) !important;
+        }
+
+        body.dark-mode .section,
+        body.dark-mode .chat-header,
+        body.dark-mode .composer,
+        body.dark-mode .footer,
+        body.dark-mode .agent-dock-body,
+        body.dark-mode .agent-dock summary,
+        body.dark-mode .listbox .item,
+        body.dark-mode .bubble pre,
+        body.dark-mode .filepick-ico,
+        body.dark-mode .mode-help {
+            border-color: rgba(71, 85, 105, 0.7) !important;
+        }
+
+        body.dark-mode .listbox .item.active {
+            background: rgba(30, 58, 138, 0.35) !important;
+        }
+
+        body.dark-mode .listbox .item:hover {
+            background: rgba(51, 65, 85, 0.45) !important;
+        }
+
+        body.dark-mode .empty,
+        body.dark-mode .file-preview,
+        body.dark-mode .bubble pre,
+        body.dark-mode .agent-dock,
+        body.dark-mode .tool {
+            background: rgba(15, 23, 42, 0.82) !important;
+        }
+
+        body.dark-mode .a-btn:hover,
+        body.dark-mode .quick-chip:hover,
+        body.dark-mode .mode-chip:hover,
+        body.dark-mode .command-chip:hover {
+            background: rgba(51, 65, 85, 0.85) !important;
+        }
+
+        body.dark-mode .input::placeholder,
+        body.dark-mode .input-sm::placeholder,
+        body.dark-mode textarea::placeholder {
+            color: rgba(148, 163, 184, 0.85) !important;
+        }
+
+        body.dark-mode .message.user .avatar {
+            color: rgba(241, 245, 249, 0.96) !important;
+            background: rgba(30, 41, 59, 1) !important;
+            border-color: rgba(71, 85, 105, 0.75) !important;
+        }
+
+        body.dark-mode .message.user .bubble {
+            background: rgba(30, 41, 59, 1) !important;
+            border-color: rgba(71, 85, 105, 0.75) !important;
+        }
+
         body::before {
             content: none;
         }
@@ -1005,8 +1076,8 @@
                 <div class="composer">
                     <div class="file-preview" id="filePreview">
                         <div style="display:flex; gap:10px; align-items:center;">
-                            <span style="font-weight: 900; color: rgba(15,23,42,0.72);">Attachment</span>
-                            <span id="fileName" style="font-weight: 800; color: rgba(15,23,42,0.88);"></span>
+                            <span style="font-weight: 900;">Attachment</span>
+                            <span id="fileName" style="font-weight: 800;"></span>
                         </div>
                         <button class="remove-file" onclick="removeFile()">×</button>
                     </div>
