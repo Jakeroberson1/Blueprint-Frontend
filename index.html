@@ -1209,9 +1209,9 @@
         let studyGuides = [];
         const CHAT_MODES = [
             { id: 'scout', name: 'Socrates', icon: '🧔‍♂️', help: 'Socratic guidance first, then direct answer when requested.' },
-            { id: 'ace', name: 'Athena', icon: '🦉', help: 'Fast direct answers with concise supporting steps.' },
-            { id: 'coach', name: 'Hermes', icon: '🏃', help: 'Execution-focused planning with next-best actions.' },
-            { id: 'forge', name: 'Apollo', icon: '🎯', help: 'Adaptive quizzing and exam-focused practice.' }
+            { id: 'ace', name: 'Galileo', icon: '🔭', help: 'Fast direct answers with concise supporting steps.' },
+            { id: 'coach', name: 'Curie', icon: '⚗️', help: 'Execution-focused planning with next-best actions.' },
+            { id: 'forge', name: 'Turing', icon: '🧠', help: 'Adaptive quizzing and exam-focused practice.' }
         ];
         const CHAT_COMMANDS = [
             { label: '7-day plan', command: '/plan-week' },
@@ -1309,9 +1309,9 @@
 
         function getModeLogoGlyph(modeId) {
             if (modeId === 'scout') return 'Σ';
-            if (modeId === 'ace') return 'A';
-            if (modeId === 'coach') return 'H';
-            if (modeId === 'forge') return 'P';
+            if (modeId === 'ace') return 'G';
+            if (modeId === 'coach') return 'C';
+            if (modeId === 'forge') return 'T';
             return 'B';
         }
 
