@@ -96,7 +96,10 @@
         body.dark-mode .sbtn,
         body.dark-mode .tiny,
         body.dark-mode .icon,
-        body.dark-mode .pill {
+        body.dark-mode .pill,
+        body.dark-mode .mode-chip,
+        body.dark-mode .command-chip,
+        body.dark-mode .context-chip {
             background: rgba(30, 41, 59, 1) !important;
             border-color: rgba(71, 85, 105, 0.75) !important;
             color: rgba(226, 232, 240, 0.95) !important;
@@ -540,6 +543,67 @@
             cursor: pointer;
         }
 
+        .mode-strip {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 12px 16px 0;
+            background: rgba(255,255,255,1);
+        }
+
+        .mode-chip {
+            border: 1px solid rgba(229,231,235,1);
+            border-radius: 999px;
+            background: rgba(249,250,251,1);
+            color: rgba(15,23,42,0.82);
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 900;
+            cursor: pointer;
+            transition: transform 0.15s ease, filter 0.15s ease;
+        }
+
+        .mode-chip:hover { transform: translateY(-1px); filter: saturate(1.03); }
+
+        .mode-chip.active {
+            border-color: rgba(26,115,232,0.65);
+            background: rgba(26,115,232,0.12);
+            color: rgba(18,79,182,1);
+        }
+
+        .command-strip,
+        .context-strip {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .command-chip,
+        .context-chip {
+            border: 1px solid rgba(229,231,235,1);
+            border-radius: 999px;
+            background: rgba(249,250,251,1);
+            color: rgba(15,23,42,0.8);
+            padding: 7px 11px;
+            font-size: 12px;
+            font-weight: 850;
+            cursor: pointer;
+        }
+
+        .context-chip.active {
+            border-color: rgba(26,115,232,0.65);
+            background: rgba(26,115,232,0.11);
+            color: rgba(18,79,182,1);
+        }
+
+        .mode-help {
+            margin-top: 8px;
+            font-size: 12px;
+            font-weight: 780;
+            color: var(--ink-2);
+        }
+
         .messages {
             height: 600px;
             overflow: auto;
@@ -848,6 +912,7 @@
                 <div class="chat-header">
                     <div class="chat-title">
                         <strong>Blueprint Chat</strong>
+                        <span id="activeModeLabel">Mode: 🧔‍♂️ Socrates</span>
                     </div>
                     <div class="chat-actions">
                         <button class="tiny" onclick="editLastUserMessage()">Edit last</button>
@@ -856,6 +921,7 @@
                         <button class="tiny" onclick="exportChat()">Export</button>
                     </div>
                 </div>
+                <div class="mode-strip" id="modeStrip"></div>
 
                 <div class="messages" id="messagesArea">
                     <div class="empty" id="emptyState">
@@ -892,6 +958,9 @@
                         <button class="quick-chip" type="button" onclick="insertPrompt('Quiz me on this topic with short-answer questions.')">Quiz me</button>
                         <button class="quick-chip" type="button" onclick="insertPrompt('Create a concise study guide from my uploaded material.')">Study guide</button>
                     </div>
+                    <div class="command-strip" id="commandStrip"></div>
+                    <div class="context-strip" id="contextStrip"></div>
+                    <div class="mode-help" id="modeHelpText"></div>
 
                     <div id="composerStatus" class="status-line"></div>
                 </div>
@@ -1037,6 +1106,7 @@
         function setChatBusy(isBusy) {
             sendButton.disabled = isBusy;
             fileUploadBtn.disabled = isBusy;
+            document.querySelectorAll('.mode-chip,.context-chip,.command-chip').forEach((el) => { el.disabled = isBusy; });
             sendButton.textContent = isBusy ? '…' : '→';
         }
 
@@ -1074,6 +1144,30 @@
         let conversations = [];
         let currentConversationId = null;
         let studyGuides = [];
+        const CHAT_MODES = [
+            { id: 'scout', name: 'Socrates', icon: '🧔‍♂️', help: 'Socratic guidance first, then direct answer when requested.' },
+            { id: 'ace', name: 'Athena', icon: '🦉', help: 'Fast direct answers with concise supporting steps.' },
+            { id: 'coach', name: 'Hermes', icon: '🏃', help: 'Execution-focused planning with next-best actions.' },
+            { id: 'forge', name: 'Apollo', icon: '🎯', help: 'Adaptive quizzing and exam-focused practice.' }
+        ];
+        const CHAT_COMMANDS = [
+            { label: '7-day plan', command: '/plan-week' },
+            { label: 'Do now', command: '/do-now' },
+            { label: 'Catch up', command: '/catch-up' },
+            { label: 'Quiz me', command: '/quiz' },
+            { label: 'Email prof', command: '/email-prof' }
+        ];
+        const CONTEXT_HINTS = [
+            { id: 'assignments', label: 'Assignments' },
+            { id: 'grades', label: 'Grades' },
+            { id: 'planner', label: 'Planner' },
+            { id: 'calendar', label: 'Calendar' },
+            { id: 'announcements', label: 'Announcements' },
+            { id: 'modules', label: 'Modules' },
+            { id: 'inbox', label: 'Inbox' }
+        ];
+        let currentChatMode = 'scout';
+        const selectedContextHints = new Set(['assignments', 'grades']);
         const TOUR_STEPS = [
             {
                 page: 'index.html',
@@ -1137,6 +1231,112 @@
             if (clearBtn) clearBtn.style.display = 'none';
             const picker = document.getElementById('studyGuidePicker');
             if (picker) picker.classList.remove('dragover');
+        }
+
+        function getCurrentModeConfig() {
+            return CHAT_MODES.find((m) => m.id === currentChatMode) || CHAT_MODES[0];
+        }
+
+        function updateModeUI() {
+            const mode = getCurrentModeConfig();
+            const label = document.getElementById('activeModeLabel');
+            const help = document.getElementById('modeHelpText');
+            if (label) label.textContent = `Mode: ${mode.icon} ${mode.name}`;
+            if (help) help.textContent = mode.help;
+        }
+
+        function setChatMode(modeId) {
+            const resolved = CHAT_MODES.some((m) => m.id === modeId) ? modeId : 'scout';
+            currentChatMode = resolved;
+            try { localStorage.setItem('bpChatMode', resolved); } catch (e) {}
+            renderModeStrip();
+            updateModeUI();
+        }
+
+        function renderModeStrip() {
+            const wrap = document.getElementById('modeStrip');
+            if (!wrap) return;
+            wrap.innerHTML = '';
+            CHAT_MODES.forEach((mode) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `mode-chip${mode.id === currentChatMode ? ' active' : ''}`;
+                btn.textContent = `${mode.icon} ${mode.name}`;
+                btn.addEventListener('click', () => setChatMode(mode.id));
+                wrap.appendChild(btn);
+            });
+        }
+
+        function toggleContextHint(hintId) {
+            if (!hintId) return;
+            if (selectedContextHints.has(hintId)) selectedContextHints.delete(hintId);
+            else selectedContextHints.add(hintId);
+            renderContextStrip();
+        }
+
+        function renderContextStrip() {
+            const wrap = document.getElementById('contextStrip');
+            if (!wrap) return;
+            wrap.innerHTML = '';
+            CONTEXT_HINTS.forEach((hint) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `context-chip${selectedContextHints.has(hint.id) ? ' active' : ''}`;
+                btn.textContent = hint.label;
+                btn.title = `Use ${hint.label.toLowerCase()} in this response`;
+                btn.addEventListener('click', () => toggleContextHint(hint.id));
+                wrap.appendChild(btn);
+            });
+        }
+
+        function renderCommandStrip() {
+            const wrap = document.getElementById('commandStrip');
+            if (!wrap) return;
+            wrap.innerHTML = '';
+            CHAT_COMMANDS.forEach((item) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'command-chip';
+                btn.textContent = item.label;
+                btn.addEventListener('click', () => applySlashCommand(item.command));
+                wrap.appendChild(btn);
+            });
+        }
+
+        function applySlashCommand(command) {
+            const expanded = expandSlashCommand(command).message;
+            insertPrompt(expanded);
+        }
+
+        function expandSlashCommand(rawMessage) {
+            const value = String(rawMessage || '').trim();
+            const lowered = value.toLowerCase();
+            if (lowered === '/plan-week') {
+                return {
+                    message: 'Create a focused 7-day study and assignment plan using my current Canvas workload. Include daily priorities, estimated time, and direct assignment links when available.'
+                };
+            }
+            if (lowered === '/do-now') {
+                return {
+                    message: 'Based on my Canvas data, give me the 3 highest-impact tasks I should do in the next 45 minutes. Include exact task names and links when possible.'
+                };
+            }
+            if (lowered === '/catch-up') {
+                return {
+                    message: 'Build a practical catch-up plan for overdue work. Prioritize by impact on grades and give a day-by-day order of execution.'
+                };
+            }
+            if (lowered === '/quiz') {
+                return {
+                    message: 'Start an adaptive quiz on my highest-risk current course topics. Ask one question at a time, grade my answer, and adjust difficulty.'
+                };
+            }
+            if (lowered === '/email-prof') {
+                return {
+                    message: 'Draft a respectful, specific email to my professor about an assignment extension request, using relevant details from my course context.'
+                };
+            }
+            return { message: value };
         }
 
         // Auto-resize textarea
@@ -1304,7 +1504,8 @@
         }
 
         async function sendMessage() {
-            const message = messageInput.value.trim();
+            const rawMessage = messageInput.value.trim();
+            const message = expandSlashCommand(rawMessage).message;
             if (!message && !currentFile) return;
             setComposerStatus();
 
@@ -1330,6 +1531,8 @@
                     const formData = new FormData();
                     formData.append('file', currentFile);
                     formData.append('message', message || '');
+                    formData.append('mode', currentChatMode);
+                    formData.append('contextHints', JSON.stringify(Array.from(selectedContextHints)));
                     if (currentConversationId) formData.append('conversationId', String(currentConversationId));
 
                     response = await apiFetch(UPLOAD_URL, {
@@ -1343,6 +1546,8 @@
                         body: JSON.stringify({
                             message,
                             subject: '',
+                            mode: currentChatMode,
+                            contextHints: Array.from(selectedContextHints),
                             conversationId: currentConversationId
                         })
                     });
@@ -1828,7 +2033,11 @@
                 const resp = await apiFetch(CHAT_REGENERATE_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ conversationId: currentConversationId })
+                    body: JSON.stringify({
+                        conversationId: currentConversationId,
+                        mode: currentChatMode,
+                        contextHints: Array.from(selectedContextHints)
+                    })
                 });
                 const data = await safeReadJson(resp);
                 if (!resp.ok || data.error) throw new Error(data.error || 'Regenerate failed');
@@ -1852,7 +2061,11 @@
                 const resp = await apiFetch(CHAT_CONTINUE_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ conversationId: currentConversationId })
+                    body: JSON.stringify({
+                        conversationId: currentConversationId,
+                        mode: currentChatMode,
+                        contextHints: Array.from(selectedContextHints)
+                    })
                 });
                 const data = await safeReadJson(resp);
                 if (!resp.ok || data.error) throw new Error(data.error || 'Continue failed');
@@ -1870,6 +2083,14 @@
 
         window.addEventListener('load', async () => {
             initializeTheme();
+            try {
+                const storedMode = localStorage.getItem('bpChatMode');
+                if (storedMode && CHAT_MODES.some((m) => m.id === storedMode)) currentChatMode = storedMode;
+            } catch (e) {}
+            renderModeStrip();
+            renderCommandStrip();
+            renderContextStrip();
+            updateModeUI();
             if (!sessionToken) {
                 redirectToLogin();
                 return;
