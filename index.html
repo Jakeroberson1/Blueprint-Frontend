@@ -191,6 +191,11 @@
             border-color: rgba(71, 85, 105, 0.75) !important;
         }
 
+        body.dark-mode .mode-logo {
+            background: rgba(15, 23, 42, 0.96) !important;
+            border: 1px solid rgba(71, 85, 105, 0.75);
+        }
+
         body::before {
             content: none;
         }
@@ -702,26 +707,18 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
-            font-weight: 900;
-            color: #fff;
-            box-shadow: inset 0 -2px 4px rgba(0,0,0,0.18);
+            box-shadow: inset 0 -2px 4px rgba(0,0,0,0.12);
             position: relative;
+            overflow: hidden;
+            background: rgba(255,255,255,0.96);
         }
-        .mode-logo-scout { background: linear-gradient(135deg, #2d6cdf, #1a73e8); }
-        .mode-logo-scout::after {
-            content: '';
-            position: absolute;
-            width: 8px;
-            height: 4px;
-            bottom: 2px;
-            left: 7px;
-            border-radius: 0 0 6px 6px;
-            background: rgba(255,255,255,0.9);
+        .mode-logo img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;
+            border-radius: 999px;
         }
-        .mode-logo-ace { background: linear-gradient(135deg, #06b6d4, #2563eb); }
-        .mode-logo-coach { background: linear-gradient(135deg, #f59e0b, #ef4444); }
-        .mode-logo-forge { background: linear-gradient(135deg, #8b5cf6, #ec4899); }
 
         .mode-desc {
             font-size: 12px;
@@ -1366,7 +1363,7 @@
             const mode = getCurrentModeConfig();
             const label = document.getElementById('activeModeLabel');
             const help = document.getElementById('modeHelpText');
-            if (label) label.textContent = `Mode: ${mode.icon} ${mode.name}`;
+            if (label) label.innerHTML = `Mode: ${getModeLogoHtml(mode)} <strong style="font-weight:900;">${escapeHtml(mode.name)}</strong>`;
             if (help) help.textContent = mode.help;
         }
 
@@ -1378,12 +1375,20 @@
             updateModeUI();
         }
 
-        function getModeLogoGlyph(modeId) {
-            if (modeId === 'scout') return 'Σ';
-            if (modeId === 'ace') return 'G';
-            if (modeId === 'coach') return 'C';
-            if (modeId === 'forge') return 'T';
-            return 'B';
+        function getModeAvatarDataUri(modeId) {
+            const avatars = {
+                scout: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='bg' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='#9cc2ff'/><stop offset='100%' stop-color='#3b82f6'/></linearGradient></defs><rect width='64' height='64' rx='32' fill='url(#bg)'/><circle cx='32' cy='40' r='16' fill='#f1d6b3'/><path d='M16 32c4-14 28-20 36-4l-2 6c-9-4-18-3-30 2z' fill='#374151'/><path d='M19 49c3-8 8-12 13-12s10 4 13 12' fill='none' stroke='#374151' stroke-width='3' stroke-linecap='round'/><circle cx='26' cy='40' r='1.8' fill='#1f2937'/><circle cx='38' cy='40' r='1.8' fill='#1f2937'/></svg>`,
+                ace: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='bg' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='#b4f0ff'/><stop offset='100%' stop-color='#0891b2'/></linearGradient></defs><rect width='64' height='64' rx='32' fill='url(#bg)'/><circle cx='32' cy='39' r='15' fill='#f2d4b0'/><path d='M18 34c4-10 10-14 19-14 7 0 12 3 15 10-4-1-8-1-12 1-6-1-12 0-22 3z' fill='#1f2937'/><path d='M24 50c2-4 5-7 8-7s6 3 8 7' fill='none' stroke='#1f2937' stroke-width='3' stroke-linecap='round'/><circle cx='27' cy='39' r='1.7' fill='#111827'/><circle cx='37' cy='39' r='1.7' fill='#111827'/></svg>`,
+                coach: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='bg' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='#ffd9a8'/><stop offset='100%' stop-color='#f97316'/></linearGradient></defs><rect width='64' height='64' rx='32' fill='url(#bg)'/><circle cx='32' cy='39' r='15' fill='#f1cfaa'/><path d='M16 34c6-13 26-18 34-2l-1 4c-9-3-18-2-33 2z' fill='#4b5563'/><path d='M23 50c3-4 6-6 9-6s6 2 9 6' fill='none' stroke='#4b5563' stroke-width='3' stroke-linecap='round'/><circle cx='27' cy='39' r='1.7' fill='#111827'/><circle cx='37' cy='39' r='1.7' fill='#111827'/></svg>`,
+                forge: `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='bg' x1='0' y1='0' x2='1' y2='1'><stop offset='0%' stop-color='#c7d2fe'/><stop offset='100%' stop-color='#4f46e5'/></linearGradient></defs><rect width='64' height='64' rx='32' fill='url(#bg)'/><circle cx='32' cy='39' r='15' fill='#efd0ad'/><path d='M18 33c3-10 10-15 20-15 6 0 11 2 13 9-10-1-22 2-33 6z' fill='#111827'/><path d='M23 50c2.8-4.2 6.2-6.2 9-6.2 2.9 0 6.1 2 9 6.2' fill='none' stroke='#111827' stroke-width='3' stroke-linecap='round'/><circle cx='27' cy='39' r='1.7' fill='#0f172a'/><circle cx='37' cy='39' r='1.7' fill='#0f172a'/></svg>`
+            };
+            const svg = avatars[modeId] || avatars.scout;
+            return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+        }
+
+        function getModeLogoHtml(mode) {
+            const src = getModeAvatarDataUri(mode?.id || 'scout');
+            return `<span class="mode-logo mode-logo-${mode?.id || 'scout'}"><img src="${src}" alt="${escapeHtml(mode?.name || 'Blueprint')} logo" loading="lazy" decoding="async" /></span>`;
         }
 
         function renderModeButtons() {
@@ -1394,7 +1399,7 @@
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = `mode-chip${mode.id === currentChatMode ? ' active' : ''}`;
-                const logo = `<span class="mode-logo mode-logo-${mode.id}">${getModeLogoGlyph(mode.id)}</span>`;
+                const logo = getModeLogoHtml(mode);
                 btn.innerHTML = `${logo}<span>${mode.name}</span>`;
                 btn.title = mode.help;
                 btn.addEventListener('click', () => setChatMode(mode.id));
